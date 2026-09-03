@@ -26,6 +26,7 @@ All tools are **functions Gemma may call**. The runtime enforces caps (window le
 | Tool | When |
 |---|---|
 | `crop_frame` | Tiny object in a frame already fetched (mini Agentic Vision) |
+| `search_slides` | On-screen text nobody spoke — ColQwen on **unique** slides; see [14-slides-and-on-screen-text.md](14-slides-and-on-screen-text.md) |
 | `ocr_frame` | Dense slide text Gemma misreads — **one frame**, not ingest |
 | `count_events` | Thin wrapper: search + merge + `len()` so the model doesn’t arithmetic-hallucinate |
 

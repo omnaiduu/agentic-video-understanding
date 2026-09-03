@@ -15,3 +15,4 @@ Start at the [root README](../README.md), then:
 11. [Glossary](11-glossary.md)
 12. [What’s new vs this design (Sep 2026)](12-whats-new-2026.md)
 13. [WhisperX](13-whisperx.md)
+14. [Slides and on-screen text](14-slides-and-on-screen-text.md)
