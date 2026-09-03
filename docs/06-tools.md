@@ -1,6 +1,6 @@
 # Tools
 
-All tools are **functions Gemma may call**. The runtime enforces caps (window length, FPS, export duration, frame budget).
+All tools are **functions the runtime may run**. Caps on window, FPS, export, frame budget. If we use the [clipboard driver](16-clipboard-and-verbs.md), **Python** calls them from a verb menu — Gemma does not pick raw tools.
 
 ## v1 (ship these)
 
