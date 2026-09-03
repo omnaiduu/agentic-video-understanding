@@ -27,6 +27,7 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/13-whisperx.md](docs/13-whisperx.md) | Speech phone book: what WhisperX is, why, how VAD/aligner/diarization work |
 | [docs/14-slides-and-on-screen-text.md](docs/14-slides-and-on-screen-text.md) | Unique slides + ColQwen: find on-screen text, Gemma still reads |
 | [docs/15-workflows-vs-agents.md](docs/15-workflows-vs-agents.md) | Code-owned paths + small E4B vs a 12B free agent |
+| [docs/16-clipboard-and-verbs.md](docs/16-clipboard-and-verbs.md) | Session clipboard + verb menu so combo questions work on E4B |
 
 ---
 

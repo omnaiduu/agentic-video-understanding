@@ -100,14 +100,13 @@ No model ever chose a tool name.
 - **Fits “count in Python”** — the model never owns the total.
 - **Small model is enough** because we never asked it to be the agent.
 
-## What we lose (honest)
+## What we lose (honest) — and the fix
 
-- Weird questions (“after the clap, what was on the slide, and was a dog in the next shot?”) need **two workflows** or a tiny fallback loop.
-- If intent is wrong, the whole path is wrong — keep an **unknown** bucket and maybe **parallel** talk+visual search when confidence is low.
-- We will not magically handle a 9th question type until we **write** a 9th workflow.
-- This is **not** a clone of Gemini’s internals (their model still picks tools). The **user** still gets the same product: ask, timestamp, clip.
+A **single** named recipe (`intent=talk_qa` only) does fail on combo questions, bad routing, and new wording.
 
-**Escape hatch (later, not v1):** if `unknown` or low confidence, one **capped** tool loop (2–3 rounds) on E4B. If that is still weak, *then* consider 12B only for that bucket. Most traffic never pays for it.
+**Fix (not 12B):** keep a **clipboard** in SQLite and let E4B tick a **verb menu** (several verbs per turn, max two plan rounds). Code glues “after the clap → slide → dog.” Details: [16-clipboard-and-verbs.md](16-clipboard-and-verbs.md).
+
+This is **not** a clone of Gemini’s internals (their model still picks tools). The **user** still gets the same product: ask, timestamp, clip.
 
 ---
 
@@ -115,7 +114,7 @@ No model ever chose a tool name.
 
 | Piece | Choice |
 |---|---|
-| Driver | Python workflows (Anthropic **routing + chaining**) |
+| Driver | **Clipboard + verb menu** ([16](16-clipboard-and-verbs.md)); named recipes are just common verb bundles |
 | Brain | **Gemma 4 E4B** for intent / extract / read / summarize |
 | 12B | Optional later, unknown/hard bucket only |
 | 31B / “32B” | No — no audio, wrong job |

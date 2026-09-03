@@ -51,8 +51,8 @@ The picture above is the **agent** driver (12B picks tools). A cheaper driver is
 2. Search before gulp.
 3. Rewatch a **short** window (e.g. ≤8s zoom, skim at very low FPS only if search is empty).
 4. Cap frames per question (e.g. 32–64).
-5. Cap tool rounds (e.g. 8).
-6. Multi-turn: keep `handle_id` + last timestamps (Google’s `step_list` idea).
+5. Cap tool rounds (e.g. 8) — or **2 plan JSON rounds** if we use the [clipboard driver](16-clipboard-and-verbs.md)
+6. Multi-turn: keep `handle_id` + last timestamps (Google’s `step_list` idea) — the **clipboard**
 
 ## Why this matches Google
 

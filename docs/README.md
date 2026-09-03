@@ -17,3 +17,4 @@ Start at the [root README](../README.md), then:
 13. [WhisperX](13-whisperx.md)
 14. [Slides and on-screen text](14-slides-and-on-screen-text.md)
 15. [Workflows vs a free agent](15-workflows-vs-agents.md)
+16. [Clipboard + verb menu](16-clipboard-and-verbs.md)
