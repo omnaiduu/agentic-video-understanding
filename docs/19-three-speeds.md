@@ -1,6 +1,6 @@
 # Three speeds: ready-made job, many jobs at once, short hunt
 
-A proposed driver. **Not locked yet.** Same small Gemma (E4B). Same tools. Same three search books. New idea: **Python picks how strict to be**, and the model always has a **notepad**.
+A proposed driver. **Not locked yet.** Same small Gemma (E4B). Same tools. Same three search books. New idea: **Node picks how strict to be**, and the model always has a **notepad**.
 
 Read this if you want both:
 
@@ -17,7 +17,7 @@ Shorter older notes: [18-the-plan.md](18-the-plan.md) (form), [16-clipboard-and-
 
 **Idea A — Ready-made job (rigid).**  
 We already know the common questions: talk, look, listen, count, export, follow-up.  
-Python has a recipe for each. Tiny Gemma only says “this is a sound question” and the search word `clap`. Python does the rest.
+Node has a recipe for each. Tiny Gemma only says “this is a sound question” and the search word `clap`. Node does the rest.
 
 - Good: cheap, testable, 4B is enough.  
 - Bad: “After the clap, what was on the slide, and was there a dog?” is **several** jobs. One recipe breaks. A wrong label sends us into the wrong recipe.
@@ -42,11 +42,11 @@ Imagine a small helper in a library.
    - sound book (GLAP) — short sound chunks, as numbers
 2. You ask a question.
 3. Tiny Gemma fills a **short form** (not “pick any tool, pick any FPS”).
-4. **Python** reads the form and presses the real buttons (search, cut a few seconds, count, export).
+4. **Node** reads the form and presses the real buttons (search, cut a few seconds, count, export).
 5. Both of them share a **notepad**: where we are on the timeline, what we already found, what we already tried.
 6. Tiny Gemma looks at a **short** slice (a few seconds of video or sound) and writes the answer.
 
-The helper never watches the whole two-hour tape. The books are the map. The notepad is memory. Python is the hands. Gemma is the eyes/ears on a small piece, and the one who fills the form.
+The helper never watches the whole two-hour tape. The books are the map. The notepad is memory. Node is the hands. Gemma is the eyes/ears on a small piece, and the one who fills the form.
 
 ---
 
@@ -57,9 +57,9 @@ These do not change with the three speeds.
 | Piece | Who | What it is |
 |---|---|---|
 | **Books** | Built at upload | Speech, pictures, sounds. Not rebuilt on question 2. |
-| **Tools** | Python | The same eight: search three books, open short video, open short sound, export clip/audio, plus “how long is the file”. |
+| **Tools** | Node | The same eight: search three books, open short video, open short sound, export clip/audio, plus “how long is the file”. |
 | **Form** | Gemma E4B | Tick jobs, tick steps, write search words, say sure / mixed / not sure. |
-| **Notepad** | Python (SQLite) | Focus time, last hits, last Q&A, **already tried**. Sent to Gemma every turn. |
+| **Notepad** | Node (SQLite) | Focus time, last hits, last Q&A, **already tried**. Sent to Gemma every turn. |
 
 **Intent** = *what kind of question?* Now it can be **more than one**.  
 Example: “After the clap, what was on the slide? Give me the clip.” → listen **and** look **and** export.
@@ -84,19 +84,21 @@ done:      false                      # true = skip more plans, go answer
 
 A simple question ticks one intent and one or two verbs.  
 A combo ticks several. That **is** “run multiple intents.”  
-`not_sure` does not mean “become a free agent.” It means “Python, please hunt.”
+`not_sure` does not mean “become a free agent.” It means “Node, please hunt.”
 
 ---
 
-## The three speeds (how Python runs that form)
+## The three speeds (how Node runs that form)
 
 Same form. Same notepad. **Code** chooses the speed. Gemma does not.
 
 ```
-                    user question + notepad
+          user question + last ~8 user messages + notepad
                               │
                               ▼
-                   Gemma E4B fills the form
+              Gemma E4B (main) fills the form
+              Chat = what they mean (“there”).
+              Notepad = the clock (1:04).
                               │
               ┌───────────────┼───────────────┐
               ▼               ▼               ▼
@@ -117,14 +119,14 @@ Same form. Same notepad. **Code** chooses the speed. Gemma does not.
 
 **When:** Gemma is **sure**, and there is basically **one** intent (talk **or** look **or** listen **or** count **or** export **or** follow-up).
 
-**What happens:** Python ignores extra creativity. It runs the known recipe for that job. **No second plan** unless the search comes back empty (then we jump to Speed 3).
+**What happens:** Node ignores extra creativity. It runs the known recipe for that job. **No second plan** unless the search comes back empty (then we jump to Speed 3).
 
-| Job | Everyday example | Python does |
+| Job | Everyday example | Node does |
 |---|---|---|
 | Talk | “What did she say about the price?” | Search speech book → maybe open a few frames → Gemma summarizes |
 | Look | “When is there a red bird?” | Search picture book → open a short zoom → Gemma confirms |
 | Listen | “When did they clap?” | Search sound book → optional short listen → time |
-| Count | “How many claps?” | Search → merge nearby hits → `len()` in Python → spot-check 2 clips |
+| Count | “How many claps?” | Search → merge nearby hits → `len()` in Node → spot-check 2 clips |
 | Export | “Give me that clip” | Cut around the notepad’s focus time (or search first if we have no focus) |
 | Follow-up | “Was there a dog **there**?” | Reuse focus → open eyes/ears → yes/no |
 
@@ -134,7 +136,7 @@ This is Idea A. Cheap. Easy to test. 4B only has to label the job and write a se
 
 **When:** Gemma ticks **two or more** intents, or several verbs, and is not `not_sure`.
 
-**What happens:** One form fill. Python **sorts** the checkboxes into a safe order, then runs them:
+**What happens:** One form fill. Node **sorts** the checkboxes into a safe order, then runs them:
 
 1. searches first (talk / look / listen)  
 2. then `shift_after` (move “we’re here” forward — “after the clap…”)  
@@ -147,7 +149,7 @@ The model never picks FPS or a two-hour window. The server clamps.
 Example: “After the clap, what was on the slide?”
 
 - Form: listen + look; verbs: search listen, shift after, open eyes; word: `clap`
-- Python: find clap → move a few seconds forward → cut video → Gemma reads the slide
+- Node: find clap → move a few seconds forward → cut video → Gemma reads the slide
 - Notepad remembers that window for “was there a dog **there**?”
 
 This is the combo fix from [16](16-clipboard-and-verbs.md). Still **no** free tool loop.
@@ -162,21 +164,21 @@ This is the combo fix from [16](16-clipboard-and-verbs.md). Still **no** free to
 
 **What happens:** a **tiny** loop. Not eight wanders. Not raw tools.
 
-1. **Pin evidence.** Python searches **all three books at once** (indexes are milliseconds). Top hits go on the notepad as sticky notes: “speech 0:40 pricing”, “sound 1:04 clap”, “picture 1:12 slide”.
+1. **Pin evidence.** Node searches **all three books at once** (indexes are milliseconds). Top hits go on the notepad as sticky notes: “speech 0:40 pricing”, “sound 1:04 clap”, “picture 1:12 slide”.
 2. **Show the notepad to Gemma.** Now the 4B model is not imagining. It is choosing among **real hits**.
 3. **Gemma fills the form again.** Example: “open eyes on 1:12; also open ears on 1:04.”
-4. Python acts, updates the notepad, including **already tried**.
+4. Node acts, updates the notepad, including **already tried**.
 5. If still empty or still `not_sure`: **one more** hunt round, then stop.
 
 Max **three** form-fills per user question (first plan + two hunts). Then we answer from what we have, or we say we could not find it — and we can list what we tried.
 
 **Why a 4B model can do this:** choosing among sticky notes is a form. Inventing a 7-step tool chain is not. The 12B waiter was good at the second job. We deleted that job.
 
-Optional last resort (**code**, not the model): if every book is empty, Python may grab a **few** frames spread across the file at very low FPS (already in the tool policy as “skim”). Pin those on the notepad. Ask Gemma “any of these look useful?” That is still a form. It is not “watch two hours.”
+Optional last resort (**code**, not the model): if every book is empty, Node may grab a **few** frames spread across the file at very low FPS (already in the tool policy as “skim”). Pin those on the notepad. Ask Gemma “any of these look useful?” That is still a form. It is not “watch two hours.”
 
 ---
 
-## How Python picks the speed
+## How Node picks the speed
 
 Gemma does **not** say “run Speed 3.” It only fills `sure` and the checkboxes. Code:
 
@@ -207,8 +209,9 @@ notes:     "clap ~1:04; slide still up"  # one line Gemma wrote
 last_user, last_answer
 ```
 
-Every Gemma call gets: the new question + **this notepad**.  
-Python writes the notepad after every verb. The model does not have to remember across calls. **State lives in the database.**
+Every **main** Gemma call gets: the new question + **last ~8 user messages** + **this notepad**.  
+Chat is only what the user typed (plus `last_answer` as one line). Times like 1:04 never appear in user text — they live on the notepad.  
+Node writes the notepad after every verb. The model does not have to remember across calls. **State lives in the database.** Full loop: [20-backend-algorithm.md](20-backend-algorithm.md).
 
 That is how we have “memory like an agent” on a 4B model: the memory is **outside** the model.
 
@@ -221,7 +224,7 @@ That is how we have “memory like an agent” on a 4B model: the memory is **ou
 “When did they clap?”
 
 1. Form: intent listen, sure, word `clap`, verb search listen.  
-2. Python: sound book → 1:04.  
+2. Node: sound book → 1:04.  
 3. Optional: open a second of audio to confirm.  
 4. Answer: “Clap at 1:04.” Notepad focus = 1:04.
 
@@ -230,7 +233,7 @@ That is how we have “memory like an agent” on a 4B model: the memory is **ou
 “After the clap, what was on the slide?”
 
 1. Form: listen + look; search listen, shift after, open eyes.  
-2. Python: clap at 1:04 → focus 1:04–1:12 → frames.  
+2. Node: clap at 1:04 → focus 1:04–1:12 → frames.  
 3. Gemma reads the slide.  
 4. Notepad keeps that window.
 
@@ -239,7 +242,7 @@ That is how we have “memory like an agent” on a 4B model: the memory is **ou
 “Was there a dog **there**?”
 
 1. Form: reuse focus, open eyes (maybe search look near focus).  
-2. Python does **not** scan two hours.  
+2. Node does **not** scan two hours.  
 3. Yes/no from those frames.
 
 ### 4. Unknown wording — Speed 3
@@ -247,7 +250,7 @@ That is how we have “memory like an agent” on a 4B model: the memory is **ou
 “What was that weird noise in the middle?”
 
 1. First form: `not_sure`, maybe a weak word `weird noise`.  
-2. Python hunts all three books. Sticky notes: a beep at 12:01, a laugh at 12:04, a chair scrape at 12:08.  
+2. Node hunts all three books. Sticky notes: a beep at 12:01, a laugh at 12:04, a chair scrape at 12:08.  
 3. Second form: Gemma picks open ears on 12:01 (best guess from the hits).  
 4. Gemma listens to a short slice and names it.  
 If the books had **nothing**, we say we could not find it after the cap — we do not wander for eight rounds.
@@ -263,10 +266,10 @@ Empty search **forces** Speed 3: search all three books, maybe retry query `clap
 “What did she say about pricing? Give me the clip.”
 
 1. Form: talk + export; search talk; query `pricing`.  
-2. Python: speech hits → answer from lines → ffmpeg cut around those times.  
+2. Node: speech hits → answer from lines → ffmpeg cut around those times.  
 3. User gets text + timestamp + link. Gemma never chose a tool name.
 
-### 7. Count — Speed 1 (count stays in Python)
+### 7. Count — Speed 1 (count stays in Node)
 
 “How many claps?”
 
@@ -285,10 +288,10 @@ Not on the form. We do **not** let 4B invent a tool. We say we cannot do that ye
 | Job | Who | Why |
 |---|---|---|
 | Find the time | Books + `search_*` | Cheap map |
-| Decide speed | **Python** | 4B should not be the manager |
+| Decide speed | **Node** | 4B should not be the manager |
 | Fill the form | **E4B** | Labels, search words, pick among hits |
-| Press tools, clamp FPS/windows | **Python** | Limits and order |
-| Count events | **Python** `len()` | Models drop numbers |
+| Press tools, clamp FPS/windows | **Node** | Limits and order |
+| Count events | **Node** `len()` | Models drop numbers |
 | Understand a short slice | **E4B** on `get_frames` / `get_audio` | Eyes and ears |
 | Remember “there” | **Notepad** | Context without stuffing the transcript |
 | Give the user a file | `export_*` | ffmpeg |
@@ -317,7 +320,7 @@ Not on the form. We do **not** let 4B invent a tool. We say we cannot do that ye
 - Open audio: ≤ ~30s (Gemma’s ear limit).  
 - Frame budget per question (e.g. 32–64).  
 - Export max length.  
-- Count in Python.  
+- Count in Node.  
 - `tried` on the notepad: do not repeat the same search word.
 
 ---
@@ -343,12 +346,12 @@ Hunt **does** help: wrong search word, wrong first intent, mixed questions, “w
 
 | Hard for E4B | We moved it |
 |---|---|
-| Long tool chains | Max 3 forms; Python runs the chain |
+| Long tool chains | Max 3 forms; Node runs the chain |
 | Inventing tool names / FPS | Closed form + server clamps |
 | Remembering the clap on turn 2 | Notepad in SQLite |
 | Mixed question in one brain dump | Several intents + sorted verbs |
 | Unknown question | Sticky notes from three books, then choose |
-| Arithmetic on 847 claps | `len()` in Python |
+| Arithmetic on 847 claps | `len()` in Node |
 
 What E4B still does (in-distribution): tick boxes, write a search phrase, pick among hits, look at ~8 seconds, write a short answer **given** the notepad.
 
@@ -368,4 +371,4 @@ What E4B still does (in-distribution): tick boxes, write a search phrase, pick a
 
 User-facing product does not change: upload once, ask many times, timestamps, optional clip, no 2-hour ingest into the model.
 
-The change is **who holds the remote**: Python, with three speeds, while the small model fills a form and reads a short slice — always with the notepad in hand.
+The change is **who holds the remote**: Node, with three speeds, while the small model fills a form and reads a short slice — always with the notepad in hand.

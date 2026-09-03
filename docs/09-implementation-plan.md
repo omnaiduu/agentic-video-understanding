@@ -4,10 +4,10 @@ Order. Don’t skip to captioning or E2B training.
 
 ## 1. Skeleton
 
-- FastAPI + ffmpeg `get_meta` / `get_frames` / `get_audio` on a local mp4
-- Gemma 4 (E4B is fine to wire tools; **quality default 12B**) with tool calling
+- Node API + ffmpeg `get_meta` / `get_frames` / `get_audio` on a local mp4
+- Modal Gemma E4B: **plan** (form JSON) and **answer** (short slice) — not free tool calling
 - Hard caps on window + FPS
-- Short-file bypass later: duration ≲ 5 min may static-gulp (Google’s split)
+- SQLite notepad + last 8 user messages into the plan call
 - Prove: “what happens at 0:10?” using **only** `get_frames` (no index)
 
 ## 2. Speech cache
@@ -41,6 +41,7 @@ Order. Don’t skip to captioning or E2B training.
 
 - Upload, status, chat, timestamps, links
 - Empty / error / loading
+- **Done for now = screen recording** of the checks in [20-backend-algorithm.md](20-backend-algorithm.md)
 
 ## 7. Multi-turn + polish
 
@@ -57,4 +58,4 @@ VLM ingest, scene detect, E2B embedder training, OCR-all-frames, desktop super-a
 
 ## Done when
 
-A ≥10 minute video answers: (a) a speech question, (b) a silent visual question, (c) a sound question, (d) a follow-up without re-ingest, (e) an exported clip URL — without loading the whole file into Gemma.
+A ≥10 minute video, Node on the laptop, models on Modal, and a **recorded demo** that shows: (a) a speech question, (b) a silent visual question, (c) a sound question, (d) a follow-up (“there”) without re-ingest, (e) an exported clip URL — without loading the whole file into Gemma. Combo + hunt if time.

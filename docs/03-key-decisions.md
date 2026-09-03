@@ -37,11 +37,14 @@ Locked. Short.
 
 ## Stack
 
-- API: **Python FastAPI**
-- Cut media: **ffmpeg**
-- Serve Gemma: **Modal** (vLLM / whatever they already run)
-- Store: **SQLite** (transcript, sessions) + **FAISS or sqlite-vec** + **S3/R2/Modal Volume** (videos, exports)
-- UI: simple web app (upload, ingest status, chat, timestamps, clip links) — see frontend doc; framework not sacred
+- API (demo): **Node** on the laptop — traffic cop (form, three speeds, notepad, ffmpeg). See [20](20-backend-algorithm.md).
+- ML workers: **Python on Modal** — Gemma E4B, WhisperX, SigLIP 2, GLAP (Node does not run these).
+- Cut media: **ffmpeg** on the laptop
+- Serve Gemma: **Modal**
+- Store: **SQLite** (videos, chats, notepad) + books on Modal Volume; object storage for mp4/exports
+- UI: one watch+ask page is enough to **record a demo**; Vite/React later if needed
+
+(Older lock was “Python FastAPI for everything.” Demo split: Node orchestrates, Modal stays Python for models.)
 
 ## Explicitly not v1
 
@@ -51,4 +54,4 @@ Scene detect · VLM captions / `search_notes` · OCR every frame · answering fr
 
 Spine above is unchanged. Practical defaults that do **not** fork the product: **GLAP** over LAION-CLAP; **WhisperX** word times around Whisper ([13-whisperx.md](13-whisperx.md)); **dedup** lecture frames. Optional later: ColQwen slides, PE Core, SAM2 count. Survey: [12-whats-new-2026.md](12-whats-new-2026.md).
 
-**Open (not locked):** **E4B** fills a **form** (intent + verbs); Python runs tools — short version: [18-the-plan.md](18-the-plan.md). Combining rigid jobs, many intents, and a short hunt on the same 4B model: [19-three-speeds.md](19-three-speeds.md).
+**Open (not locked):** **E4B** fills a **form** from **user chat + notepad**; Node runs tools at one of three speeds — [18](18-the-plan.md), [19](19-three-speeds.md), [20](20-backend-algorithm.md).

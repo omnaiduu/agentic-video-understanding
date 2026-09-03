@@ -21,3 +21,4 @@ Start at the [root README](../README.md), then:
 17. [Plain map of the whole system](17-plain-map.md)
 18. [The plan: form + verbs](18-the-plan.md)
 19. [Three speeds: rigid + combo + hunt (still E4B)](19-three-speeds.md)
+20. [Backend algorithm: Node local + Modal models](20-backend-algorithm.md)

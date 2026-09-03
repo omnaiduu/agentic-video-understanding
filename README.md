@@ -29,7 +29,9 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/15-workflows-vs-agents.md](docs/15-workflows-vs-agents.md) | Code-owned paths + small E4B vs a 12B free agent |
 | [docs/16-clipboard-and-verbs.md](docs/16-clipboard-and-verbs.md) | Session clipboard + verb menu so combo questions work on E4B |
 | [docs/17-plain-map.md](docs/17-plain-map.md) | One-page map: books vs tools vs 12B vs 4B |
-| [docs/18-the-plan.md](docs/18-the-plan.md) | Short plan: small Gemma fills a form (intent + verbs), Python runs tools |
+| [docs/18-the-plan.md](docs/18-the-plan.md) | Short plan: small Gemma fills a form (intent + verbs), code runs tools |
+| [docs/19-three-speeds.md](docs/19-three-speeds.md) | Ready-made job + many intents + short hunt, still E4B |
+| [docs/20-backend-algorithm.md](docs/20-backend-algorithm.md) | How the backend runs: Node local, Modal models, step-by-step logic |
 
 ---
 

@@ -4,20 +4,25 @@ Frontend was **not** locked in the earlier thread. This is the plan that fits th
 
 ## Backend
 
+**Demo stack (what we run locally):** Node on the laptop is the API. Models stay on **Modal** in Python. Detail and algorithms: [20-backend-algorithm.md](20-backend-algorithm.md).
+
 | Piece | Choice | Why |
 |---|---|---|
-| Language | **Python 3.11+** | Whisper, SigLIP, CLAP, Gemma clients |
-| HTTP | **FastAPI** | Async jobs (ingest) + chat |
-| Media | **ffmpeg** CLI | Cut frames/audio/clips; codecs just work |
-| Agent | OpenAI-compatible calls to **Modal**-hosted Gemma (tool calling) | User hosts models there |
-| Ingest workers | Modal jobs or FastAPI background + queue | Whisper/SigLIP/CLAP once |
+| Product API | **Node** (local) | You asked for Node for the demo; HTTP, SQLite, ffmpeg, calls Modal |
+| ML | **Python on Modal** | Whisper, SigLIP, CLAP/GLAP, Gemma cannot run in Node |
+| HTTP | Node `/videos` + `/chat` | Upload, ingest status, questions |
+| Media | **ffmpeg** CLI on the laptop | Cut frames/audio/clips |
+| Brain | OpenAI-compatible calls to **Modal** Gemma E4B | Two calls: **plan** (form) and **answer** (short slice) |
+| Ingest workers | Modal jobs | WhisperX/SigLIP/GLAP once |
 | Auth | None for local v1 | Add later |
+
+Main Gemma sees **last ~8 user messages** (what they typed) **plus the notepad** (the clock, e.g. 1:04). User text alone cannot fill times.
 
 ### API sketch (v1)
 
 - `POST /videos` — upload or register path; start ingest
 - `GET /videos/{id}` — status: processing | ready | error
-- `POST /videos/{id}/chat` — message; returns answer, citations `{t}`, tool trace, export URLs
+- `POST /videos/{id}/chat` — message; returns answer, citations `{t}`, verb trace, export URLs
 - `GET /videos/{id}/exports/{file}` — or public object-storage URLs
 
 ### Data
@@ -38,7 +43,7 @@ Persist a **clipboard** per chat: `handle_id`, **focus** window `{t0,t1}`, last 
 
 **Job:** upload (or pick a file), show ingest progress, chat, show timestamps (click to seek), show exported clip/audio links, empty/error/loading states.
 
-**Proposed v1:** **Vite + React + TypeScript**, talks to FastAPI. Not a second ML stack.
+**Proposed v1 demo UI:** one **watch + ask** page (upload, status, chat, timestamp chips, clip link). Vite + React if we want; a single static page is enough to record. Not a second ML stack.
 
 Why not Next.js as a must: we never chose it; a SPA against FastAPI is enough. Swap later if we need SSR.
 
@@ -55,13 +60,13 @@ Desktop + mobile: player + chat stack on small screens.
 
 - **ffmpeg:** backend cutter. Locked.
 - **MediaBunny:** browser trim/preview later; not the ML path.
-- **Node:** optional BFF; not required.
+- **Node:** **demo API** (orchestrator). Not the ML worker.
 - **Go:** later high-QPS cut service; not v1.
 
 ## Local vs Modal
 
-- **Dev:** Ollama or vLLM on a GPU box; local ffmpeg; SQLite on disk.
-- **Prod:** Gemma + ingest on **Modal**; API can stay on Modal too; files on Volume/S3.
+- **Dev / demo:** Node + ffmpeg + SQLite on the laptop; Gemma + ingest on **Modal**. Record a screen video when the checks in [20](20-backend-algorithm.md) pass.
+- **Prod (later):** same split, or move the Node API next to Modal; files on Volume/S3.
 
 ## Resources / throughput (honest ranges)
 
