@@ -23,12 +23,19 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Build order |
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
 | [docs/11-glossary.md](docs/11-glossary.md) | CLIP, VLM, FPS, RAG, etc. |
+| [docs/12-whats-new-2026.md](docs/12-whats-new-2026.md) | 2025–2026 techniques vs this design: keep, swap, refuse |
+| [docs/13-whisperx.md](docs/13-whisperx.md) | Speech phone book: what WhisperX is, why, how VAD/aligner/diarization work |
+| [docs/14-slides-and-on-screen-text.md](docs/14-slides-and-on-screen-text.md) | Unique slides + ColQwen: find on-screen text, Gemma still reads |
+| [docs/15-workflows-vs-agents.md](docs/15-workflows-vs-agents.md) | Code-owned paths + small E4B vs a 12B free agent |
+| [docs/16-clipboard-and-verbs.md](docs/16-clipboard-and-verbs.md) | Session clipboard + verb menu so combo questions work on E4B |
+| [docs/17-plain-map.md](docs/17-plain-map.md) | One-page map: books vs tools vs 12B vs 4B |
+| [docs/18-the-plan.md](docs/18-the-plan.md) | Short plan: small Gemma fills a form (intent + verbs), Python runs tools |
 
 ---
 
 ## One-sentence product
 
-**Gemma 4 (brain, question time only) + ffmpeg (scissors) + three phone books built once: Whisper (speech), SigLIP 2 (pictures), CLAP/GLAP (sounds).**
+**Gemma 4 (brain, question time only) + ffmpeg (scissors) + three phone books built once: WhisperX (speech), SigLIP 2 (pictures), GLAP (sounds).**
 
 ---
 

@@ -32,7 +32,7 @@ Postgres + pgvector when there are many users/videos — not day one.
 
 ### Session
 
-Persist `handle_id` (which video + indexes) and last tool times so “was a car in that frame?” does not re-search the whole tape.
+Persist a **clipboard** per chat: `handle_id`, **focus** window `{t0,t1}`, last search hits (talk/look/listen), one-line notes. Follow-up “was a car in that frame?” uses focus — no re-search. Combo questions update focus in order (`shift_after`). See [16-clipboard-and-verbs.md](16-clipboard-and-verbs.md).
 
 ## Frontend
 
