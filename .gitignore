@@ -1,0 +1,22 @@
+# Local / OS
+.DS_Store
+Thumbs.db
+*.swp
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+node_modules/
+
+# Agent scratch (not part of this project)
+agent-tools/
+tmp-scaffold/
+
+# Media and indexes (when implementation lands)
+data/
+*.mp4
+*.wav
+*.faiss
+*.jsonl
