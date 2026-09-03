@@ -50,3 +50,5 @@ Scene detect · VLM captions / `search_notes` · OCR every frame · answering fr
 ## After the Sep 2026 review
 
 Spine above is unchanged. Practical defaults that do **not** fork the product: **GLAP** over LAION-CLAP; **WhisperX** word times around Whisper ([13-whisperx.md](13-whisperx.md)); **dedup** lecture frames. Optional later: ColQwen slides, PE Core, SAM2 count. Survey: [12-whats-new-2026.md](12-whats-new-2026.md).
+
+**Open (not locked):** code-owned **workflows** + **E4B** instead of a 12B tool-calling agent — [15-workflows-vs-agents.md](15-workflows-vs-agents.md).

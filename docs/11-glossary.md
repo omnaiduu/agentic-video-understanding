@@ -30,4 +30,6 @@
 | **PE Core** | Meta 2025 CLIP-class encoder; stronger video retrieval than SigLIP 2 |
 | **Muon / SOAP** | Training optimizers for LLM pretrain. **Not** our ingest/question loop |
 | **Modal** | GPU host for Gemma / ingest (user: “model.com”) |
-| **E4B / 12B** | Gemma 4 sizes. 12B = default agent |
+| **E4B / 12B** | Gemma 4 sizes. 12B = default **agent**; E4B = cheap / workflow brain |
+| **Workflow** | Code picks the path; the model only does small jobs (intent, read, summarize). Anthropic / NVIDIA NAT |
+| **Agent** (narrow) | The model picks tools itself (Google; our old 12B loop) |

@@ -22,6 +22,8 @@
 
 On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP.
 
+The picture above is the **agent** driver (12B picks tools). A cheaper driver is a **workflow**: E4B classifies intent, **Python** runs the row in the table below. Same tools. See [15-workflows-vs-agents.md](15-workflows-vs-agents.md).
+
 ## Three jobs (do not mix)
 
 | Job | Who |

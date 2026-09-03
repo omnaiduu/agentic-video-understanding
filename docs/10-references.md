@@ -64,3 +64,9 @@ Later papers in the same loop: [VideoExplorer](https://arxiv.org/html/2506.10821
 - Prefix KV cache, speculative decoding, constrained tool JSON — vLLM / SGLang; Google’s agentic video also uses **context caching** across turns.
 - sqlite-vec is enough per video; ANN (USearch, LanceDB, FAISS) when the **library** is large. sqlite-vec GA is still exact KNN as of 2026 writeups.
 - **Muon / SOAP** — LLM **pretraining** ([Keller Jordan](https://kellerjordan.github.io/posts/muon/), [NVIDIA Megatron](https://developer.nvidia.com/blog/advancing-emerging-optimizers-for-accelerated-llm-training-with-nvidia-megatron/)). Not a v1 work item.
+
+## Workflows vs agents (driver)
+
+- [Anthropic — Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) — **workflow** = code paths; **agent** = model picks tools. Routing + chaining.
+- [NVIDIA NeMo Agent Toolkit — workflows](https://docs.nvidia.com/nemo/agent-toolkit/latest/build-workflows/workflow-configuration.html) — YAML `workflow`; `sequential_executor` / `router_agent` vs `react_agent`.
+- [NVIDIA AI-Q Blueprint](https://docs.nvidia.com/aiq-blueprint/latest/architecture/overview.html) — intent classifier, then shallow vs deep path. See [15-workflows-vs-agents.md](15-workflows-vs-agents.md).
