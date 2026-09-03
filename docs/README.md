@@ -18,3 +18,5 @@ Start at the [root README](../README.md), then:
 14. [Slides and on-screen text](14-slides-and-on-screen-text.md)
 15. [Workflows vs a free agent](15-workflows-vs-agents.md)
 16. [Clipboard + verb menu](16-clipboard-and-verbs.md)
+17. [Plain map of the whole system](17-plain-map.md)
+18. [The plan: form + verbs](18-the-plan.md)

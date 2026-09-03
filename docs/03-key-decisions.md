@@ -51,4 +51,4 @@ Scene detect · VLM captions / `search_notes` · OCR every frame · answering fr
 
 Spine above is unchanged. Practical defaults that do **not** fork the product: **GLAP** over LAION-CLAP; **WhisperX** word times around Whisper ([13-whisperx.md](13-whisperx.md)); **dedup** lecture frames. Optional later: ColQwen slides, PE Core, SAM2 count. Survey: [12-whats-new-2026.md](12-whats-new-2026.md).
 
-**Open (not locked):** **E4B** + **clipboard + verb menu** instead of a 12B tool-calling agent — [15](15-workflows-vs-agents.md), [16](16-clipboard-and-verbs.md). Plain map: [17-plain-map.md](17-plain-map.md).
+**Open (not locked):** **E4B** fills a **form** (intent + verbs); Python runs tools — short version: [18-the-plan.md](18-the-plan.md).
