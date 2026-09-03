@@ -272,3 +272,10 @@ Easy door, mix door, hunt door.
 Upload once. Ask many times. Timestamp. Optional clip.
 
 That is the whole backend.
+
+---
+
+## Data / contract
+
+What we save and what we send: **[HUMAN-data.md](HUMAN-data.md)**.
+
