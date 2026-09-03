@@ -40,7 +40,7 @@ Later papers in the same loop: [VideoExplorer](https://arxiv.org/html/2506.10821
 
 ## Speech pipeline (timestamps, not just WER)
 
-- [WhisperX](https://github.com/m-bain/whisperX) — VAD + faster-whisper + wav2vec2 word alignment + optional pyannote diarization.
+- [WhisperX](https://github.com/m-bain/whisperX) — VAD + faster-whisper + wav2vec2 word alignment + optional pyannote diarization. How we use it: [13-whisperx.md](13-whisperx.md).
 - [NVIDIA Canary-1B-v2 / Parakeet-TDT](https://arxiv.org/pdf/2509.14128) — English/multilingual ASR that beats Whisper-large-v3 on speed; same `search_transcript` slot.
 - 2026 roundups: [AssemblyAI open STT](https://www.assemblyai.com/blog/top-open-source-stt-options-for-voice-applications), [Presenc open-weight ASR](https://presenc.ai/research/best-open-weight-speech-to-text-models-2026).
 

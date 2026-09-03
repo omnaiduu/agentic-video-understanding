@@ -12,10 +12,10 @@ Order. Don’t skip to captioning or E2B training.
 
 ## 2. Speech cache
 
-- faster-whisper ingest → SQLite FTS
-- Prefer **WhisperX** (VAD + word alignment) so FTS hits have real start/end times — see [12-whats-new-2026.md](12-whats-new-2026.md)
-- `search_transcript`
-- Prove: lecture question without sending the whole video
+- **WhisperX** once per file: VAD + faster-whisper + **word alignment** (diarization **off** for single-speaker talks)
+- SQLite: words + `start_ms` / `end_ms` + sentence FTS — see [13-whisperx.md](13-whisperx.md)
+- `search_transcript` returns those times (not 15s Whisper blobs)
+- Prove: lecture “when did she say X?” jumps to the **word**, clip starts on the right syllable
 
 ## 3. Visual cache
 

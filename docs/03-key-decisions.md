@@ -18,7 +18,7 @@ Locked. Short.
 
 | Channel | Model | Tool |
 |---|---|---|
-| Speech | **faster-whisper / Whisper** | `search_transcript` |
+| Speech | **WhisperX** (faster-whisper + word times; diarization off for v1 talks) | `search_transcript` |
 | Pictures | **SigLIP 2** (not 2021 CLIP as default) | `search_visual` |
 | Sounds | **GLAP** (LAION-CLAP fallback) | `search_audio` |
 
@@ -49,4 +49,4 @@ Scene detect · VLM captions / `search_notes` · OCR every frame · answering fr
 
 ## After the Sep 2026 review
 
-Spine above is unchanged. Practical defaults that do **not** fork the product: **GLAP** over LAION-CLAP; **WhisperX** word times around Whisper; **dedup** lecture frames. Optional later: ColQwen slides, PE Core, SAM2 count. Details: [12-whats-new-2026.md](12-whats-new-2026.md).
+Spine above is unchanged. Practical defaults that do **not** fork the product: **GLAP** over LAION-CLAP; **WhisperX** word times around Whisper ([13-whisperx.md](13-whisperx.md)); **dedup** lecture frames. Optional later: ColQwen slides, PE Core, SAM2 count. Survey: [12-whats-new-2026.md](12-whats-new-2026.md).

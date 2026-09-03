@@ -20,12 +20,13 @@
 
 Gemma **does not** replace Whisper for a 2-hour transcript.
 
-## Speech index — Whisper
+## Speech index — WhisperX (Whisper + clock)
 
-- **faster-whisper** (large-v3 or turbo) once per file → `{t, text}`
-- Prefer wrapping with **WhisperX**: VAD (less silence hallucination) + wav2vec2 **word-level** times for FTS and clip jump
-- English-only speed/accuracy later: Parakeet / Canary behind the same tool
-- SQLite FTS or equivalent
+- Run **WhisperX** once per file, not bare Whisper times — full why/how: [13-whisperx.md](13-whisperx.md)
+- **faster-whisper** (large-v3 or turbo) = the typist inside WhisperX
+- VAD + wav2vec2 **word-level** times for FTS, seek, and `export_clip`
+- Diarization **off** in v1 (one speaker). Panels later.
+- English-only speed/accuracy later: Parakeet / Canary as the typist; **same** `search_transcript` tool
 - This is **elaborate speech**, not a scene log
 
 ## Picture index — SigLIP 2
