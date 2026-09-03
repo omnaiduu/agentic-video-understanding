@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md), then:
+Start at the [root README](../README.md). **Humans:** [HUMAN-backend.md](../HUMAN-backend.md) (plain picture). **Agents:** numbered docs below.
 
 1. [Goal and context](01-goal-and-context.md)
 2. [Conversation summary](02-conversation-summary.md)

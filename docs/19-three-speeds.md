@@ -36,10 +36,11 @@ The model holds the tools. It thinks, calls a tool, sees the result in memory, c
 
 Imagine a small helper in a library.
 
-1. **Three books** already exist for this video (built at **upload**, once):
+1. **Four books** already exist for this video (built at **upload**, once):
    - speech book (WhisperX) — words people said + times
    - picture book (SigLIP 2) — one photo per second, as numbers
    - sound book (GLAP) — short sound chunks, as numbers
+   - **slide book (ColQwen / ColPali)** — unique slides, for writing on screen nobody said
 2. You ask a question.
 3. Tiny Gemma fills a **short form** (not “pick any tool, pick any FPS”).
 4. **Node** reads the form and presses the real buttons (search, cut a few seconds, count, export).
@@ -57,7 +58,7 @@ These do not change with the three speeds.
 | Piece | Who | What it is |
 |---|---|---|
 | **Books** | Built at upload | Speech, pictures, sounds. Not rebuilt on question 2. |
-| **Tools** | Node | The same eight: search three books, open short video, open short sound, export clip/audio, plus “how long is the file”. |
+| **Tools** | Node | Search four books, open short video, open short sound, export clip/audio, plus “how long is the file”. |
 | **Form** | Gemma E4B | Tick jobs, tick steps, write search words, say sure / mixed / not sure. |
 | **Notepad** | Node (SQLite) | Focus time, last hits, last Q&A, **already tried**. Sent to Gemma every turn. |
 
@@ -126,6 +127,7 @@ Same form. Same notepad. **Code** chooses the speed. Gemma does not.
 | Talk | “What did she say about the price?” | Search speech book → maybe open a few frames → Gemma summarizes |
 | Look | “When is there a red bird?” | Search picture book → open a short zoom → Gemma confirms |
 | Listen | “When did they clap?” | Search sound book → optional short listen → time |
+| Slides | “Which slide had Pro $99?” (nobody said it) | Search **slide book** (ColQwen) → open eyes → Gemma reads |
 | Count | “How many claps?” | Search → merge nearby hits → `len()` in Node → spot-check 2 clips |
 | Export | “Give me that clip” | Cut around the notepad’s focus time (or search first if we have no focus) |
 | Follow-up | “Was there a dog **there**?” | Reuse focus → open eyes/ears → yes/no |
@@ -138,7 +140,7 @@ This is Idea A. Cheap. Easy to test. 4B only has to label the job and write a se
 
 **What happens:** One form fill. Node **sorts** the checkboxes into a safe order, then runs them:
 
-1. searches first (talk / look / listen)  
+1. searches first (talk / look / listen / **slides**)  
 2. then `shift_after` (move “we’re here” forward — “after the clap…”)  
 3. then open eyes / open ears on that window  
 4. then count  
@@ -164,7 +166,7 @@ This is the combo fix from [16](16-clipboard-and-verbs.md). Still **no** free to
 
 **What happens:** a **tiny** loop. Not eight wanders. Not raw tools.
 
-1. **Pin evidence.** Node searches **all three books at once** (indexes are milliseconds). Top hits go on the notepad as sticky notes: “speech 0:40 pricing”, “sound 1:04 clap”, “picture 1:12 slide”.
+1. **Pin evidence.** Node searches **all four books at once** (indexes are milliseconds). Top hits go on the notepad as sticky notes: “speech 0:40 pricing”, “sound 1:04 clap”, “picture 1:12 bird”, “slide 14:10 $99”.
 2. **Show the notepad to Gemma.** Now the 4B model is not imagining. It is choosing among **real hits**.
 3. **Gemma fills the form again.** Example: “open eyes on 1:12; also open ears on 1:04.”
 4. Node acts, updates the notepad, including **already tried**.
@@ -250,7 +252,7 @@ That is how we have “memory like an agent” on a 4B model: the memory is **ou
 “What was that weird noise in the middle?”
 
 1. First form: `not_sure`, maybe a weak word `weird noise`.  
-2. Node hunts all three books. Sticky notes: a beep at 12:01, a laugh at 12:04, a chair scrape at 12:08.  
+2. Node hunts all four books. Sticky notes: a beep at 12:01, a laugh at 12:04, a slide with $99 at 14:10.  
 3. Second form: Gemma picks open ears on 12:01 (best guess from the hits).  
 4. Gemma listens to a short slice and names it.  
 If the books had **nothing**, we say we could not find it after the cap — we do not wander for eight rounds.
@@ -259,7 +261,7 @@ If the books had **nothing**, we say we could not find it after the cap — we d
 
 “When did they applaud?”  
 Gemma writes `applaud`. Sound book was built around `clap`. Empty.  
-Empty search **forces** Speed 3: search all three books, maybe retry query `clap` / `applause` / `hands`. The **tried** list stops us looping on `applaud` forever.
+Empty search **forces** Speed 3: search all four books, maybe retry query `clap` / `applause` / `hands`. The **tried** list stops us looping on `applaud` forever.
 
 ### 6. Talk + clip — Speed 2
 
@@ -350,7 +352,7 @@ Hunt **does** help: wrong search word, wrong first intent, mixed questions, “w
 | Inventing tool names / FPS | Closed form + server clamps |
 | Remembering the clap on turn 2 | Notepad in SQLite |
 | Mixed question in one brain dump | Several intents + sorted verbs |
-| Unknown question | Sticky notes from three books, then choose |
+| Unknown question | Sticky notes from four books, then choose |
 | Arithmetic on 847 claps | `len()` in Node |
 
 What E4B still does (in-distribution): tick boxes, write a search phrase, pick among hits, look at ~8 seconds, write a short answer **given** the notepad.

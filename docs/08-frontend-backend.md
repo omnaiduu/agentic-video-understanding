@@ -9,11 +9,11 @@ Frontend was **not** locked in the earlier thread. This is the plan that fits th
 | Piece | Choice | Why |
 |---|---|---|
 | Product API | **Node** (local) | You asked for Node for the demo; HTTP, SQLite, ffmpeg, calls Modal |
-| ML | **Python on Modal** | Whisper, SigLIP, CLAP/GLAP, Gemma cannot run in Node |
+| ML | **Python on Modal** | Whisper, SigLIP, GLAP, **ColQwen**, Gemma cannot run in Node |
 | HTTP | Node `/videos` + `/chat` | Upload, ingest status, questions |
 | Media | **ffmpeg** CLI on the laptop | Cut frames/audio/clips |
 | Brain | OpenAI-compatible calls to **Modal** Gemma E4B | Two calls: **plan** (form) and **answer** (short slice) |
-| Ingest workers | Modal jobs | WhisperX/SigLIP/GLAP once |
+| Ingest workers | Modal jobs | WhisperX / SigLIP / GLAP / **ColQwen unique slides** once |
 | Auth | None for local v1 | Add later |
 
 Main Gemma sees **last ~8 user messages** (what they typed) **plus the notepad** (the clock, e.g. 1:04). User text alone cannot fill times.
@@ -37,7 +37,7 @@ Postgres + pgvector when there are many users/videos — not day one.
 
 ### Session
 
-Persist a **clipboard** per chat: `handle_id`, **focus** window `{t0,t1}`, last search hits (talk/look/listen), one-line notes. Follow-up “was a car in that frame?” uses focus — no re-search. Combo questions update focus in order (`shift_after`). See [16-clipboard-and-verbs.md](16-clipboard-and-verbs.md).
+Persist a **clipboard** per chat: `handle_id`, **focus** window `{t0,t1}`, last search hits (talk/look/listen/**slides**), one-line notes. Follow-up “was a car in that frame?” uses focus — no re-search. Combo questions update focus in order (`shift_after`). See [16-clipboard-and-verbs.md](16-clipboard-and-verbs.md).
 
 ## Frontend
 

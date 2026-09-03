@@ -40,6 +40,7 @@ Modal.com (Python + GPU)
   WhisperX            ← speech book at upload
   SigLIP 2            ← picture book at upload
   GLAP                ← sound book at upload
+  ColQwen / ColPali   ← slide book at upload (unique slides only; on-screen text)
 ```
 
 **Why Node here:** you asked for Node for the demo. Node is good at HTTP, files, SQLite, calling ffmpeg, calling Modal.
@@ -52,8 +53,8 @@ Modal.com (Python + GPU)
 
 ## The pieces in one sentence each
 
-1. **Upload** — save the mp4, start ingest on Modal, wait until three books exist.  
-2. **Books** — speech / pictures / sounds. Built **once**. Question 2 reuses them.  
+1. **Upload** — save the mp4, start ingest on Modal, wait until **four** books exist (speech, pictures, sounds, **slides**).  
+2. **Books** — speech / pictures / sounds / **slides (ColQwen)**. Built **once**. Question 2 reuses them.  
 3. **Notepad** — where we are on the timeline, last hits, already tried, last answer.  
 4. **Main Gemma** — reads **your last messages + notepad**, fills a **form**.  
 5. **Speeds** — Node code (not Gemma) picks ready-made / many jobs / hunt.  
@@ -79,7 +80,7 @@ id, path, duration_sec, ingest_status   # processing | ready | error
 chat_id
 video_id
 focus_t0, focus_t1, focus_why     # “the place we’re talking about”
-hits_talk, hits_look, hits_listen # JSON lists of {t, score, text?}
+hits_talk, hits_look, hits_listen, hits_slides
 opened_frames, opened_audio       # true/false this turn
 tried                             # ["listen:clap", "look:dog"]
 notes                             # one line
@@ -138,6 +139,8 @@ Node **always** clamps times. Gemma never chooses FPS or a 2-hour window.
      b. WhisperX → words + times  → speech book
      c. 1 photo/sec → SigLIP 2    → picture book
      d. 1–5s audio chunks → GLAP  → sound book
+     e. dedup unique slides → ColQwen / ColPali → slide book
+        (on-screen text nobody spoke; see docs/14)
 5. Modal returns “ready” (books stay on Modal Volume; Node may cache
    transcript lines in SQLite for FTS if we want local talk search).
 6. Node sets status = ready. UI can chat.
@@ -218,6 +221,7 @@ Ready-made jobs (speed 1) are just **common verb bundles**. Node can add missing
 | Talk | `talk` | `search_talk` |
 | Look | `look` | `search_look` then `open_eyes` on best hit |
 | Listen | `listen` | `search_listen` then optional `open_ears` |
+| Slides | `slides` | `search_slides` then `open_eyes` (ColQwen finds; Gemma reads) |
 | Count | `count` | `search_*` + `count_hits` (no Gemma arithmetic) |
 | Export | `export` | `export` on focus (search first if no focus) |
 | Follow-up | `refers_to=focus` | `reuse_focus` + `open_eyes` or `open_ears` |
@@ -232,7 +236,7 @@ Gemma may tick boxes in a messy order. Node **rewrites** order:
 
 ```
 1. reuse_focus          (if any)
-2. search_talk, search_look, search_listen   (can run in parallel)
+2. search_talk, search_look, search_listen, search_slides   (can run in parallel)
 3. count_hits
 4. shift_after          (needs a hit first)
 5. open_eyes, open_ears
@@ -253,13 +257,14 @@ Each checkbox → one Node function. Caps inside.
 | `search_talk` | Modal/SQLite FTS with `queries.talk`. Save hits. Append `tried`. |
 | `search_look` | Modal SigLIP search with `queries.look`. Save hits. |
 | `search_listen` | Modal GLAP search with `queries.listen`. Save hits. |
+| `search_slides` | Modal ColQwen search with `queries.slides` (on-screen text). Save hits. |
 | `reuse_focus` | Do not search the whole tape. Keep `focus`. |
 | `shift_after` | `focus = [best_hit.t, best_hit.t + ZOOM_SEC]` (move **forward**) |
 | `open_eyes` | ffmpeg frames on `focus` (≤ ZOOM_SEC, ≤ MAX_FRAMES). Send paths to answer call later. |
 | `open_ears` | ffmpeg wav on `focus` (≤ AUDIO_SEC). |
 | `count_hits` | merge hits closer than `COUNT_MERGE_GAP`, `count = length`. **Not Gemma.** |
 | `export` | ffmpeg clip on `focus`, cap `EXPORT_MAX_SEC`, save file, URL. |
-| `unsure` | run talk+look+listen searches **in parallel**. |
+| `unsure` | run talk+look+listen+**slides** searches **in parallel**. |
 
 After every verb: write notepad to SQLite.
 
@@ -276,15 +281,16 @@ function hunt(question, notepad, firstForm):
   loop:
     if plans >= MAX_PLANS: break
 
-    # 1. Pin evidence (cheap, all three books)
+    # 1. Pin evidence (cheap, all four books)
     parallel:
       search_talk(firstForm.queries.talk or question)
       search_look(firstForm.queries.look or question)
       search_listen(firstForm.queries.listen or question)
+      search_slides(firstForm.queries.slides or question)
     write all hits onto notepad as sticky notes
     mark tried
 
-    if all three empty:
+    if all four empty:
       optional: SKIM a few frames at SKIM_FPS across the file (code, not Gemma)
       if still empty: break
 
@@ -362,6 +368,7 @@ Keep these small and boring. Node is the brain of the **path**. Modal is the **m
 | `POST /search/talk` | query → `[{t, text, score}]` |
 | `POST /search/look` | query → `[{t, score}]` |
 | `POST /search/listen` | query → `[{t, score}]` |
+| `POST /search/slides` | query → `[{t, score, slide_id}]`  ColQwen on unique slides |
 | `POST /gemma/plan` | `{question, user_history, notepad}` → form JSON |
 | `POST /gemma/answer` | `{question, user_history, notepad, frames[], audio?}` → answer text |
 
@@ -454,10 +461,18 @@ Video is a 20-minute talk. Books are ready. Notepad is empty.
 ### Turn 5 — hunt (“What was that weird noise?”)
 
 1. Main: `sure: not_sure`, weak query.  
-2. **Speed 3.** Parallel search all three books. Sticky notes: beep 12:01, laugh 12:04.  
+2. **Speed 3.** Parallel search all **four** books (speech, pictures, sounds, slides). Sticky notes: beep 12:01, laugh 12:04.  
 3. Main again: `open_ears` on 12:01.  
 4. Answer: “Microphone beep at 12:01.”  
    If empty after 3 plans: “I couldn’t find it. I tried …”
+
+### Turn 6 — on-screen text nobody spoke (“Which slide had Pro $99?”)
+
+1. Speech book is empty (she never said the number). SigLIP only sees “a slide.”  
+2. Main: `intents: [slides]`, `verbs: [search_slides, open_eyes]`, `queries.slides: "Pro $99"`.  
+3. Speed 1. `search_slides` (ColQwen on unique slides) → 14:10.  
+4. ffmpeg frames. Answer Gemma **reads**: “Pro $99.”  
+   ColQwen found the second. Gemma still reads the frame.
 
 ---
 
@@ -491,7 +506,8 @@ Record the screen:
 4. Follow-up: “Was there a dog **there**?” → does **not** re-ingest, uses notepad.  
 5. Combo: “After the clap, what was on the slide?”  
 6. Export: “Give me that clip” → download link.  
-7. Optional: a vague “what was that noise?” to show hunt.
+7. Optional: a vague “what was that noise?” to show hunt.  
+8. Slides: “Which slide had Pro $99?” (nobody spoke the number) → ColQwen find → Gemma reads.
 
 That recording is the v1 proof. No production auth, no 12B waiter, no watching the whole file.
 
@@ -512,7 +528,7 @@ That recording is the v1 proof. No production auth, no 12B waiter, no watching t
 | Piece | Choice |
 |---|---|
 | Orchestrator | **Node** (local) |
-| Models | **Modal** (Gemma E4B, WhisperX, SigLIP 2, GLAP) |
+| Models | **Modal** (Gemma E4B, WhisperX, SigLIP 2, GLAP, **ColQwen slides**) |
 | Cutter | **ffmpeg** on the laptop |
 | State | **SQLite** notepad + last 8 **user** messages |
 | Driver | Main form → three speeds → answer |
@@ -520,4 +536,4 @@ That recording is the v1 proof. No production auth, no 12B waiter, no watching t
 | UI | One watch+ask page, enough to record |
 
 Product to the user is unchanged: ask, timestamp, clip.  
-The logic is: **chat tells us what they mean, notepad tells us where we are, books find, Node presses, Gemma reads a short slice.**
+The logic is: **chat tells us what they mean, notepad tells us where we are, four books find (including ColQwen slides), Node presses, Gemma reads a short slice.**

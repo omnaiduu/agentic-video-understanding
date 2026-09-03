@@ -4,6 +4,8 @@ An open-source system that copies **Google Gemini’s agentic video understandin
 
 This repository is the **design, decisions, and conversation record**. Implementation code is not in this repo yet.
 
+**If you are a human:** start at **[HUMAN-backend.md](HUMAN-backend.md)** — the whole backend in plain language, with pictures. The numbered `docs/` files are for coding agents.
+
 **Goal:** Ask questions about long videos (talks, slides, sports, CCTV, sounds) without dumping the whole file into a large model. Find the moment, look or listen to a short slice, then answer — optionally export a clip with a link.
 
 ---

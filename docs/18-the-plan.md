@@ -6,7 +6,7 @@ Concise write-up of the idea: **workflows + E4B**, not a 12B tool-calling waiter
 
 ## Plan
 
-1. **Upload** — build three search books once: speech (WhisperX), pictures (SigLIP 2), sounds (GLAP). Optional later: slides (ColQwen / ColPali).
+1. **Upload** — build four search books once: speech (WhisperX), pictures (SigLIP 2), sounds (GLAP), **slides (ColQwen / ColPali on unique frames)**.
 2. **Ask** — a **small** Gemma (E4B) reads the last few **user messages** plus the **notepad**, then fills a **short form** (intent + verbs + search words). Chat explains “there / that”. The notepad holds the clock (1:04). Gemma does **not** pick raw tools or FPS.
 3. **Node** (local demo) reads the form, runs the real tools (search on Modal, cut with ffmpeg, export), keeps the **notepad**. Picks a speed: ready-made job, many jobs, or a short hunt.
 4. **Gemma again** — looks/listens to that short slice and writes the answer.

@@ -20,7 +20,7 @@ Locked. Short.
 |---|---|---|
 | Speech | **WhisperX** (faster-whisper + word times; diarization off for v1 talks) | `search_transcript` |
 | Pictures | **SigLIP 2** (not 2021 CLIP as default) | `search_visual` |
-| Sounds | **GLAP** (LAION-CLAP fallback) | `search_audio` |
+| Slides | **ColQwen** (ColPali fallback) on unique frames | `search_slides` |
 
 - Sample pictures at ~**1 FPS** for the visual index.
 - Chunk audio ~**1–5s** for the audio index.
