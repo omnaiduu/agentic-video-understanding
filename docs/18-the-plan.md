@@ -72,3 +72,5 @@ Max two form-fills if the first search is empty. Then stop.
 - One hardcoded path per event type (clap vs bird vs laugh) — same checkboxes, different **search words**
 
 More detail: [17-plain-map.md](17-plain-map.md) (three layers), [16-clipboard-and-verbs.md](16-clipboard-and-verbs.md) (clipboard), [15-workflows-vs-agents.md](15-workflows-vs-agents.md) (why not a free agent).
+
+**Next proposal (not locked):** combine ready-made jobs, many intents at once, and a short hunt loop — still E4B, still a form — in [19-three-speeds.md](19-three-speeds.md).

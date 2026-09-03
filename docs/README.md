@@ -20,3 +20,4 @@ Start at the [root README](../README.md), then:
 16. [Clipboard + verb menu](16-clipboard-and-verbs.md)
 17. [Plain map of the whole system](17-plain-map.md)
 18. [The plan: form + verbs](18-the-plan.md)
+19. [Three speeds: rigid + combo + hunt (still E4B)](19-three-speeds.md)

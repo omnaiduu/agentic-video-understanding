@@ -33,5 +33,7 @@
 | **E4B / 12B** | Gemma 4 sizes. 12B = default **agent**; E4B = cheap / workflow brain |
 | **Workflow** | Code picks the path; the model only does small jobs (intent, read, summarize). Anthropic / NVIDIA NAT |
 | **Agent** (narrow) | The model picks tools itself (Google; our old 12B loop) |
-| **Clipboard** | Session state we store (focus time, last hits, one-line notes). Not the video |
+| **Clipboard / notepad** | Session state we store (focus time, last hits, already tried, one-line notes). Not the video |
+| **Intent** | Kind of question (talk / look / listen / …). Can be **several** at once |
 | **Verb menu** | Closed list E4B may tick (`search_listen`, `open_eyes`, …). Code runs them |
+| **Three speeds** | How Python runs the same form: ready-made job, many jobs at once, or a short hunt. See [19](19-three-speeds.md) |
