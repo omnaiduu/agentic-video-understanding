@@ -20,7 +20,7 @@ Locked. Short.
 |---|---|---|
 | Speech | **faster-whisper / Whisper** | `search_transcript` |
 | Pictures | **SigLIP 2** (not 2021 CLIP as default) | `search_visual` |
-| Sounds | **LAION-CLAP or GLAP** | `search_audio` |
+| Sounds | **GLAP** (LAION-CLAP fallback) | `search_audio` |
 
 - Sample pictures at ~**1 FPS** for the visual index.
 - Chunk audio ~**1–5s** for the audio index.
@@ -46,3 +46,7 @@ Locked. Short.
 ## Explicitly not v1
 
 Scene detect · VLM captions / `search_notes` · OCR every frame · answering from RAG only · homemade E2B embedder · kitchen-sink desktop tools · dumping 2h into Gemma
+
+## After the Sep 2026 review
+
+Spine above is unchanged. Practical defaults that do **not** fork the product: **GLAP** over LAION-CLAP; **WhisperX** word times around Whisper; **dedup** lecture frames. Optional later: ColQwen slides, PE Core, SAM2 count. Details: [12-whats-new-2026.md](12-whats-new-2026.md).

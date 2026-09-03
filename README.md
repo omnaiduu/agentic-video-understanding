@@ -23,6 +23,7 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Build order |
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
 | [docs/11-glossary.md](docs/11-glossary.md) | CLIP, VLM, FPS, RAG, etc. |
+| [docs/12-whats-new-2026.md](docs/12-whats-new-2026.md) | 2025–2026 techniques vs this design: keep, swap, refuse |
 
 ---
 

@@ -23,6 +23,8 @@ Gemma **does not** replace Whisper for a 2-hour transcript.
 ## Speech index — Whisper
 
 - **faster-whisper** (large-v3 or turbo) once per file → `{t, text}`
+- Prefer wrapping with **WhisperX**: VAD (less silence hallucination) + wav2vec2 **word-level** times for FTS and clip jump
+- English-only speed/accuracy later: Parakeet / Canary behind the same tool
 - SQLite FTS or equivalent
 - This is **elaborate speech**, not a scene log
 
@@ -32,13 +34,14 @@ Gemma **does not** replace Whisper for a 2-hour transcript.
 - ~1 photo/sec → vector → FAISS / sqlite-vec
 - Query: embed the **phrase**, nearest times
 - **Why not 2021 CLIP:** SigLIP 2 is stronger, multilingual, Apache-2.0
-- **PE Core (Meta):** optional later if sports/CCTV retrieval is weak
+- **PE Core (Meta, 2025):** first swap if sports/CCTV retrieval is weak — beats SigLIP 2 on video benchmarks; same `search_visual` slot
+- **Talks/slides:** SigLIP finds a slide, it does not read “Pro $99”. Optional later: ColQwen/ColPali on **deduped** frames (`search_slides`), then Gemma still rewatches
 - **Cost:** 2h @ 1 FPS ≈ 7200 small forwards (minutes GPU / tens of minutes CPU), then queries in **ms**
 - Storage: tens of MB of vectors, not the video again
 
 ## Sound index — CLAP family
 
-- **LAION-CLAP** or **GLAP** (Xiaomi, 2025) for v1
+- **GLAP** (Xiaomi, 2025) as the v1 default; LAION-CLAP only if GLAP is painful to install
 - Stronger papers exist (M2D-CLAP, FineLAP, WavLink); **same tool API**, swap later
 - Chunk 1–5s → vector + time
 - **Still needed if SigLIP exists:** chirps, claps, beeps are **not** in the picture index

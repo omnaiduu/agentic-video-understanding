@@ -21,5 +21,9 @@
 | **Export** | Write a clip/audio to storage and return a URL |
 | **Agentic Vision** | Zoom/crop **inside one still** (Google). Not the video timeline |
 | **search_notes** | Search VLM **captions** from ingest. **We don’t do this** |
+| **WhisperX** | Whisper + VAD + forced **word** timestamps (and optional speakers) |
+| **ColPali / ColQwen** | Late-interaction search over **slide screenshots**, not OCR-all-frames |
+| **PE Core** | Meta 2025 CLIP-class encoder; stronger video retrieval than SigLIP 2 |
+| **Muon / SOAP** | Training optimizers for LLM pretrain. **Not** our ingest/question loop |
 | **Modal** | GPU host for Gemma / ingest (user: “model.com”) |
 | **E4B / 12B** | Gemma 4 sizes. 12B = default agent |
