@@ -1,6 +1,6 @@
 # Slides and on-screen text — find, then Gemma reads
 
-Plain-language plan from the design thread: **two problems, two fixes, one extra tool.** Not a second product. Not v1-blocking. Code is not in this repo yet.
+Plain-language plan from the design thread: **two problems, two fixes, one extra tool.** The demo backend in [20](20-backend-algorithm.md) and the human picture in [HUMAN-backend.md](../HUMAN-backend.md) **include this book**. Code is not in this repo yet.
 
 The picture book we already locked is **SigLIP 2** (`search_visual`): “this frame *looks like* a bird / red light.” That stays. This note is only for **text, numbers, charts, and tables printed on screen** — mostly **talks and slides** — when nobody **said** the words into the mic.
 
@@ -75,7 +75,7 @@ Does **not** replace:
 | “Summarize the talk” | Transcript (+ a bit of video) |
 | Already know the time | `get_frames` — Gemma reads; skip ColQwen |
 
-If first demos are bird / clap / “what did she say?”, **ship without ColQwen.** Maybe still **dedup** so SigLIP isn’t 2,400 copies of slide 7. Add ColQwen when slide/text questions fail.
+If first demos skip talks, you can ship the other three books first. The **full backend picture** still has ColQwen as the fourth book. Dedup unique frames either way so SigLIP isn’t 2,400 copies of slide 7.
 
 Scorebugs, license plates, tiny TV overlays: same *idea*, weaker fit (models were trained on **pages**). Not the main win.
 

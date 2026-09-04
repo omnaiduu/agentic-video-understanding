@@ -13,9 +13,9 @@ These are **not** tools the chat model calls in a loop. They run at **upload**. 
 | Speech | **WhisperX** | Words + exact times | `search_transcript` |
 | Pictures | **SigLIP 2** | 1 photo/sec as numbers | `search_visual` |
 | Sounds | **GLAP** | 1–5s sound chunks as numbers | `search_audio` |
-| Slides (later) | **ColQwen / ColPali** | Unique slide screenshots | `search_slides` |
+| Slides | **ColQwen / ColPali** | Unique slide screenshots (on-screen text) | `search_slides` |
 
-WhisperX is not “a tool call for 12B.” It is how we **build** the speech book. ColPali is not v1-required; it is an extra book for “$99 on the slide” when nobody said the number.
+WhisperX is not “a tool call for 12B.” It is how we **build** the speech book. ColQwen is the **fourth book** for “$99 on the slide” when nobody said the number. Human picture: [HUMAN-backend.md](../HUMAN-backend.md).
 
 ---
 

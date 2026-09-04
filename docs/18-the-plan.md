@@ -1,4 +1,4 @@
-# The plan: small Gemma fills a form, Python presses the buttons
+# The plan: small Gemma fills a form, Node presses the buttons
 
 Concise write-up of the idea: **workflows + E4B**, not a 12B tool-calling waiter. Not locked yet.
 
@@ -6,9 +6,9 @@ Concise write-up of the idea: **workflows + E4B**, not a 12B tool-calling waiter
 
 ## Plan
 
-1. **Upload** — build three search books once: speech (WhisperX), pictures (SigLIP 2), sounds (GLAP). Optional later: slides (ColQwen / ColPali).
-2. **Ask** — a **small** Gemma (E4B) fills a **short form** (intent + verbs + search words). It does **not** pick raw tools or FPS.
-3. **Python** reads the form, runs the real tools (search, cut a few seconds, export), keeps a tiny **clipboard** (where we are on the timeline).
+1. **Upload** — build four search books once: speech (WhisperX), pictures (SigLIP 2), sounds (GLAP), **slides (ColQwen / ColPali on unique frames)**.
+2. **Ask** — a **small** Gemma (E4B) reads the last few **user messages** plus the **notepad**, then fills a **short form** (intent + verbs + search words). Chat explains “there / that”. The notepad holds the clock (1:04). Gemma does **not** pick raw tools or FPS.
+3. **Node** (local demo) reads the form, runs the real tools (search on Modal, cut with ffmpeg, export), keeps the **notepad**. Picks a speed: ready-made job, many jobs, or a short hunt.
 4. **Gemma again** — looks/listens to that short slice and writes the answer.
 
 Same product as before: timestamp, optional clip, many questions on one file. Different **driver**.
@@ -72,3 +72,5 @@ Max two form-fills if the first search is empty. Then stop.
 - One hardcoded path per event type (clap vs bird vs laugh) — same checkboxes, different **search words**
 
 More detail: [17-plain-map.md](17-plain-map.md) (three layers), [16-clipboard-and-verbs.md](16-clipboard-and-verbs.md) (clipboard), [15-workflows-vs-agents.md](15-workflows-vs-agents.md) (why not a free agent).
+
+**Next proposal (not locked):** combine ready-made jobs, many intents at once, and a short hunt loop — still E4B, still a form — in [19-three-speeds.md](19-three-speeds.md). How the backend runs (Node on the laptop, models on Modal, full algorithm): [20-backend-algorithm.md](20-backend-algorithm.md).

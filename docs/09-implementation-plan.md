@@ -4,15 +4,15 @@ Order. Don’t skip to captioning or E2B training.
 
 ## 1. Skeleton
 
-- FastAPI + ffmpeg `get_meta` / `get_frames` / `get_audio` on a local mp4
-- Gemma 4 (E4B is fine to wire tools; **quality default 12B**) with tool calling
+- Node API + ffmpeg `get_meta` / `get_frames` / `get_audio` on a local mp4
+- Modal Gemma E4B: **plan** (form JSON) and **answer** (short slice) — not free tool calling
 - Hard caps on window + FPS
-- Short-file bypass later: duration ≲ 5 min may static-gulp (Google’s split)
+- SQLite notepad + last 8 user messages into the plan call
 - Prove: “what happens at 0:10?” using **only** `get_frames` (no index)
 
 ## 2. Speech cache
 
-- **WhisperX** once per file: VAD + faster-whisper + **word alignment** (diarization **off** for single-speaker talks)
+- **WhisperX** once per file: VAD + faster-whisper + **word alignment** + **diarization on** (Speaker 1/2); **English only**
 - SQLite: words + `start_ms` / `end_ms` + sentence FTS — see [13-whisperx.md](13-whisperx.md)
 - `search_transcript` returns those times (not 15s Whisper blobs)
 - Prove: lecture “when did she say X?” jumps to the **word**, clip starts on the right syllable
@@ -39,8 +39,10 @@ Order. Don’t skip to captioning or E2B training.
 
 ## 6. UI
 
-- Upload, status, chat, timestamps, links
-- Empty / error / loading
+- Upload, **or mp4 URL**, status, chat, timestamps, **transcript quote**, **frame thumbnails**, clip link
+- Spinner + **live status** of the current step
+- Empty / error / “couldn’t find it”
+- **Done = screen recording** (one user, desktop)
 
 ## 7. Multi-turn + polish
 
@@ -57,4 +59,4 @@ VLM ingest, scene detect, E2B embedder training, OCR-all-frames, desktop super-a
 
 ## Done when
 
-A ≥10 minute video answers: (a) a speech question, (b) a silent visual question, (c) a sound question, (d) a follow-up without re-ingest, (e) an exported clip URL — without loading the whole file into Gemma.
+A ≥10 minute **mp4** (or audio-only), Node on the laptop, models on Modal from zero (~$30/mo), and a **recorded demo**: speech (quote+time), visual or sound, follow-up “there”, ColQwen slide text + **frame on screen**, export, and a “couldn’t find it”. Spinner shows live status. Refresh clears chat.
