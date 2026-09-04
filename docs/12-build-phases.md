@@ -34,7 +34,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 | Phase | Name | Adds to the app | Status |
 |---|---|---|---|
-| 1 | Hold a video | FastAPI + SQLite + save file + duration | **Locking now** |
+| 1 | Hold a video | FastAPI + SQLite + save file + duration | **See [phase-01.md](phases/phase-01.md)** |
 | 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | Proposed |
 | 3 | Brain loop | Gemma calls those tools, `/chat` | Proposed |
 | 4 | Speech index | Whisper + `search_transcript` | Proposed |
@@ -51,156 +51,9 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 # Phase 1 — Hold a video
 
-**In one sentence:** the server starts, you can put a video in, you can read back its id, path, duration, and status.
+Full brief (what, why, options, questions): **[phases/phase-01.md](phases/phase-01.md)**
 
-**Not in this phase:** ffmpeg frame cutting, Gemma, Whisper, search, export, website, login.
-
-## What it is doing
-
-A video file has to live somewhere before anything else can cut it or index it. This phase is that shelf.
-
-1. HTTP API process starts.
-2. You send a video (how: see OPEN below).
-3. The app copies it onto disk under a stable folder.
-4. It asks **ffprobe** (comes with ffmpeg) for duration, fps, has_audio.
-5. It writes a row in SQLite.
-6. `GET /videos/{id}` returns that row.
-
-Later phases hang off this row: indexes, chat, exports.
-
-## Plan (agent checklist)
-
-1. Create `backend/` Python project (`pyproject.toml`).
-2. FastAPI app, CORS open (the website in Phase 9 will need it).
-3. Config via env / `.env` (`DATA_DIR`, `DATABASE_URL`).
-4. SQLite + SQLModel (unless human picks another option).
-5. `Video` table and `data/videos/{id}/original.mp4` on disk.
-6. `POST /videos` + `GET /videos/{id}` (+ `GET /videos` list, cheap and useful).
-7. After save, run ffprobe, set `status=ready` (no indexes yet; “ready” here means *file + meta exist*).
-8. Tests with a tiny fixture mp4 (generate with ffmpeg in the test, do not commit a big movie).
-9. README in `backend/` with how to run.
-
-## Libraries
-
-| Piece | Library | Why |
-|---|---|---|
-| HTTP | **FastAPI** + **uvicorn** | Locked in [08](08-frontend-backend.md) |
-| Upload parsing | **python-multipart** | FastAPI file uploads |
-| Settings | **pydantic-settings** | `DATA_DIR`, later `MODEL_BASE_URL` |
-| DB | **SQLModel** (SQLAlchemy + Pydantic) | One style for rows now and chat/transcript later |
-| Driver | stdlib **sqlite3** via SQLModel | No Postgres day one ([08](08-frontend-backend.md)) |
-| Tests | **pytest** + **httpx** | API tests |
-| Duration | **ffprobe** CLI | Same family as ffmpeg; not a Python decoder |
-
-Do **not** add Whisper, transformers, FAISS, React, or a Gemma client here.
-
-## How it is made (layout)
-
-```
-backend/
-  pyproject.toml
-  README.md
-  app/
-    __init__.py
-    main.py          # FastAPI app, CORS, routers
-    config.py        # DATA_DIR, DATABASE_URL
-    db.py            # engine, session, create_all
-    models.py        # Video
-    storage.py       # save bytes → data/videos/{id}/original.mp4
-    media.py         # ffprobe → duration, fps, has_audio
-    routers/
-      videos.py      # POST/GET
-  tests/
-    conftest.py
-    test_videos.py
-data/                  # gitignored; created at runtime
-```
-
-Website folder `web/` is **not** created yet (Phase 9).
-
-## What the code looks like (shape, not copy-paste gospel)
-
-**Row**
-
-```python
-class VideoStatus(str, Enum):
-    uploaded = "uploaded"
-    processing = "processing"
-    ready = "ready"
-    error = "error"
-
-class Video(SQLModel, table=True):
-    id: str                          # uuid4 hex
-    original_path: str
-    duration_s: float | None = None
-    fps: float | None = None
-    has_audio: bool | None = None
-    status: VideoStatus = VideoStatus.uploaded
-    error_message: str | None = None
-    created_at: datetime
-```
-
-Phase 1 flow: `uploaded` → ffprobe → `ready` (or `error`).  
-`processing` is unused until Phase 4 ingest. Keep the value so we do not migrate later.
-
-**Routes**
-
-- `POST /videos` — multipart file (and/or path; see OPEN).
-- `GET /videos` — list.
-- `GET /videos/{id}` — one video: id, duration, fps, has_audio, status.
-
-No `/chat`. No tool routes.
-
-**Storage path:** `DATA_DIR/videos/{id}/original.mp4`  
-Later: `frames/`, `indexes/`, `exports/` under the same `{id}/`.
-
-## Technical decisions (Phase 1)
-
-| Topic | Proposed default | Notes |
-|---|---|---|
-| Language | Python 3.11+ | Matches [08](08-frontend-backend.md) |
-| API folder | `backend/` | Frontend later = `web/` |
-| IDs | UUID hex | Stable file names; not 1, 2, 3 |
-| Auth | None | Locked for now |
-| DB file | `DATA_DIR/app.db` | One SQLite file |
-| Probe | ffprobe JSON | Fail → `status=error` + message |
-| CORS | Allow all in dev | Tighten later if we ever host a real domain |
-| Gitignore | `data/`, `.env`, `__pycache__` | |
-
-## OPEN — human must pick (Phase 1)
-
-**A. How does a video get in?**
-
-- **A1 — Upload only.** `POST /videos` with a file. What the website will use. Tests upload a tiny mp4.
-- **A2 — Disk path only.** JSON `{ "path": "/home/me/talk.mp4" }`. Handy on a GPU box. Awkward for the website.
-- **A3 — Both.** Upload for the product; path for local/dev. Slightly more code.
-
-**Recommend: A3.** Production path is upload. Path-register keeps local work easy.
-
-**B. Database library?**
-
-- **B1 — SQLModel.** Proposed.
-- **B2 — SQLAlchemy only.** Fine, more boilerplate.
-- **B3 — raw sqlite3.** Too little structure once transcripts and chats exist.
-
-**Recommend: B1.**
-
-**C. Folder names?**
-
-- **C1 — `backend/` + later `web/`.** Proposed.
-- **C2 — `api/` + `frontend/`.** Same idea, different names.
-
-**Recommend: C1.**
-
-When these three are answered, this phase is **LOCKED**. An agent may implement only Phase 1.
-
-## Done when (Phase 1)
-
-- `uvicorn` starts.
-- You can add a video and `GET` it back with duration > 0.
-- A bad file sets `status=error`.
-- Tests pass without a GPU and without extra models.
-- No UI, no chat, no frame extraction as a product feature (ffprobe only).
+Do not implement from this map. Use that file. Status: not locked until the human answers the questions there.
 
 ---
 

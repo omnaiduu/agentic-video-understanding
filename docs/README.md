@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). Product decisions live in docs 01–11. The agent build order is [12 — Build phases](12-build-phases.md).
+Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). The slice being locked now is [Phase 1](phases/phase-01.md).
 
 Then:
 
@@ -15,4 +15,5 @@ Then:
 9. [Implementation plan](09-implementation-plan.md)
 10. [References](10-references.md)
 11. [Glossary](11-glossary.md)
-12. [Build phases](12-build-phases.md) — complete app, slice by slice (agent brief)
+12. [Build phases](12-build-phases.md) — complete app, slice by slice (map)
+13. [Phase 1](phases/phase-01.md) — hold a video (current slice)
