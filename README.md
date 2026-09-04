@@ -24,7 +24,8 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
 | [docs/11-glossary.md](docs/11-glossary.md) | CLIP, VLM, FPS, RAG, etc. |
 | [docs/12-build-phases.md](docs/12-build-phases.md) | How we build the complete app — phase map |
-| [docs/phases/phase-01.md](docs/phases/phase-01.md) | **Phase 1** — hold a video (current slice) |
+| [docs/phases/phase-01.md](docs/phases/phase-01.md) | Phase 1 — hold a video (**locked**) |
+| [docs/phases/phase-02.md](docs/phases/phase-02.md) | **Phase 2** — scissors (current slice) |
 
 ---
 

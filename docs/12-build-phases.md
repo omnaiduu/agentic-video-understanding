@@ -34,8 +34,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 | Phase | Name | Adds to the app | Status |
 |---|---|---|---|
-| 1 | Hold a video | FastAPI + SQLite + save file + duration | **See [phase-01.md](phases/phase-01.md)** |
-| 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | Proposed |
+| 1 | Hold a video | FastAPI + SQLite + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
+| 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **Locking** — [phase-02.md](phases/phase-02.md) |
 | 3 | Brain loop | Gemma calls those tools, `/chat` | Proposed |
 | 4 | Speech index | Whisper + `search_transcript` | Proposed |
 | 5 | Picture index | SigLIP 2 + `search_visual` | Proposed |
@@ -51,77 +51,15 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 # Phase 1 — Hold a video
 
-Full brief (what, why, options, questions): **[phases/phase-01.md](phases/phase-01.md)**
-
-Do not implement from this map. Use that file. Status: not locked until the human answers the questions there.
+**LOCKED.** Brief: [phases/phase-01.md](phases/phase-01.md)
 
 ---
 
 # Phase 2 — Scissors
 
-**In one sentence:** the app can cut a **short** picture strip or audio slice from a stored video, and it **refuses** a two-hour dump.
+Full brief (what, why, options, questions): **[phases/phase-02.md](phases/phase-02.md)**
 
-**Depends on:** Phase 1 (a video id and `original_path`).
-
-**Not in this phase:** Gemma, search indexes, export-to-URL, UI.
-
-## What it is doing
-
-ffmpeg is the scissors ([06](06-tools.md)). Gemma is not here yet. We still build the **real** tool functions the brain will call in Phase 3.
-
-Three functions (Python, not public “download the movie” APIs):
-
-| Tool | Does |
-|---|---|
-| `get_meta(video_id)` | duration, fps, has_audio (from DB / ffprobe) |
-| `get_frames(video_id, start, end, fps)` | JPEGs for that window |
-| `get_audio(video_id, start, end)` | wav bytes (keep short, ≤ ~30s later for Gemma) |
-
-**Server clamps** (do not trust the caller):
-
-- Max window for frames (e.g. zoom ≤ 8s, or skim with very low FPS).
-- Max FPS (e.g. 8–10).
-- Max frame count (e.g. 32–64).
-- `get_frames(0, 7200, fps=1)` → error or rewrite. Never run it.
-
-## Plan
-
-1. `app/tools/` module: `get_meta`, `get_frames`, `get_audio`.
-2. ffmpeg CLI via **subprocess** (not MediaBunny, not a Node cutter — [04](04-what-we-rejected.md)).
-3. Shared cap helpers.
-4. Tests: fixture video, extract 1s of frames, extract 1s of audio, assert oversize window fails.
-5. Optional internal debug routes are OK; they are not the product.
-
-## Libraries
-
-- ffmpeg **CLI** (already needed for ffprobe).
-- Pillow only if we need to inspect JPEGs in tests — optional.
-- No Gemma.
-
-## How it is made
-
-```
-ffmpeg -ss START -i original.mp4 -t DURATION -vf fps=FPS ... frame-%03d.jpg
-ffmpeg -ss START -i original.mp4 -t DURATION -vn -ac 1 -ar 16000 slice.wav
-```
-
-Return **bytes + timestamps**, not a folder the model has to understand. Phase 3 will turn JPEGs into Gemma image parts.
-
-Store temp files under `DATA_DIR/tmp/` and delete after the call.
-
-## Technical decisions (lock when we reach this phase)
-
-| Topic | Proposed | Option |
-|---|---|---|
-| How we call ffmpeg | subprocess CLI | vs `ffmpeg-python` wrapper |
-| Frame format | JPEG | vs PNG (heavier) |
-| Audio format | 16 kHz mono wav | matches Whisper/Gemma-ish audio later |
-| Caps | window, fps, frame count as constants in config | |
-| Who can call tools | Python functions in `app/tools/` | vs REST for each tool (skip REST as the spine) |
-
-## Done when
-
-Tests prove: short slice works; too-long slice is rejected; original file is unchanged.
+Do not implement from this map. Use that file. Status: not locked until the human answers the questions there.
 
 ---
 
