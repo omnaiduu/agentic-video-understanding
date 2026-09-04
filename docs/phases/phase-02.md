@@ -36,7 +36,66 @@ We build them now so Phase 3 (brain) only has to *call* them, not invent them.
 
 **Cap** — a hard max we enforce in code. The caller does not get to ask for 7200 seconds at 1 FPS.
 
-**FPS** — frames per second. Higher = more pictures, more cost. A 10-second window at 1 FPS is 10 pictures; at 10 FPS is 100.
+**FPS** — how many still pictures we take per second of video. 1 FPS = one photo each second. 8 FPS = eight photos each second (needed for fast motion).
+
+---
+
+## Caps in plain words
+
+These are not four separate products. They are **one budget**: how much Gemma is allowed to *see* or *hear* in a single tool call.
+
+Google’s Gemma 4 card ([source](https://ai.google.dev/gemma/docs/core/model_card_4)): roughly **60 seconds of video at 1 picture/sec**, and **30 seconds of audio**. We stay under that.
+
+Think of a flashlight, not a floodlight:
+
+| Number | Means | Example |
+|---|---|---|
+| **8 seconds** | Longest *close look* | “What happens at 1:04?” → open 1:03–1:11, not the whole talk |
+| **10 FPS** | Densest sampling in that look | 8 seconds × 8 FPS ≈ 64 pictures. Fast action (sports) needs this. A lecture slide does not — 1 FPS is enough |
+| **64 frames** | Hard max pictures **per call** | 8s × 8 FPS = 64. 60s × 1 FPS = 60. Both fit. `0→7200s at 1 FPS` = 7200 pictures → **blocked** |
+| **30 seconds audio** | Hard max sound **per call** | Same as Gemma’s audio limit. Not “the whole podcast” |
+
+**Skim (optional):** if we must peek across a *long* span, we take pictures rarely (e.g. one every 4 seconds) and still stop at 64 pictures. That is a blurry map, not a close look. Then we zoom.
+
+The four numbers work as a set. Changing one without the others either wastes GPU or refuses useful zooms.
+
+---
+
+## How Gemma actually sees a cut (checked)
+
+Gemma 4 **12B Unified** takes **text + images + audio** in a prompt. It also has **function calling** (it outputs “call `get_frames` with these times”).
+
+Official function-calling docs show tool **results as text/JSON** (weather, etc.) — not as a special “image tool-result” type ([function calling](https://ai.google.dev/gemma/docs/capabilities/text/function-calling-gemma4)).
+
+So we do this (our runtime, Phase 3):
+
+1. Gemma: `get_frames(1:03, 1:11, fps=8)`
+2. **Our code** runs ffmpeg, gets JPEG bytes
+3. We send a **new multimodal turn**: text (“frames at 1:03, 1:03.125, …”) **plus the actual images** (and/or a wav for `get_audio`)
+4. Gemma looks at those images/audio and answers or calls another tool
+
+That is multimodal. The scissors return **bytes**. The brain loop **attaches** those bytes as image/audio parts. We do not base64-dump 64 JPEGs into a JSON string and hope she “sees” them.
+
+Audio: 16 kHz wav matches how Gemma 12B ingests audio (raw-ish waveform / 16 kHz family). Cap 30s matches the card.
+
+Phase 2 only produces the bytes. Phase 3 wires them into the Gemma request.
+
+---
+
+## Why only these three functions *in this phase*
+
+The **finished** app has more tools ([06](../06-tools.md)):
+
+| Tool | When |
+|---|---|
+| `get_meta` / `get_frames` / `get_audio` | **Phase 2** — scissors |
+| `search_transcript` | Phase 4 — needs Whisper |
+| `search_visual` | Phase 5 — needs SigLIP |
+| `search_audio` | Phase 6 — needs CLAP |
+| `export_clip` / `export_audio` | Phase 7 — file for the *user*, not for Gemma’s eyes |
+| `crop_frame` / `ocr_frame` | Later, only if tiny objects / slides fail |
+
+Phase 2 is not “the whole toolbox.” Search needs indexes. Export is a download, not a look. Extra tools without those pieces would be empty stubs.
 
 ---
 
@@ -70,20 +129,14 @@ Work in a temp folder, return bytes, **delete temp files**. Do not fill the disk
 
 **Out of range** (start after the end of the file, end before start): error.
 
-## Proposed caps (from the tool doc)
+## Cap rules (same numbers as above)
 
-These exist so the future brain cannot dump the whole movie.
+- Close look: window ≤ **8s**, FPS ≤ **10**, and pictures ≤ **64**
+- Skim: longer window only if FPS ≤ **0.25** and pictures still ≤ **64**
+- Audio: ≤ **30s**
+- Whole-file dump: always error
 
-| Rule | Proposed number | Why |
-|---|---|---|
-| Zoom window | max **8 seconds** if FPS is “high” | Look closely at a moment |
-| Max FPS | **10** | Fast motion without exploding cost |
-| Max pictures per call | **64** | Fits what Gemma can reasonably see |
-| Long window (“skim”) | only if FPS is very low (**≤ 0.25**, i.e. one picture every 4s) **and** still ≤ 64 frames | Peek across a long span without 2h of images |
-| Audio slice | max **30 seconds** | Gemma’s audio gulp is about that |
-| Two-hour gulp | **always error** | `get_frames(0, 7200, fps=1)` must never run |
-
-**If the caller exceeds a cap:** proposed **reject** with a clear error (“max 8s at this FPS”). Then the brain can retry smaller. Alternative: silently shrink the window. Reject is clearer.
+**If over the cap:** proposed **reject** with a clear error. Alternative: auto-shrink. Reject is clearer.
 
 ## What we will not build here
 
