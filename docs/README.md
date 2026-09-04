@@ -1,6 +1,8 @@
 # Docs index
 
-Start at the [root README](../README.md), then:
+Start at the [root README](../README.md). Product decisions live in docs 01–11. The agent build order is [12 — Build phases](12-build-phases.md).
+
+Then:
 
 1. [Goal and context](01-goal-and-context.md)
 2. [Conversation summary](02-conversation-summary.md)
@@ -13,3 +15,4 @@ Start at the [root README](../README.md), then:
 9. [Implementation plan](09-implementation-plan.md)
 10. [References](10-references.md)
 11. [Glossary](11-glossary.md)
+12. [Build phases](12-build-phases.md) — complete app, slice by slice (agent brief)
