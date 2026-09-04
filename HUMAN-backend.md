@@ -277,5 +277,6 @@ That is the whole backend.
 
 ## Data / contract
 
-What we save and what we send: **[HUMAN-data.md](HUMAN-data.md)**.
+What we save and what we send: **[HUMAN-data.md](HUMAN-data.md)**.  
+What you locked: **[HUMAN-locked.md](HUMAN-locked.md)**.
 

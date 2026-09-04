@@ -351,9 +351,13 @@ Then Node saves `last_answer` and returns JSON to the UI:
 {
   "text": "They clapped at 1:04. After that the slide says Q3 plan.",
   "timestamps": [64.0, 68.0],
-  "export_url": null,
-  "trace": ["search_listen", "shift_after", "open_eyes"]  // for the demo screen
+  "quotes": [{ "t": 64.0, "text": "…", "speaker": "SPEAKER_1" }],
+  "frames": ["/tmp/frame_64.jpg"],
+  "export_url": null
 }
+```
+
+While this runs, Node streams **status** strings (searching / cutting / reading). Empty books → text = couldn’t find it; do not guess.
 ```
 
 ---
@@ -496,20 +500,20 @@ Two Gemma calls on a simple question. Three on a hunt (plan, plan again, answer)
 
 ## Demo (this is “done”)
 
-Run **Node on the laptop**. Point it at **Modal** with a few deployed functions (Gemma E4B, ingest, three searches). Use one ≥10 minute file.
+Run **Node on the laptop**. Deploy Modal **from zero** (E4B, WhisperX English + diarization, SigLIP, GLAP, **ColQwen**). ~**$30/mo**. One user. Video **on disk** (upload or mp4 URL). Chat **in memory** (refresh = gone).
 
-Record the screen:
+Record the screen (desktop, one page, spinner + live status):
 
-1. Upload / pick file → status becomes ready (ingest once).  
-2. Speech: “What did she say about …?” → timestamp.  
-3. Sound: “When did they clap?” → timestamp.  
-4. Follow-up: “Was there a dog **there**?” → does **not** re-ingest, uses notepad.  
-5. Combo: “After the clap, what was on the slide?”  
-6. Export: “Give me that clip” → download link.  
-7. Optional: a vague “what was that noise?” to show hunt.  
-8. Slides: “Which slide had Pro $99?” (nobody spoke the number) → ColQwen find → Gemma reads.
+1. Upload or paste mp4 URL → ready.  
+2. Speech: quote + timestamp (+ speaker if diarization).  
+3. Sound: clap / similar.  
+4. Follow-up “there” — no re-ingest.  
+5. Combo after-clap slide.  
+6. Export clip.  
+7. Hunt / couldn’t find it (do not guess).  
+8. ColQwen: on-screen text nobody spoke; **show the frame** in the UI.
 
-That recording is the v1 proof. No production auth, no 12B waiter, no watching the whole file.
+Empty → say we couldn’t find it.
 
 ---
 
@@ -527,13 +531,13 @@ That recording is the v1 proof. No production auth, no 12B waiter, no watching t
 
 | Piece | Choice |
 |---|---|
-| Orchestrator | **Node** (local) |
-| Models | **Modal** (Gemma E4B, WhisperX, SigLIP 2, GLAP, **ColQwen slides**) |
-| Cutter | **ffmpeg** on the laptop |
-| State | **SQLite** notepad + last 8 **user** messages |
-| Driver | Main form → three speeds → answer |
-| 12B | Not for this demo |
-| UI | One watch+ask page, enough to record |
+| Orchestrator | **Node** (local, one user) |
+| Models | **Modal from zero** — E4B only, WhisperX EN+diarization, SigLIP, GLAP, **ColQwen** (~$30/mo) |
+| Cutter / files | **ffmpeg** + mp4 **on disk** (upload or URL) |
+| State | **In-memory** chat/notepad (refresh clears) |
+| Driver | Form → three speeds → answer; empty = couldn’t find it |
+| 12B | **Never** for this ship |
+| UI | One page, desktop, spinner+status, quote+frames |
 
 Product to the user is unchanged: ask, timestamp, clip.  
 The logic is: **chat tells us what they mean, notepad tells us where we are, four books find (including ColQwen slides), Node presses, Gemma reads a short slice.**

@@ -8,13 +8,13 @@ Frontend was **not** locked in the earlier thread. This is the plan that fits th
 
 | Piece | Choice | Why |
 |---|---|---|
-| Product API | **Node** (local) | You asked for Node for the demo; HTTP, SQLite, ffmpeg, calls Modal |
+| Product API | **Node** (local) | HTTP, in-memory session, ffmpeg, calls Modal |
 | ML | **Python on Modal** | Whisper, SigLIP, GLAP, **ColQwen**, Gemma cannot run in Node |
 | HTTP | Node `/videos` + `/chat` | Upload, ingest status, questions |
 | Media | **ffmpeg** CLI on the laptop | Cut frames/audio/clips |
 | Brain | OpenAI-compatible calls to **Modal** Gemma E4B | Two calls: **plan** (form) and **answer** (short slice) |
-| Ingest workers | Modal jobs | WhisperX / SigLIP / GLAP / **ColQwen unique slides** once |
-| Auth | None for local v1 | Add later |
+| Auth | **None.** Refresh clears chat | Demo only; one user |
+| Ingest workers | Modal jobs from **zero** | WhisperX (English, diarization on) / SigLIP / GLAP / **ColQwen** |
 
 Main Gemma sees **last ~8 user messages** (what they typed) **plus the notepad** (the clock, e.g. 1:04). User text alone cannot fill times.
 
@@ -22,16 +22,16 @@ Main Gemma sees **last ~8 user messages** (what they typed) **plus the notepad**
 
 - `POST /videos` — upload or register path; start ingest
 - `GET /videos/{id}` — status: processing | ready | error
-- `POST /videos/{id}/chat` — message; returns answer, citations `{t}`, verb trace, export URLs
+- `POST /videos/{id}/chat` — message; returns answer, citations `{t}`, **transcript quotes**, **frame URLs**, live **status** events, export URLs
 - `GET /videos/{id}/exports/{file}` — or public object-storage URLs
 
 ### Data
 
 | Store | Holds |
 |---|---|
-| **SQLite** | video rows, transcript lines (FTS), chat sessions, last timestamps |
-| **FAISS or sqlite-vec** | SigLIP + CLAP vectors + time |
-| **Object storage** | original mp4, exported clips/audio |
+| **Memory** | chat, sticky note, messages (gone on refresh) |
+| **Owner disk** | original mp4, ffmpeg cuts, export files |
+| **Modal** | four books + Gemma |
 
 Postgres + pgvector when there are many users/videos — not day one.
 
@@ -43,7 +43,7 @@ Persist a **clipboard** per chat: `handle_id`, **focus** window `{t0,t1}`, last 
 
 **Job:** upload (or pick a file), show ingest progress, chat, show timestamps (click to seek), show exported clip/audio links, empty/error/loading states.
 
-**Proposed v1 demo UI:** one **watch + ask** page (upload, status, chat, timestamp chips, clip link). Vite + React if we want; a single static page is enough to record. Not a second ML stack.
+**Proposed v1 demo UI:** **one page**, desktop first. Upload **or paste mp4 URL**. Spinner + **live status** (searching / cutting / reading). Answer shows **text, timestamps, transcript quote, the frame(s)**. Audio-only files OK. One chat, one video.
 
 Why not Next.js as a must: we never chose it; a SPA against FastAPI is enough. Swap later if we need SSR.
 
@@ -65,7 +65,7 @@ Desktop + mobile: player + chat stack on small screens.
 
 ## Local vs Modal
 
-- **Dev / demo:** Node + ffmpeg + SQLite on the laptop; Gemma + ingest on **Modal**. Record a screen video when the checks in [20](20-backend-algorithm.md) pass.
+- **Dev / demo:** Node + ffmpeg on the laptop; video **on disk**; Gemma + ingest on **Modal** (~$30/mo, E4B only, scale to zero). Chat is **in-memory** (refresh = gone). Record a screen video.
 - **Prod (later):** same split, or move the Node API next to Modal; files on Volume/S3.
 
 ## Resources / throughput (honest ranges)

@@ -153,20 +153,32 @@ When `ready`, you may chat. If `error`, ingest failed.
 
 ```
 video: vid_1
-chat:  chat_1          (or Node makes a new one)
+chat:  chat_1
 text:  "When did they clap?"
 ```
 
-**Node → you:**
+While it works, Node **streams status** (spinner text):
+
+```
+searching sound…
+cutting 8 seconds…
+Gemma reading…
+```
+
+**Node → you (final):**
 
 ```
 text:         "They clapped at 1:04."
 timestamps:   [64]
-export_url:   null          (or a link if you asked for a clip)
-trace:        ["search_listen"]    (tiny, for the demo screen)
+quotes:       [{ t: 64, text: "…", speaker: "SPEAKER_1" }]   // if talk
+frames:       ["http://localhost/.../frame_64.jpg"]         // what Gemma saw
+export_url:   null
+status_done:  true
 ```
 
-You click `64` → player jumps to 1:04. That is the whole UI contract.
+If nothing: `text` = we couldn’t find it; quotes/frames may be empty.
+
+Refresh the page: this chat is **gone**.
 
 ---
 
@@ -294,9 +306,10 @@ Node does **not** search 20 minutes. It opens 64–72.
 
 ## Super short
 
-Laptop saves: **video, chat, sticky note, messages**.  
-Modal keeps: **four books**.  
-Browser only sees: **text, times, optional clip link**.  
+Laptop session (gone on refresh): **video pointer, chat, sticky note, messages**.  
+Video file: **on your disk**.  
+Modal: **four books**.  
+Browser sees: **status, text, times, transcript quote, frames, optional clip**.  
 Every search returns **time + score**.  
 Gemma in: **your last lines + sticky note**.  
 Gemma out: **form**, then later **answer text**.  

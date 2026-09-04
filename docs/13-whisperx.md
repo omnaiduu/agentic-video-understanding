@@ -31,9 +31,9 @@ audio
   → 1. VAD          is anyone talking?
   → 2. Whisper      what words?          (faster-whisper)
   → 3. Aligner      when was each word?  (wav2vec2)
-  → 4. Diarization  who?                 (pyannote)  — OFF for v1 talks
+  → 4. Diarization  who?                 (pyannote)  — **ON** for this demo (Speaker 1/2); drop if it blows ~$30/mo
          ↓
-  SQLite: word + start + end  (+ speaker later)
+  SQLite / session: word + start + end  (+ speaker)
          ↓
   search_transcript  →  jump / clip at that time
 ```
@@ -139,8 +139,8 @@ Rename speakers in the UI later. Needs a Hugging Face token (gated models). Fail
 At ingest:
 
 1. ffmpeg extract audio.
-2. WhisperX: **VAD + Whisper + align**. No diarization.
-3. Store in SQLite: `video_id, word, start_ms, end_ms, sentence_id` (and full sentence text for FTS).
+2. WhisperX: **VAD + Whisper + align + diarization** (Speaker 1/2). English only. Drop diarization if Modal cost blows ~$30/mo.
+3. Store for the session: `video_id, word, start_ms, end_ms, sentence_id, speaker`.
 4. `search_transcript(query)` → FTS / word match → `{t, text, score}`.
 5. Player seek and `export_clip` use **word** (or sentence) `start_ms`.
 
