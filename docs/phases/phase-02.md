@@ -36,28 +36,33 @@ We build them now so Phase 3 (brain) only has to *call* them, not invent them.
 
 **Cap** — a hard max we enforce in code. The caller does not get to ask for 7200 seconds at 1 FPS.
 
-**FPS** — how many still pictures we take per second of video. 1 FPS = one photo each second. 8 FPS = eight photos each second (needed for fast motion).
+**One look** — one call to `get_frames` or `get_audio`. Like opening a book to one page, not reading the whole book.
 
 ---
 
-## Caps in plain words
+## The cap (one rule)
 
-These are not four separate products. They are **one budget**: how much Gemma is allowed to *see* or *hear* in a single tool call.
+A 2-hour video is like a photo album with thousands of pages. The AI cannot look at every page at once. So **each look is small**.
 
-Google’s Gemma 4 card ([source](https://ai.google.dev/gemma/docs/core/model_card_4)): roughly **60 seconds of video at 1 picture/sec**, and **30 seconds of audio**. We stay under that.
+**The only rule that matters:**
 
-Think of a flashlight, not a floodlight:
+- Pictures: at most **about 64 photos** in one look  
+- Sound: at most **30 seconds** in one listen  
 
-| Number | Means | Example |
-|---|---|---|
-| **8 seconds** | Longest *close look* | “What happens at 1:04?” → open 1:03–1:11, not the whole talk |
-| **10 FPS** | Densest sampling in that look | 8 seconds × 8 FPS ≈ 64 pictures. Fast action (sports) needs this. A lecture slide does not — 1 FPS is enough |
-| **64 frames** | Hard max pictures **per call** | 8s × 8 FPS = 64. 60s × 1 FPS = 60. Both fit. `0→7200s at 1 FPS` = 7200 pictures → **blocked** |
-| **30 seconds audio** | Hard max sound **per call** | Same as Gemma’s audio limit. Not “the whole podcast” |
+If someone asks for more, we **refuse**. We do not extract 7,000 photos from two hours.
 
-**Skim (optional):** if we must peek across a *long* span, we take pictures rarely (e.g. one every 4 seconds) and still stop at 64 pictures. That is a blurry map, not a close look. Then we zoom.
+That is the cap. Everything else is just *how* we pick those 64 photos:
 
-The four numbers work as a set. Changing one without the others either wastes GPU or refuses useful zooms.
+- Slow talk / a slide: take **1 photo per second** for up to ~60 seconds (60 photos).  
+- Fast action: take **several photos per second**, so the clip must be **shorter** (e.g. 8 seconds × 8 photos/sec ≈ 64 photos).  
+
+Same pile of 64 photos. Either a longer stretch with few photos, or a short stretch with many photos. Never both (long **and** dense) — that blows past 64.
+
+30 seconds of sound is the same idea: Gemma can only hear a short clip at a time.
+
+We did not invent 64 and 30. They match what Gemma 4 can swallow (about a minute of video at 1 photo/sec, 30 seconds of audio).
+
+**Phase 2 does not talk to Gemma.** We only cut files and enforce this rule. How Gemma *asks* for a cut (tool call vs JSON / structured output) is **Phase 3**. Either way our code runs ffmpeg. It does not change this phase.
 
 ---
 
@@ -129,14 +134,13 @@ Work in a temp folder, return bytes, **delete temp files**. Do not fill the disk
 
 **Out of range** (start after the end of the file, end before start): error.
 
-## Cap rules (same numbers as above)
+## How we enforce it in code
 
-- Close look: window ≤ **8s**, FPS ≤ **10**, and pictures ≤ **64**
-- Skim: longer window only if FPS ≤ **0.25** and pictures still ≤ **64**
-- Audio: ≤ **30s**
-- Whole-file dump: always error
+Count photos that *would* come out: `seconds × photos_per_second`. If that is over 64, refuse. If audio longer than 30 seconds, refuse. Never run ffmpeg on the whole file.
 
-**If over the cap:** proposed **reject** with a clear error. Alternative: auto-shrink. Reject is clearer.
+Defaults for a close look (not a separate product): a few seconds, a few photos per second, still under 64. A slow scan can be longer if photos stay under 64.
+
+If over: **reject**. Do not silently shrink.
 
 ## What we will not build here
 
@@ -186,14 +190,9 @@ backend/tests/test_tools.py
 
 ## Questions (answer these to lock)
 
-1. **Caps above OK?** 8s zoom, 10 FPS, 64 frames, 30s audio. Different numbers?
-
-2. **Try it with curl?**  
-   - **A** — only Python + tests (smaller).  
-   - **B** — also HTTP, e.g. `POST /videos/{id}/frames` returns images, so you can demo scissors before Gemma exists.  
-   I would do **B** if you want to *see* a cut without waiting for the brain; **A** if you want this slice tiny.
-
-3. **Oversize:** reject with an error (recommended), or auto-shrink the window?
+1. **The rule:** at most ~64 photos per look, at most 30 seconds of sound. If someone asks for more, we **say no**. OK?
+2. **Can you try a cut before Gemma exists?** Tests only, or also an HTTP route you can curl?
+3. Tool call vs structured output: **not this phase.** We pick that in Phase 3. OK to leave it?
 
 When these are answered, mark **LOCKED** and implement only this file.
 
