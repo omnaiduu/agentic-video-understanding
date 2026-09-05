@@ -65,7 +65,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 Full brief (what, why, options, questions): **[phases/phase-03.md](phases/phase-03.md)**
 
-Do not implement from this map. Use that file. Status: not locked until the human answers the questions there.
+Do not implement from this map. Use that file. **Correction:** native tool calling is **not** the product path. Structured JSON + our state machine.
 
 ---
 
