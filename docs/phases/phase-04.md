@@ -22,6 +22,33 @@ Whisper has **no eyes**. It will not describe a red light or a slide. That is Ph
 
 ---
 
+## How we implement it (not an embedding model)
+
+Two different jobs get mixed up. Only the first is this phase.
+
+| Job | What it is | This phase? |
+|---|---|---|
+| **Transcribe** | Whisper: sound → words + times | **Yes** (once per file) |
+| **Find a line** | Search those words | **Yes** |
+| **Train / run a speech embedder** | Vectors for “sounds like” | **No** — that’s Phase 6 (CLAP) for *beeps/claps/chirps*, not for “what did she say” |
+
+**Option A — text search (what I would do)**  
+Save Whisper’s sentences in SQLite. Search with **FTS** (find words, like Ctrl+F, but ranked). Query “pricing” → lines that contain it → timestamps.
+
+- Right for: names, quotes, “pricing”, “Q3”, “red team”
+- Fast, no extra GPU at question time
+- Misses: “how much does it cost?” if she only said “pricing” (different words). Gemma can still try a shorter keyword, or we add embeddings **later** on the *same text*.
+
+**Option B — embed the transcript**  
+After Whisper, run a **text** embedding model on each sentence, search by meaning. Helps paraphrases. More moving parts. We are **not** training anything. We are **not** using SigLIP here (that’s pictures).
+
+**Option C — no notebook, Gemma listens to hours**  
+Rejected. Caps exist so we never do this.
+
+**Recommendation: A.** Whisper + FTS. Same as the old architecture doc. Embeddings on transcript lines can be added later without throwing A away. Do **not** build or train an embedding model in Phase 4.
+
+---
+
 ## Words
 
 **Whisper** — speech → text + timestamps. We use **faster-whisper** (same model, faster engine).
@@ -90,9 +117,10 @@ Example: “what did she say about pricing?” → `search` → hits at 12:04 �
 
 ## Questions (lock these)
 
-1. **Whisper size:** **turbo** (faster ingest, a bit sloppier) or **large-v3** (better text, slower)? I would use **turbo** for the demo, same code path to swap the name later.
-2. **Upload waits?** I would **not** wait. Return the video id immediately; speech index fills in the background. OK?
-3. **`search` in the same JSON form** as look/listen/answer — OK? (Not vLLM `tools=`.)
+0. **Find speech how?** **A — Whisper + text search (FTS)** (recommended), or **B — also embed transcript lines**? I would lock **A only**.
+1. **Whisper size:** **turbo** (faster) or **large-v3** (better text)? I would use **turbo**.
+2. **Don’t block upload** — notebook fills in the background. OK?
+3. **`search` in the same JSON** as look / listen / answer. OK?
 
 When these are answered, mark **LOCKED**.
 
