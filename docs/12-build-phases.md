@@ -37,7 +37,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 1 | Hold a video | FastAPI + SQLite + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
 | 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
 | 3 | Brain loop | Gemma calls those tools, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
-| 4 | Speech index | Whisper + `search_transcript` | Proposed |
+| 4 | Speech index | Whisper + `search` in JSON loop | **Locking** — [phase-04.md](phases/phase-04.md) |
 | 5 | Picture index | SigLIP 2 + `search_visual` | Proposed |
 | 6 | Sound index | CLAP/GLAP + `search_audio` + count | Proposed |
 | 7 | Export | `export_clip` / `export_audio` + URL | Proposed |
@@ -71,41 +71,9 @@ vLLM JSON schema + our look/listen/answer state machine. Not native `tools=`.
 
 # Phase 4 — Speech index
 
-**In one sentence:** ingest runs **Whisper once**; Gemma can `search_transcript` instead of listening to the whole talk.
+Full brief: **[phases/phase-04.md](phases/phase-04.md)**
 
-## What it is doing
-
-Upload (already in Phase 1) starts a job: speech → `{t, text}` lines → SQLite **FTS**. Status goes `processing` then `ready`. Question 2 does not run Whisper again ([01](01-goal-and-context.md)).
-
-Tool: `search_transcript(query)` → `[{t, text, score}]`.
-
-Path: “What did she say about pricing?” → search → maybe `get_frames` to see the slide.
-
-## Plan
-
-1. Ingest worker function (same process first; Modal job later via the same function).
-2. **faster-whisper** on `original.mp4`.
-3. `TranscriptLine` table + FTS5.
-4. Register `search_transcript` on the agent.
-5. `indexes.transcript = true` on the video (add a JSON or columns; do not rebuild the video table from scratch).
-
-## Libraries
-
-| Piece | Proposed | Option |
-|---|---|---|
-| ASR | **faster-whisper** | whisper.cpp |
-| Size | **turbo** or **large-v3** | turbo = faster ingest, a bit worse text |
-| Job runner | FastAPI BackgroundTasks / `asyncio` | Celery, RQ, Modal function — same ingest function |
-
-## Technical decisions (lock later)
-
-- Whisper model size.
-- Chunk/store word-level vs segment-level timestamps (segments are enough).
-- If ingest fails: `status=error`, keep the file.
-
-## Done when
-
-A lecture-style fixture: ask a spoken phrase → search returns a time → no full-video Gemma listen.
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
 ---
 
