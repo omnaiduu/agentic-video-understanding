@@ -1,6 +1,6 @@
 # Phase 6 — Sound phone book
 
-**Status:** not locked. Human answers the questions at the bottom first.
+**Status: LOCKED** (LAION-CLAP dense search; Python merge+count; **PostgreSQL** + pgvector).
 
 Depends on: [Phase 1](phase-01.md) (file + Postgres), [Phase 2](phase-02.md) (ffmpeg audio), [Phase 3](phase-03.md) (JSON loop), [Phase 4](phase-04.md) / [Phase 5](phase-05.md) (pgvector already there).
 
@@ -10,151 +10,85 @@ Related: [CLAP](../07-models-and-indexes.md) · [counting](../05-architecture.md
 
 ---
 
-## Where we are
-
-| Done on paper | This phase | Later |
-|---|---|---|
-| Hold file, scissors, Gemma JSON loop, **speech** notebook, **picture** notebook | **Sounds** notebook | Export (7), memory (8), website (9+) |
-
-Whisper writes **words**. SigLIP sees **pictures**. Neither hears a chirp, a clap, or a beep. This phase is the ears for **non-speech sound**.
-
----
-
 ## What we are trying to do
 
-Once per file we cut the audio into **short chunks** (a few seconds each). A small encoder (**CLAP / GLAP**) turns each chunk into a list of numbers. We save **numbers + time**.
+Once per file: **3s audio chunks** (1.5s hop) → **LAION-CLAP** → numbers + time. Chat runs **dense search** on that notebook. Gemma gets a few times as **text**, may `listen`, then `answer`. Second question does not run CLAP again.
 
-When you ask a sound question, our state machine **searches those numbers**. We hand Gemma a few times as **text**. She may then `listen` to that slice and `answer`.
+**Counting** is Python: merge nearby hits, `len()`. Stadium applause may be one blob — “applause 1:00–1:40”, not a fake 847.
 
-Question 2 does **not** re-encode the audio.
-
-This **is** RAG for sounds. The encoder finds times; Gemma understands by listening. Search scores are **not** the answer.
-
-**Counting** (“how many claps?”) is **Python** on the hits, not Gemma watching two hours and adding in her head. Nearby hits merge into one event. Stadium applause may be **one blob** — we say “applause 1:00–1:40”, not a fake 847.
+This **is** RAG for sounds. Not Whisper (words). Not SigLIP (pictures). Not hybrid (raw audio has no words). Not a clap-only detector.
 
 ---
 
-## What this is not
+## Locked
 
-- **Not** Whisper. Whisper is spoken words (Phase 4). “Clap” is often not a word in the transcript.
-- **Not** SigLIP. Pictures do not hear.
-- **Not** training an embedding model. We download a checkpoint and run it.
-- **Not** hybrid keyword + dense. Raw audio has no words. (Spoken words are already searchable in Phase 4.)
-- **Not** Gemma listening to the whole file. `listen` is still capped at 30 seconds.
-- **Not** a clap-only detector. One search covers chirps, beeps, claps, gunshots ([04](../04-what-we-rejected.md)).
-- **Not** dump-every-chunk into Gemma.
+**Why still needed:** Whisper will not write “chirp.” SigLIP will not hear a beep.
 
----
+**Why CLAP not GLAP as default:** sound events are CLAP’s job; speech words are already Whisper. GLAP is a later swap (same table, same JSON action).
 
-## Why we still need this after Whisper and SigLIP
-
-| Question | Which book |
-|---|---|
-| “What did she say about pricing?” | Speech (Whisper text) |
-| “Where is the red light?” | Pictures (SigLIP) |
-| “When did the bird chirp?” | **This** (CLAP/GLAP) |
-
-Same pattern as pictures: specialist encoder at ingest, Gemma only on a short slice.
+**Why Postgres:** same DB as Phases 4–5. New table, different vector size.
 
 ---
 
 ## Words
 
-**CLAP** — Contrastive Language-Audio Pretraining. Sounds → vectors, phrases → vectors. Same idea as SigLIP, for audio. **Search**, don’t narrate.
-
-**GLAP** — newer (2025) CLAP-style model. Same job, same JSON action if we swap.
-
-**Chunk** — a few seconds of audio we embed. Not the 30-second `listen` cap.
-
-**Merge** — if hits sit next to each other, they are **one event**, not ten.
-
-**`search_audio`** — a new move in our JSON form. **Not** a vLLM tool call. Our Python runs the search (and the count).
+**CLAP** — sounds → vectors, phrases → vectors. Search, don’t narrate.  
+**Chunk** — a few seconds we embed. Not the 30s `listen` cap.  
+**Merge** — hits next to each other are one event.  
+**`search_audio`** — JSON action. Our Python (search + count). Not vLLM tools.
 
 ---
 
 ## How it will work
 
-**After upload (Phase 1 still saves the file first)**
-
 ```
-file saved, ffprobe done
-       → background ffmpeg audio chunks
-       → CLAP/GLAP each chunk → AudioChunk (start_s, end_s, embedding)
+upload → disk + video row (no wait)
+       → background ffmpeg 3s chunks, 1.5s hop
+       → CLAP each chunk → AudioChunk (start_s, end_s, embedding)
        → audio_status = ready
 ```
 
-HTTP upload does **not** wait. No audio stream → skip, `audio_status = skipped`. Fail → file stays; timed `listen` still works if the file has audio.
+JSON: `look` | `listen` | `search` | `search_visual` | `search_audio` | `answer`
 
-**Chat (Phase 3 loop, one extra action)**
+No audio → `audio_status = skipped`. Fail → file stays; timed listen still works.
 
-JSON `do` is now:
-
-- `look` / `listen` / `search` / `search_visual` (locked)
-- `search_audio` — `{ "query": "bird chirp" }` → nearest times → next prompt as **text** (`t` + score, plus merged count). No wav in this step.
-- `answer`
-
-Example: “when did the bird chirp?” → `search_audio` → hit at 0:41 → maybe `listen` 0:40–0:45 → `answer`.
-
-**Count path (same phase, same search):**
-
-```
-search_audio → candidate times
-            → merge nearby (gap in config, e.g. 1s)
-            → count = len(clusters)   # Python, not Gemma
-            → optional listen on 2–3 samples to verify
-```
-
-We put the cluster list and the count in the text we feed Gemma. She does not invent a total.
-
-**Caps:** top ~8 raw hits (or the merged clusters). Not every chunk.
+`search_audio` returns top hits **and** merged clusters + count as **text**. Gemma may then `listen`.
 
 ---
 
-## Options (what I would pick)
+## Locked details
 
-| Topic | My pick | Other options | Why my pick |
-|---|---|---|---|
-| Encoder | **LAION-CLAP** (`laion/larger_clap_general` or `clap-htsat-fused`) | **GLAP** (`mispeech/GLAP`, 2025) | Sound events (chirp, clap, beep) are CLAP’s job. Speech **words** are already Whisper. CLAP is native in `transformers` (no `trust_remote_code`). GLAP is newer/multilingual — **same table, same JSON action**, name in config. |
-| Chunk | **3 seconds**, hop **1.5s** (50% overlap) | 1s (more rows); 5s (miss short beeps); no overlap | Overlap so a 0.4s chirp is not split in half and lost. 3s is the middle of the 1–5s range in older docs. |
-| Vectors | **Same Postgres / pgvector**, table `AudioChunk` | FAISS | Same as Phases 4–5. |
-| What Gemma gets | **Times + merged count as text**, then she `listen`s | Attach wavs in the search step | Wavs would eat the 30s listen budget. Same pattern as speech/picture hits. |
-| Counting | **Python merge + `len()`**, included in search results | Separate `count_events` JSON action; clap-only detector | Detector is too narrow. A second JSON verb can wait — the number is already in the search text. |
-| JSON name | **`search_audio`** | overload `search` with a channel | Three phone books, three verbs. |
-
-**Libraries:** `transformers` + LAION-CLAP (or GLAP via config), ffmpeg CLI, pgvector. No Whisper re-run. No SigLIP. No clap-only CNN.
+| Topic | Decision |
+|---|---|
+| Encoder | **LAION-CLAP** (default `laion/larger_clap_general` or `clap-htsat-fused`; name in config) |
+| Later swap | **GLAP** — same table, same `search_audio` |
+| Chunk | **3s**, hop **1.5s** |
+| DB | Same PostgreSQL + pgvector, table `AudioChunk` |
+| Hits | Top ~8 + merged clusters/count as **text**; Gemma then `listen`s |
+| Counting | **Python** merge + `len()` inside `search_audio`. No clap-only detector |
+| Chat action | `search_audio` in the vLLM JSON schema |
+| Fail | File stays; timed listen still works |
 
 ---
 
 ## Plan (agent)
 
-1. `AudioChunk`: video_id, start_s, end_s, embedding. Index on video_id + vector
+1. `AudioChunk`: video_id, start_s, end_s, embedding
 2. `video.audio_status`: pending | processing | ready | error | skipped
 3. Background ingest: ffmpeg chunks → CLAP → rows
-4. `search_audio(query)`: embed phrase with **text** tower → KNN in this video → top hits → merge nearby → `{t, score}` + cluster count
-5. Add `search_audio` to the vLLM JSON schema + prompt (tell the model to trust the Python count)
-6. State machine: run search, append **text** hits, loop (Gemma may then `listen`)
-7. Tests: inject fake vectors; `"beep"` finds the beep second; two nearby hits merge to count 1; mute file → skipped; mock CLAP in unit tests (no GPU)
+4. `search_audio(query)`: text tower → KNN → merge nearby → hits + count
+5. Wire `search_audio` into the Phase 3 loop
+6. Tests: inject fake vectors; nearby hits merge to count 1; mute → skipped; mock CLAP (no GPU)
 
-Implement **only** this file after 1–5. No export. No website.
+**Libraries:** `transformers` + LAION-CLAP, ffmpeg, pgvector. No Whisper re-run. No SigLIP.
 
----
-
-## Questions (lock these)
-
-1. **Encoder — LAION-CLAP default, name in config (GLAP is a later swap).** OK?
-2. **Chunks: 3 seconds, hop 1.5 seconds.** OK?
-3. **Same Postgres / pgvector**, new table. OK?
-4. **Counting in Python** (merge nearby + `len()`), included in `search_audio` text. No clap-only detector. OK?
-5. **`search_audio` in the same JSON form.** Hits as **text times**, then Gemma `listen`s. OK?
-
-When these are answered, mark **LOCKED**.
+Implement only this file after 1–5.
 
 ## Done when
 
-- “When did the bird chirp?” can surface a timestamp from stored sound vectors
+- “When did the bird chirp?” can surface a timestamp
 - Second question does not re-run CLAP
-- “How many claps?” uses Python merge+count, not Gemma arithmetic
-- Stadium blob is honest (one span), not a fake huge number
-- Mute / no-audio files skip this index
-- Timed listen still works if the sound book is not ready
-- Gemma is not fed two hours of audio
+- “How many claps?” uses Python merge+count
+- Stadium blob is honest (one span)
+- Mute files skip this index
+- Two hours of audio are not dumped into Gemma

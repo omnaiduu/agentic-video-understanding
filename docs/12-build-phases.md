@@ -39,8 +39,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 3 | Brain loop | Gemma JSON loop, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
 | 4 | Speech index | Hybrid Whisper RAG on **Postgres** | **LOCKED** — [phase-04.md](phases/phase-04.md) |
 | 5 | Picture index | SigLIP 2 + `search_visual` | **LOCKED** — [phase-05.md](phases/phase-05.md) |
-| 6 | Sound index | CLAP/GLAP + `search_audio` + count | **OPEN** — [phase-06.md](phases/phase-06.md) |
-| 7 | Export | `export_clip` / `export_audio` + URL | Proposed |
+| 6 | Sound index | CLAP + `search_audio` + Python count | **LOCKED** — [phase-06.md](phases/phase-06.md) |
+| 7 | Export | `export_clip` / `export_audio` + URL | **OPEN** — [phase-07.md](phases/phase-07.md) |
 | 8 | Memory | Multi-turn last timestamps | Proposed |
 | 9 | UI shell | React app, pages, empty/loading/error | Proposed |
 | 10 | Upload UI | Pick file, ingest progress | Proposed |
@@ -87,47 +87,19 @@ SigLIP 2 at ~1 FPS → pgvector; `search_visual` in the JSON loop. Dense picture
 
 # Phase 6 — Sound index
 
-Full brief: **[phases/phase-06.md](phases/phase-06.md)**
+**LOCKED.** Brief: [phases/phase-06.md](phases/phase-06.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-CLAP (or GLAP via config) on short audio chunks → pgvector; `search_audio` in the JSON loop. Counts happen in **Python**, not in Gemma’s head.
+LAION-CLAP on 3s chunks → pgvector; `search_audio` in the JSON loop. Counts happen in **Python**.
 
 ---
 
 # Phase 7 — Export
 
-**In one sentence:** after times are known, cut a clip or audio file, save it, return an **HTTPS (or local) URL**. Cap length (e.g. 60s).
+Full brief: **[phases/phase-07.md](phases/phase-07.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-Find / understand / **give the user a file** — third job ([05](05-architecture.md)).
-
-Tools: `export_clip(start, end)`, `export_audio(start, end)`.
-
-## Plan
-
-1. ffmpeg write `data/videos/{id}/exports/{export_id}.mp4` (or wav).
-2. `GET /videos/{id}/exports/{export_id}` streams the file (Phase 1 local disk). Object storage (S3/R2/Modal Volume) later **behind the same storage interface**.
-3. Register tools; duration cap.
-4. Chat response can include `export_url`.
-
-## Libraries
-
-- ffmpeg CLI again.
-- No new web framework.
-
-## Technical decisions (lock later)
-
-| Topic | Proposed | Option |
-|---|---|---|
-| Where files live | Local disk + API GET | S3/R2/Modal Volume when we host |
-| Max length | 60s | config |
-| Auth on URLs | none for now | signed URLs when we add users |
-
-## Done when
-
-Tool returns a URL; fetching it is a playable short mp4/wav; 10-minute request is rejected.
+After times are known, ffmpeg writes a short clip/audio and returns a URL. Cap length; reject oversize.
 
 ---
 
