@@ -20,9 +20,18 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/06-tools.md](docs/06-tools.md) | Tools the bot gets |
 | [docs/07-models-and-indexes.md](docs/07-models-and-indexes.md) | Gemma, Whisper, SigLIP, CLAP |
 | [docs/08-frontend-backend.md](docs/08-frontend-backend.md) | Stack, hosting (Modal), data stores |
-| [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Build order |
+| [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Original build order |
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
 | [docs/11-glossary.md](docs/11-glossary.md) | CLIP, VLM, FPS, RAG, etc. |
+| [docs/12-build-phases.md](docs/12-build-phases.md) | How we build the complete app — phase map |
+| [docs/phases/phase-01.md](docs/phases/phase-01.md) | Phase 1 — hold a video (**locked**) |
+| [docs/phases/phase-02.md](docs/phases/phase-02.md) | Phase 2 — scissors (**locked**) |
+| [docs/phases/phase-03.md](docs/phases/phase-03.md) | Phase 3 — brain loop (**locked**) |
+| [docs/phases/phase-04.md](docs/phases/phase-04.md) | Phase 4 — speech phone book (**locked**; hybrid + Postgres) |
+| [docs/phases/phase-05.md](docs/phases/phase-05.md) | Phase 5 — picture phone book (**locked**; SigLIP 2) |
+| [docs/phases/phase-06.md](docs/phases/phase-06.md) | Phase 6 — sound phone book (**locked**; CLAP) |
+| [docs/phases/phase-07.md](docs/phases/phase-07.md) | Phase 7 — export a clip (**locked**; 60s URL) |
+| [docs/phases/phase-08.md](docs/phases/phase-08.md) | Phase 8 — remember last times (**open**) |
 
 ---
 
