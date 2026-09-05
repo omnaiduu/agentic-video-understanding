@@ -35,8 +35,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | Phase | Name | Adds to the app | Status |
 |---|---|---|---|
 | 1 | Hold a video | FastAPI + SQLite + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
-| 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **Locking** — [phase-02.md](phases/phase-02.md) |
-| 3 | Brain loop | Gemma calls those tools, `/chat` | Proposed |
+| 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
+| 3 | Brain loop | Gemma calls those tools, `/chat` | **Locking** — [phase-03.md](phases/phase-03.md) |
 | 4 | Speech index | Whisper + `search_transcript` | Proposed |
 | 5 | Picture index | SigLIP 2 + `search_visual` | Proposed |
 | 6 | Sound index | CLAP/GLAP + `search_audio` + count | Proposed |
@@ -57,79 +57,15 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 # Phase 2 — Scissors
 
-Full brief (what, why, options, questions): **[phases/phase-02.md](phases/phase-02.md)**
-
-Do not implement from this map. Use that file. Status: not locked until the human answers the questions there.
+**LOCKED.** Brief: [phases/phase-02.md](phases/phase-02.md)
 
 ---
 
 # Phase 3 — Brain loop
 
-**In one sentence:** you send a question; Gemma may call `get_meta` / `get_frames` / `get_audio`; you get an answer. Still **no** search indexes.
+Full brief (what, why, options, questions): **[phases/phase-03.md](phases/phase-03.md)**
 
-**Depends on:** Phase 2 tools.
-
-## What it is doing
-
-This is the product loop: Think → Act → Observe ([05](05-architecture.md)). For now the only way to “find a time” is that the **user said the time** (“what happens at 0:10?”).
-
-```
-POST /videos/{id}/chat  { "message": "What happens at 0:10?" }
-  → agent loop (cap ~8 rounds)
-  → tools
-  → { answer, citations: [{t}], tool_trace }
-```
-
-Caps: max tool rounds, max frames per question ([06](06-tools.md)).
-
-## Plan
-
-1. `app/agent/loop.py` — while rounds left: call model, run tool, append result.
-2. `app/agent/client.py` — OpenAI-compatible HTTP client (`base_url`, `api_key`, `model`).
-3. Register **only** the three tools that exist.
-4. Fake / scripted brain in tests (no GPU required to merge).
-5. Real Gemma via env (`MODEL_BASE_URL`) — Ollama, vLLM, or Modal. Same client.
-
-## Libraries
-
-| Piece | Proposed | Option |
-|---|---|---|
-| HTTP to model | **openai** Python SDK (compatible servers) | raw httpx |
-| Default model name | Gemma 4 **12B Unified** | E4B as cheaper env override ([07](07-models-and-indexes.md)) |
-| Host | Env URL, not hard-coded | Local now, Modal later, **same code** |
-
-Do not dump the whole video into the prompt. Pointer = video id + duration from `get_meta`.
-
-## What the code looks like
-
-```python
-tools = [get_meta, get_frames, get_audio]  # JSON schemas for the model
-for _ in range(MAX_ROUNDS):
-    resp = client.chat(messages, tools)
-    if resp.tool_calls:
-        for call in resp.tool_calls:
-            out = run_tool(call)   # clamps inside tools
-            messages.append(tool_result(out))
-    else:
-        return resp.text
-```
-
-Chat rows in SQLite can start here (user + assistant messages) so Phase 8 is an add-on, not a rewrite. If we skip storing messages until Phase 8, `/chat` is stateless besides the video id.
-
-**Proposed:** save messages from Phase 3 (simple `ChatMessage` table). Phase 8 only adds “last timestamps.”
-
-## Technical decisions (lock later)
-
-| Topic | Proposed | Option |
-|---|---|---|
-| Tests without GPU | FakeBrain that must call `get_frames` for a scripted question | skip real Gemma in CI |
-| System prompt | “Search/tools first, short windows, never load 2h” | |
-| Where Gemma lives | `MODEL_BASE_URL` | Modal vs Ollama is config, not a fork |
-| 12B vs E4B | 12B default, `MODEL_NAME` override | |
-
-## Done when
-
-Scripted test: question at 0:10 → `get_frames` called with a short window → answer returned. Oversize tool call never reaches ffmpeg.
+Do not implement from this map. Use that file. Status: not locked until the human answers the questions there.
 
 ---
 

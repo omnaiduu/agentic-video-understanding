@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). Phase 1 is [locked](phases/phase-01.md). The slice being locked now is [Phase 2](phases/phase-02.md).
+Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). Phases 1–2 are locked. The slice being locked now is [Phase 3](phases/phase-03.md).
 
 Then:
 
@@ -17,4 +17,5 @@ Then:
 11. [Glossary](11-glossary.md)
 12. [Build phases](12-build-phases.md) — complete app, slice by slice (map)
 13. [Phase 1](phases/phase-01.md) — hold a video (**locked**)
-14. [Phase 2](phases/phase-02.md) — scissors (current slice)
+14. [Phase 2](phases/phase-02.md) — scissors (**locked**)
+15. [Phase 3](phases/phase-03.md) — brain loop (current slice)
