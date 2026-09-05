@@ -38,8 +38,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
 | 3 | Brain loop | Gemma JSON loop, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
 | 4 | Speech index | Hybrid Whisper RAG on **Postgres** | **LOCKED** — [phase-04.md](phases/phase-04.md) |
-| 5 | Picture index | SigLIP 2 + `search_visual` | **OPEN** — [phase-05.md](phases/phase-05.md) |
-| 6 | Sound index | CLAP/GLAP + `search_audio` + count | Proposed |
+| 5 | Picture index | SigLIP 2 + `search_visual` | **LOCKED** — [phase-05.md](phases/phase-05.md) |
+| 6 | Sound index | CLAP/GLAP + `search_audio` + count | **OPEN** — [phase-06.md](phases/phase-06.md) |
 | 7 | Export | `export_clip` / `export_audio` + URL | Proposed |
 | 8 | Memory | Multi-turn last timestamps | Proposed |
 | 9 | UI shell | React app, pages, empty/loading/error | Proposed |
@@ -79,52 +79,19 @@ Hybrid keyword + dense RAG on Whisper lines. PostgreSQL + pgvector (not SQLite).
 
 # Phase 5 — Picture index
 
-Full brief: **[phases/phase-05.md](phases/phase-05.md)**
+**LOCKED.** Brief: [phases/phase-05.md](phases/phase-05.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-SigLIP 2 at ~1 FPS → pgvector; `search_visual` in the JSON loop. Dense picture search (not hybrid — pictures have no words).
+SigLIP 2 at ~1 FPS → pgvector; `search_visual` in the JSON loop. Dense picture search (not hybrid).
 
 ---
 
 # Phase 6 — Sound index
 
-**In one sentence:** 1–5s audio chunks → **CLAP/GLAP** vectors; `search_audio("chirp")`; counts happen in **Python**, not in Gemma’s head.
+Full brief: **[phases/phase-06.md](phases/phase-06.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-Picture index will not hear a bird. Whisper will not write “clap.” Same pattern as SigLIP ([05](05-architecture.md) counting section).
-
-```
-search_audio → times → merge nearby hits → len() in code
-→ optional get_audio on 2–3 samples to verify
-```
-
-Stadium applause may be one blob. Honest answer: “applause 1:00–1:40”, not a fake 847.
-
-## Plan
-
-1. Chunk audio 1–5s, embed, store vectors + times.
-2. `search_audio(phrase)`.
-3. Optional helper `count_events` later ([06](06-tools.md)); for this phase, merge+count in the tool or in Python the agent is instructed to trust.
-4. Register tool.
-
-## Libraries
-
-| Piece | Proposed | Option |
-|---|---|---|
-| Encoder | **LAION-CLAP** | **GLAP** (newer, same tool API) |
-| Chunk | 3s default, 1s hop or 3s hop | 1s vs 5s |
-| Vectors | same store as visual (sqlite-vec / FAISS) | |
-
-## Technical decisions (lock later)
-
-- CLAP vs GLAP.
-- Clap-only detector: **not** this phase ([04](04-what-we-rejected.md)).
-
-## Done when
-
-“When did the bird make a sound?” returns a time from the audio index; Gemma may confirm with `get_audio`.
+CLAP (or GLAP via config) on short audio chunks → pgvector; `search_audio` in the JSON loop. Counts happen in **Python**, not in Gemma’s head.
 
 ---
 
