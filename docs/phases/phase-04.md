@@ -22,30 +22,42 @@ Whisper has **no eyes**. It will not describe a red light or a slide. That is Ph
 
 ---
 
-## How we implement it (not an embedding model)
+## This *is* RAG — the choice is the retriever
 
-Two different jobs get mixed up. Only the first is this phase.
+**RAG** = retrieve a few pieces, then the model answers from those pieces (and here, may `look`/`listen` to confirm). We are **not** “no RAG.” We are **not** stuffing the whole talk into Gemma.
 
-| Job | What it is | This phase? |
-|---|---|---|
-| **Transcribe** | Whisper: sound → words + times | **Yes** (once per file) |
-| **Find a line** | Search those words | **Yes** |
-| **Train / run a speech embedder** | Vectors for “sounds like” | **No** — that’s Phase 6 (CLAP) for *beeps/claps/chirps*, not for “what did she say” |
+The fight is only: **what do we retrieve, and with what engine?**
 
-**Option A — text search (what I would do)**  
-Save Whisper’s sentences in SQLite. Search with **FTS** (find words, like Ctrl+F, but ranked). Query “pricing” → lines that contain it → timestamps.
+Speech is a waveform. “What did she **say**” is about **words**. To search words you almost always **transcribe first** (Whisper). After that, retrieval is over **text with timestamps**. That is “RAG over speech” in practice: audio → text+time → retrieve → Gemma.
 
-- Right for: names, quotes, “pricing”, “Q3”, “red team”
-- Fast, no extra GPU at question time
-- Misses: “how much does it cost?” if she only said “pricing” (different words). Gemma can still try a shorter keyword, or we add embeddings **later** on the *same text*.
+Skipping Whisper and doing RAG on **raw audio vectors** finds *how it sounds* (clap, chirp). It does **not** reliably find the word “pricing.” That engine is CLAP, Phase 6, different question.
 
-**Option B — embed the transcript**  
-After Whisper, run a **text** embedding model on each sentence, search by meaning. Helps paraphrases. More moving parts. We are **not** training anything. We are **not** using SigLIP here (that’s pictures).
+We are **not** training a new model. Options below are all off-the-shelf.
 
-**Option C — no notebook, Gemma listens to hours**  
-Rejected. Caps exist so we never do this.
+### Retriever options (pick one for Phase 4)
 
-**Recommendation: A.** Whisper + FTS. Same as the old architecture doc. Embeddings on transcript lines can be added later without throwing A away. Do **not** build or train an embedding model in Phase 4.
+**A — Keyword / BM25 (SQLite FTS5)**  
+Technical: SQLite’s built-in full-text tables. Tokenizer splits words, BM25 ranks lines that contain the query terms. We store `{start_s, end_s, text}` per Whisper **segment**. Query string from Gemma’s `search` JSON. Return top ~8 rows.
+
+- Why it is strong: talk questions often use the **same words** (names, “pricing”, “NATO”, quotes). No extra model at query time. Lives in the same `app.db`. Matches the original architecture doc.
+- Why it is weak: “how much does it cost?” may miss a line that only says “pricing.” Typos / ASR errors (“prising”) can miss.
+
+**B — Dense RAG on the transcript**  
+Technical: same Whisper segments. A **small text** embedder (e.g. E5 / MiniLM — not SigLIP, not a model we train) → one vector per segment → sqlite-vec or FAISS. Query: embed the question, nearest neighbors.
+
+- Why: paraphrase and “cost” ≈ “pricing.”
+- Why not required on day one: extra ingest GPU, extra index, still depends on Whisper quality. If ASR is wrong, vectors are wrong too.
+
+**C — Hybrid**  
+Run A and B, merge (e.g. RRF). Best quality, most code. Can be Phase 4b.
+
+**D — RAG on raw audio only (no Whisper)**  
+CLAP-style chunks. Right for “when did it clap.” Wrong as the **only** index for “what did she say.”
+
+**E — Put the whole transcript in the prompt**  
+A 2-hour talk is a long document. Can work for short videos; blows up for long ones; also tends to skip `look` (we already said don’t answer from the index alone). Not the spine.
+
+**What I would ship first: A**, because Find is “get a time from words we already wrote down,” Understand stays Gemma on a short `look`. Add **B** later on the **same** `TranscriptLine` table if paraphrase fails. I will **not** lock A without you — you asked for the why, not a silent lock.
 
 ---
 
@@ -117,10 +129,10 @@ Example: “what did she say about pricing?” → `search` → hits at 12:04 �
 
 ## Questions (lock these)
 
-0. **Find speech how?** **A — Whisper + text search (FTS)** (recommended), or **B — also embed transcript lines**? I would lock **A only**.
-1. **Whisper size:** **turbo** (faster) or **large-v3** (better text)? I would use **turbo**.
-2. **Don’t block upload** — notebook fills in the background. OK?
-3. **`search` in the same JSON** as look / listen / answer. OK?
+0. **Retriever:** **A** FTS5/BM25, **B** dense text embeddings on Whisper lines, **C** hybrid A+B, or **D** skip Whisper and audio-embed only (I would not pick D for “what did she say”)?  
+1. **Whisper size:** turbo vs large-v3?  
+2. Background ingest (don’t block upload)?  
+3. `search` in the same JSON as look/listen/answer?
 
 When these are answered, mark **LOCKED**.
 
