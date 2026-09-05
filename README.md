@@ -27,7 +27,7 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/phases/phase-01.md](docs/phases/phase-01.md) | Phase 1 — hold a video (**locked**) |
 | [docs/phases/phase-02.md](docs/phases/phase-02.md) | Phase 2 — scissors (**locked**) |
 | [docs/phases/phase-03.md](docs/phases/phase-03.md) | Phase 3 — brain loop (**locked**) |
-| [docs/phases/phase-04.md](docs/phases/phase-04.md) | **Phase 4** — speech phone book (current slice) |
+| [docs/phases/phase-04.md](docs/phases/phase-04.md) | Phase 4 — speech phone book (**locked**; hybrid + Postgres) |
 
 ---
 

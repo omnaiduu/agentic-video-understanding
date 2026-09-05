@@ -80,7 +80,7 @@ BRANCH on JSON.do:
 
 **API:** `POST /videos/{id}/chat` `{ "message": "..." }` → `{ answer, citations, steps }`.
 
-Save messages in SQLite (text + pointers to which times we showed). Do not store every JPEG in the DB.
+Save messages in **Postgres** (text + pointers to which times we showed). Do not store every JPEG in the DB.
 
 **Tests:** FakeBrain returns canned JSON (`look` then `answer`). No GPU. Oversize `look` never runs a 2h ffmpeg.
 

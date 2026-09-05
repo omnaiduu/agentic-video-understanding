@@ -10,7 +10,7 @@ Related: [goal](../01-goal-and-context.md) · [stack](../08-frontend-backend.md)
 
 ## What this phase is
 
-**File intake.** An HTTP API that receives a video or audio file, keeps it on disk, remembers it in SQLite, tells you duration and status.
+**File intake.** An HTTP API that receives a video or audio file, keeps it on disk, remembers it in Postgres, tells you duration and status.
 
 Not: website, chat, frame cutting, Whisper, Gemma, clip export.
 
@@ -18,7 +18,7 @@ Not: website, chat, frame cutting, Whisper, Gemma, clip export.
 
 ## Words
 
-**SQLite** — a database that is one file.
+**SQLite** — old default (one file). **Corrected:** we use **PostgreSQL** (your pick). Same SQLModel classes; `DATABASE_URL` is Postgres. Files still live on disk.
 
 **SQLModel** — Python library (not an AI model). A class becomes a database table. Save/load rows.
 
@@ -33,7 +33,7 @@ Not: website, chat, frame cutting, Whisper, Gemma, clip export.
 | How files enter | **Upload** (multipart) **and** **path** (JSON). Path **copies** into our folder. |
 | Types | **mp4** video, plus **any audio** ffprobe accepts (mp3, wav, m4a, aac, flac, ogg, …). Probe must succeed. |
 | Size | **2 GB** default (`MAX_UPLOAD_BYTES`). Configurable. Not unlimited. |
-| Database | SQLite + **SQLModel** |
+| Database | **PostgreSQL** + SQLModel (**corrected**; was SQLite) |
 | Ids | UUID. Folder `data/videos/{id}/original.{ext}` (keep real extension). |
 | Auth | None |
 | POST | Sync: return after save + ffprobe. No job queue. |
@@ -61,7 +61,7 @@ Not: website, chat, frame cutting, Whisper, Gemma, clip export.
 ```
 POST /videos          upload file OR {"path": "..."}
   → copy to data/videos/{id}/original.{ext}
-  → ffprobe → SQLite → JSON
+  → ffprobe → Postgres → JSON
 
 GET /videos
 GET /videos/{id}      metadata
@@ -75,7 +75,7 @@ DELETE /videos/{id}   row + folder
 
 1. `backend/` Python 3.11+, `pyproject.toml`
 2. FastAPI, CORS open, pydantic-settings
-3. SQLModel + SQLite at `DATA_DIR/app.db`
+3. SQLModel + **PostgreSQL** (`DATABASE_URL`)
 4. Routes above
 5. Reject over 2 GB (413)
 6. Tests: tiny mp4, tiny audio, garbage → error, oversize, delete removes files

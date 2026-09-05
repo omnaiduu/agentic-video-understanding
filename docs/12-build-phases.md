@@ -37,7 +37,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 1 | Hold a video | FastAPI + SQLite + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
 | 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
 | 3 | Brain loop | Gemma calls those tools, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
-| 4 | Speech index | Whisper + `search` in JSON loop | **Locking** — [phase-04.md](phases/phase-04.md) |
+| 4 | Speech index | Hybrid Whisper RAG on **Postgres** | **LOCKED** — [phase-04.md](phases/phase-04.md) |
 | 5 | Picture index | SigLIP 2 + `search_visual` | Proposed |
 | 6 | Sound index | CLAP/GLAP + `search_audio` + count | Proposed |
 | 7 | Export | `export_clip` / `export_audio` + URL | Proposed |
@@ -71,9 +71,9 @@ vLLM JSON schema + our look/listen/answer state machine. Not native `tools=`.
 
 # Phase 4 — Speech index
 
-Full brief: **[phases/phase-04.md](phases/phase-04.md)**
+**LOCKED.** Brief: [phases/phase-04.md](phases/phase-04.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
+Hybrid keyword + dense RAG on Whisper lines. PostgreSQL + pgvector (not SQLite).
 
 ---
 
