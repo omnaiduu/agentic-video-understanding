@@ -1,6 +1,6 @@
 # Phase 3 — Brain loop
 
-**Status:** locking. Human confirmed: **not** native tool calling for this product. **Structured output + our state machine.**
+**Status: LOCKED** (structured JSON via vLLM + our state machine). An agent may implement only this file after Phases 1–2.
 
 Depends on: [Phase 1](phase-01.md), [Phase 2](phase-02.md).
 
@@ -100,40 +100,30 @@ Save messages in SQLite (text + pointers to which times we showed). Do not store
 | Topic | Decision |
 |---|---|
 | Loop owner | **Our state machine** |
-| Model output | **Structured JSON** (`do`: look / listen / answer) |
+| Model output | **vLLM structured output** — `response_format` JSON schema (`do`: look / listen / answer). This is Gemma 4 + vLLM’s native feature, not “ask nicely for JSON.” ([vLLM Gemma 4 recipe](https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html)) |
 | Native tool calling | **Not used** for this app’s brain |
 | How it sees media | Image/audio **content parts**, not tool_response |
 | Caps | Phase 2: 64 photos / 30s audio, reject oversize |
 | Max rounds | **8** |
-| Fake brain in tests | **Yes** |
+| Brain | **E4B** default (vLLM). 12B is an env switch if we want later. |
+| Fake brain in tests | **Yes** (no GPU in CI) |
 
----
-
-## Still open (one thing)
-
-**Constrained decoding** (host `guided_json` / grammar) vs “please return JSON” + parse?
-
-Recommend: **use constrained decoding when the host has it**; otherwise parse + one retry. Same schema either way.
+Also tell the model in the **prompt** what look/listen/answer mean. vLLM only forces the **shape**; the prompt teaches the **meaning**. ([vLLM note](https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html))
 
 ---
 
 ## Plan (agent)
 
-1. Pydantic schema for the JSON
-2. `app/agent/loop.py` — state machine above
-3. `app/agent/client.py` — chat completion **without** `tools`; optional `response_format` / `guided_json`
+1. Pydantic schema for look / listen / answer
+2. `app/agent/loop.py` — state machine
+3. `app/agent/client.py` — vLLM OpenAI client, **`response_format: json_schema`**, no `tools=`
 4. Attach Phase 2 bytes as multimodal parts
 5. `POST /videos/{id}/chat`
 6. Tests with FakeBrain
 
 ---
 
-## Questions
-
-1. Constrained decoding when the host supports it, else parse-and-retry — OK?
-2. Default brain **E4B** (cheap, sees+hears) with **12B** as a config switch — OK? (Native tools are off, so E4B’s weak Tau2 score matters less.)
-
-When these are answered, mark **LOCKED**.
+Implement only this file after Phases 1–2.
 
 ## Done when
 

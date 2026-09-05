@@ -36,7 +36,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 |---|---|---|---|
 | 1 | Hold a video | FastAPI + SQLite + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
 | 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
-| 3 | Brain loop | Gemma calls those tools, `/chat` | **Locking** — [phase-03.md](phases/phase-03.md) |
+| 3 | Brain loop | Gemma calls those tools, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
 | 4 | Speech index | Whisper + `search_transcript` | Proposed |
 | 5 | Picture index | SigLIP 2 + `search_visual` | Proposed |
 | 6 | Sound index | CLAP/GLAP + `search_audio` + count | Proposed |
@@ -63,9 +63,9 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 # Phase 3 — Brain loop
 
-Full brief (what, why, options, questions): **[phases/phase-03.md](phases/phase-03.md)**
+**LOCKED.** Brief: [phases/phase-03.md](phases/phase-03.md)
 
-Do not implement from this map. Use that file. **Correction:** native tool calling is **not** the product path. Structured JSON + our state machine.
+vLLM JSON schema + our look/listen/answer state machine. Not native `tools=`.
 
 ---
 
