@@ -34,11 +34,11 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 
 | Phase | Name | Adds to the app | Status |
 |---|---|---|---|
-| 1 | Hold a video | FastAPI + SQLite + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
+| 1 | Hold a video | FastAPI + Postgres + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
 | 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
-| 3 | Brain loop | Gemma calls those tools, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
+| 3 | Brain loop | Gemma JSON loop, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
 | 4 | Speech index | Hybrid Whisper RAG on **Postgres** | **LOCKED** — [phase-04.md](phases/phase-04.md) |
-| 5 | Picture index | SigLIP 2 + `search_visual` | Proposed |
+| 5 | Picture index | SigLIP 2 + `search_visual` | **OPEN** — [phase-05.md](phases/phase-05.md) |
 | 6 | Sound index | CLAP/GLAP + `search_audio` + count | Proposed |
 | 7 | Export | `export_clip` / `export_audio` + URL | Proposed |
 | 8 | Memory | Multi-turn last timestamps | Proposed |
@@ -79,37 +79,11 @@ Hybrid keyword + dense RAG on Whisper lines. PostgreSQL + pgvector (not SQLite).
 
 # Phase 5 — Picture index
 
-**In one sentence:** ~1 photo per second → **SigLIP 2** vectors; `search_visual("red light")` returns times.
+Full brief: **[phases/phase-05.md](phases/phase-05.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-Whisper has no eyes. This is the picture phone book ([07](07-models-and-indexes.md)). Still not the answer: Gemma must `get_frames` to verify.
-
-Ingest: ffmpeg 1 FPS → SigLIP → vectors + times, next to the video id.
-
-## Plan
-
-1. Frame sample at 1 FPS (ffmpeg), encode, discard bulk JPEGs after vectors are stored (keep vectors + times).
-2. Vector table or sqlite-vec / FAISS file per video or one index with video_id.
-3. Tool `search_visual(phrase)`: embed phrase, nearest times.
-4. Register tool.
-
-## Libraries
-
-| Piece | Proposed | Option |
-|---|---|---|
-| Encoder | **SigLIP 2** (Hugging Face / timm) | not 2021 OpenAI CLIP ([04](04-what-we-rejected.md)) |
-| Vectors | **sqlite-vec** | FAISS — faster at huge scale, extra file |
-| Query | embed text with same SigLIP text tower | |
-
-## Technical decisions (lock later)
-
-- sqlite-vec vs FAISS.
-- Keep sampled frames on disk or not (storage vs easier debug). **Proposed: delete JPEGs after embed**; ffmpeg can recreate any time.
-
-## Done when
-
-Silent visual query returns a timestamp without Gemma scanning 2 hours.
+SigLIP 2 at ~1 FPS → pgvector; `search_visual` in the JSON loop. Dense picture search (not hybrid — pictures have no words).
 
 ---
 
