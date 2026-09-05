@@ -40,8 +40,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 4 | Speech index | Hybrid Whisper RAG on **Postgres** | **LOCKED** — [phase-04.md](phases/phase-04.md) |
 | 5 | Picture index | SigLIP 2 + `search_visual` | **LOCKED** — [phase-05.md](phases/phase-05.md) |
 | 6 | Sound index | CLAP + `search_audio` + Python count | **LOCKED** — [phase-06.md](phases/phase-06.md) |
-| 7 | Export | `export_clip` / `export_audio` + URL | **OPEN** — [phase-07.md](phases/phase-07.md) |
-| 8 | Memory | Multi-turn last timestamps | Proposed |
+| 7 | Export | `export_clip` / `export_audio` + URL | **LOCKED** — [phase-07.md](phases/phase-07.md) |
+| 8 | Memory | Multi-turn last timestamps | **OPEN** — [phase-08.md](phases/phase-08.md) |
 | 9 | UI shell | React app, pages, empty/loading/error | Proposed |
 | 10 | Upload UI | Pick file, ingest progress | Proposed |
 | 11 | Watch + ask | Player, chat, seek on timestamps | Proposed |
@@ -95,41 +95,19 @@ LAION-CLAP on 3s chunks → pgvector; `search_audio` in the JSON loop. Counts ha
 
 # Phase 7 — Export
 
-Full brief: **[phases/phase-07.md](phases/phase-07.md)**
+**LOCKED.** Brief: [phases/phase-07.md](phases/phase-07.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-After times are known, ffmpeg writes a short clip/audio and returns a URL. Cap length; reject oversize.
+60s cap, reject oversize; local GET URL; mp4 / wav; re-encode; `export_clip` / `export_audio` in the JSON loop.
 
 ---
 
 # Phase 8 — Memory (multi-turn)
 
-**In one sentence:** follow-up uses the **same video** and **last times** (“was a car in that frame?”) without re-ingest and without searching the whole tape again.
+Full brief: **[phases/phase-08.md](phases/phase-08.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-Google’s `step_list` idea ([02](02-conversation-summary.md)): persist `handle_id` (video + indexes) and last tool timestamps.
-
-## Plan
-
-1. `Session` / `ChatMessage` (if not already from Phase 3).
-2. `last_times: list[{start, end, kind}]` on the session.
-3. System prompt: prefer last times for “that frame / there / the clip”.
-4. `POST /videos/{id}/chat` takes optional `session_id`.
-
-## Libraries
-
-- Same SQLite. No Redis required.
-
-## Technical decisions (lock later)
-
-- How many last windows to keep (e.g. last 3).
-- Optional `crop_frame` / `ocr_frame` are **not** this phase ([06](06-tools.md) later list).
-
-## Done when
-
-Two-turn test: find a moment, then a follow-up about “that” moment does not re-run ingest and does not search from scratch if times exist.
+Follow-up uses the same video and last times. No re-ingest. No Redis.
 
 ---
 

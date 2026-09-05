@@ -30,7 +30,8 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/phases/phase-04.md](docs/phases/phase-04.md) | Phase 4 — speech phone book (**locked**; hybrid + Postgres) |
 | [docs/phases/phase-05.md](docs/phases/phase-05.md) | Phase 5 — picture phone book (**locked**; SigLIP 2) |
 | [docs/phases/phase-06.md](docs/phases/phase-06.md) | Phase 6 — sound phone book (**locked**; CLAP) |
-| [docs/phases/phase-07.md](docs/phases/phase-07.md) | Phase 7 — export a clip (**open**) |
+| [docs/phases/phase-07.md](docs/phases/phase-07.md) | Phase 7 — export a clip (**locked**; 60s URL) |
+| [docs/phases/phase-08.md](docs/phases/phase-08.md) | Phase 8 — remember last times (**open**) |
 
 ---
 
