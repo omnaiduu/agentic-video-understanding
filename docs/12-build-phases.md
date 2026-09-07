@@ -44,8 +44,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 8 | Memory | Multi-turn last timestamps | **LOCKED** — [phase-08.md](phases/phase-08.md) |
 | 9 | UI shell | TanStack Start + shadcn + Query | **LOCKED** — [phase-09.md](phases/phase-09.md) |
 | 10 | Upload UI | Pick file, ingest progress | **LOCKED** — [phase-10.md](phases/phase-10.md) |
-| 11 | Watch + ask | Player, chat, seek on timestamps | **OPEN** — [phase-11.md](phases/phase-11.md) |
-| 12 | Clips + polish | Download links, mobile, errors | Proposed |
+| 11 | Watch + ask | Video.js, chat, seek, collapsed trace | **LOCKED** — [phase-11.md](phases/phase-11.md) |
+| 12 | Clips + polish | Download links, mobile, errors | **OPEN** — [phase-12.md](phases/phase-12.md) |
 
 ---
 
@@ -127,37 +127,19 @@ File picker on the library; byte progress; Query poll; jump to `/videos/:id`.
 
 # Phase 11 — Watch + ask
 
-Full brief: **[phases/phase-11.md](phases/phase-11.md)**
+**LOCKED.** Brief: [phases/phase-11.md](phases/phase-11.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-Play the file, ask, click a timestamp to seek.
+Video.js; saved `session_id`; click-to-seek; Working…; collapsed tool trace. No export buttons yet.
 
 ---
 
 # Phase 12 — Clips + polish
 
-**In one sentence:** show **clip/audio links** from export tools; layout works on a phone; ingest/model-down errors are readable.
+Full brief: **[phases/phase-12.md](phases/phase-12.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-Finish the complete app, not a new product.
-
-- Render `export_url` as download / inline play.
-- Stack player + chat on small width.
-- Copy for: no video, ingest error, model unreachable.
-- README at repo root: how to run backend + web.
-
-## Not in this phase (still later / never)
-
-- Login, Postgres, Elasticsearch.
-- `search_notes`, scene detect, train E2B as CLIP ([04](04-what-we-rejected.md)).
-- `crop_frame` / `ocr_frame` unless we already failed on tiny objects / slides.
-- Kitchen-sink desktop agent.
-
-## Done when (complete app)
-
-A ≥10 minute video can: (a) speech question, (b) silent visual, (c) sound question, (d) follow-up without re-ingest, (e) exported clip URL, (f) all of that from the website — without loading the whole file into Gemma. Same bar as [09](09-implementation-plan.md), plus UI.
+Clip links, phone stack, readable errors, README. Last phase.
 
 ---
 
