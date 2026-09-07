@@ -4,7 +4,7 @@ An open-source system that copies **Google Gemini’s agentic video understandin
 
 This repository is the **design, decisions, and conversation record**. Implementation code is not in this repo yet.
 
-**Source of truth:** the **12 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, Node backend, or ColQwen — ignore it. Those were earlier drafts. They are not this app.
+**Source of truth:** the **12 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, Node backend, or ColQwen — ignore it for v1. Those were earlier drafts. The ColQwen slide-search design is saved in [what we rejected](docs/04-what-we-rejected.md) as a later alternative, not this app.
 
 **Goal:** Ask questions about long videos (talks, slides, sports, CCTV, sounds) without dumping the whole file into a large model. Find the moment, look or listen to a short slice, then answer — optionally export a clip with a link.
 
@@ -25,7 +25,7 @@ Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–
 | [docs/01-goal-and-context.md](docs/01-goal-and-context.md) | What this is, why it exists |
 | [docs/02-conversation-summary.md](docs/02-conversation-summary.md) | Early thread, compressed (history) |
 | [docs/03-key-decisions.md](docs/03-key-decisions.md) | Locked choices — **matches the 12 phases** |
-| [docs/04-what-we-rejected.md](docs/04-what-we-rejected.md) | What we are not doing |
+| [docs/04-what-we-rejected.md](docs/04-what-we-rejected.md) | What we are not doing — **ColQwen design kept here as a later alternative** |
 | [docs/05-architecture.md](docs/05-architecture.md) | Ingest vs question loop |
 | [docs/06-tools.md](docs/06-tools.md) | JSON actions our Python runs |
 | [docs/07-models-and-indexes.md](docs/07-models-and-indexes.md) | E4B, Whisper, SigLIP, CLAP, Postgres |

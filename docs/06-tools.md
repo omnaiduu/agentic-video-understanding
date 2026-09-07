@@ -37,7 +37,7 @@ Counting is already inside `search_audio` (merge + `len()`). No extra verb requi
 - Native `tools=` / `tool_calls`
 - Arbitrary Python / full Agentic Vision sandbox
 - Web search, shell, calendar
-- ColQwen `search_slides`
+- ColQwen `search_slides` — design kept in [what we rejected](04-what-we-rejected.md); not a v1 tool
 
 ## Agentic Vision vs these tools
 

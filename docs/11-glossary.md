@@ -26,3 +26,5 @@
 | **search_notes** | Search VLM **captions** from ingest. **We don’t do this** |
 | **Modal** | GPU host we may use for Gemma / ingest (hosting still open in doc 13) |
 | **E4B / 12B** | Gemma 4 sizes. **E4B = default.** 12B = later env switch. |
+| **ColQwen / ColPali** | Patch-level slide retriever (MaxSim). **Not v1.** Design in [what we rejected](04-what-we-rejected.md). Would be `search_slides` later. |
+| **search_slides** | Hypothetical JSON action: find a unique slide by on-screen text. Not in phases 1–12. |

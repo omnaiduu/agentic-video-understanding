@@ -7,7 +7,7 @@ Then:
 1. [Goal and context](01-goal-and-context.md)
 2. [Conversation summary](02-conversation-summary.md)
 3. [Key decisions](03-key-decisions.md)
-4. [What we rejected](04-what-we-rejected.md)
+4. [What we rejected](04-what-we-rejected.md) — includes the **ColQwen / `search_slides`** alternative (not v1)
 5. [Architecture](05-architecture.md)
 6. [Tools](06-tools.md)
 7. [Models and indexes](07-models-and-indexes.md)

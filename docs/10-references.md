@@ -23,6 +23,8 @@
 
 ## Related (not v1 spine)
 
+- [ColPali](https://arxiv.org/abs/2407.01449) — ICLR 2025. Patch-level PDF/slide retrieval (late interaction). Ancestor of ColQwen.
+- [ColQwen2](https://huggingface.co/vidore/colqwen2-v1.0) — same recipe on Qwen2-VL. **Not v1**; design in [what we rejected](04-what-we-rejected.md).
 - Omni-Embed-Audio (ACL 2026) — LLM as audio retriever; why E2B-embed is **research**, not v1.
 - FineLAP, M2D-CLAP, WavLink — stronger CLAP-class models; same `search_audio` slot.
 

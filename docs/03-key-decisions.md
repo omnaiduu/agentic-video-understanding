@@ -52,4 +52,6 @@ Locked. Short. This file matches the **12 build phases**. Do not follow older SQ
 
 ## Explicitly not v1
 
-Scene detect · VLM captions / `search_notes` · OCR every frame · answering from RAG only · homemade E2B embedder · WhisperX / ColQwen / three-speed Node driver · kitchen-sink desktop tools · dumping 2h into Gemma
+Scene detect · VLM captions / `search_notes` · OCR every frame · answering from RAG only · homemade E2B embedder · WhisperX / three-speed Node driver · kitchen-sink desktop tools · dumping 2h into Gemma
+
+**ColQwen / `search_slides`:** not v1. Full design lives in [what we rejected](04-what-we-rejected.md) as a later alternative if printed slide text fails.
