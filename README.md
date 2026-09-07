@@ -33,7 +33,8 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/phases/phase-07.md](docs/phases/phase-07.md) | Phase 7 — export a clip (**locked**; 60s URL) |
 | [docs/phases/phase-08.md](docs/phases/phase-08.md) | Phase 8 — remember last times (**locked**) |
 | [docs/phases/phase-09.md](docs/phases/phase-09.md) | Phase 9 — website shell (**locked**; TanStack Start + shadcn + Query) |
-| [docs/phases/phase-10.md](docs/phases/phase-10.md) | Phase 10 — upload in the browser (**open**) |
+| [docs/phases/phase-10.md](docs/phases/phase-10.md) | Phase 10 — upload in the browser (**locked**) |
+| [docs/phases/phase-11.md](docs/phases/phase-11.md) | Phase 11 — watch and ask (**open**) |
 
 ---
 

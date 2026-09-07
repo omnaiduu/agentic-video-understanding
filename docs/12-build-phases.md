@@ -43,8 +43,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 7 | Export | `export_clip` / `export_audio` + URL | **LOCKED** — [phase-07.md](phases/phase-07.md) |
 | 8 | Memory | Multi-turn last timestamps | **LOCKED** — [phase-08.md](phases/phase-08.md) |
 | 9 | UI shell | TanStack Start + shadcn + Query | **LOCKED** — [phase-09.md](phases/phase-09.md) |
-| 10 | Upload UI | Pick file, ingest progress | **OPEN** — [phase-10.md](phases/phase-10.md) |
-| 11 | Watch + ask | Player, chat, seek on timestamps | Proposed |
+| 10 | Upload UI | Pick file, ingest progress | **LOCKED** — [phase-10.md](phases/phase-10.md) |
+| 11 | Watch + ask | Player, chat, seek on timestamps | **OPEN** — [phase-11.md](phases/phase-11.md) |
 | 12 | Clips + polish | Download links, mobile, errors | Proposed |
 
 ---
@@ -119,40 +119,19 @@ TanStack Start + shadcn/Tailwind + TanStack Query. Library + watch+ask shell. Fa
 
 # Phase 10 — Upload UI
 
-Full brief: **[phases/phase-10.md](phases/phase-10.md)**
+**LOCKED.** Brief: [phases/phase-10.md](phases/phase-10.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-Pick a file in the browser; poll until ready or error.
+File picker on the library; byte progress; Query poll; jump to `/videos/:id`.
 
 ---
 
 # Phase 11 — Watch + ask
 
-**In one sentence:** play the video, type a question, see the answer, click a **timestamp** to seek.
+Full brief: **[phases/phase-11.md](phases/phase-11.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-The human loop: watch and ask. Player uses `GET` of the original (need a media route if files are not public — add `GET /videos/{id}/media` if missing).
-
-## Plan
-
-1. HTML5 `<video>` (simple).
-2. Chat panel: messages, input, waiting state.
-3. `POST /videos/{id}/chat`.
-4. Timestamp chips → `video.currentTime = t`.
-5. Optional: show tool_trace behind a “details” disclosure (debug, not required).
-
-## Libraries
-
-| Piece | Proposed | Option |
-|---|---|---|
-| Player | native `<video>` | video.js / Media Chrome later |
-| Media URL | FastAPI streams `original.mp4` | |
-
-## Done when
-
-Ask a question on a ready video; see answer text; click a time; player jumps there.
+Play the file, ask, click a timestamp to seek.
 
 ---
 
