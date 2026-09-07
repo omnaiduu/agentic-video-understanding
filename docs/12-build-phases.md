@@ -2,7 +2,7 @@
 
 This is **one production app**, built in slices. It is not a v1 toy that we later replace.
 
-Old docs stay. They are the *why* and the *locked product*. This file is the *build order* for an AI agent.
+**This file plus `docs/phases/` is the source of truth.** Docs 01–11 were rewritten to match. Older GitHub PRs (Node/Modal hybrid, ColQwen, WhisperX, 12B native tools) are **not** this app.
 
 | Read this | For |
 |---|---|
@@ -12,7 +12,7 @@ Old docs stay. They are the *why* and the *locked product*. This file is the *bu
 | [06 Tools](06-tools.md) | Tool list and caps |
 | [07 Models](07-models-and-indexes.md) | Gemma, Whisper, SigLIP, CLAP |
 | [08 Frontend/backend](08-frontend-backend.md) | Stack |
-| [09 Implementation plan](09-implementation-plan.md) | Original build order (this file replaces it as the agent brief) |
+| [09 Implementation plan](09-implementation-plan.md) | Pointer here — do not implement the old 7-step list |
 | [11 Glossary](11-glossary.md) | Words |
 | [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size — **open**, talk this next |
 | [14 From idea to production](14-from-idea-to-production.md) | How to run agents without reading code (method, any project) |

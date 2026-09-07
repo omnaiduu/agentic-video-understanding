@@ -30,7 +30,7 @@
 
 - [Modal pricing](https://modal.com/pricing) — GPU per-second (L4 / A10 / …).
 - ffmpeg — extract and export.
-- FastAPI, sqlite-vec / FAISS.
+- FastAPI, PostgreSQL, pgvector.
 
 ## Academic agentic video (background only)
 

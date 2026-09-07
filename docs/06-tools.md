@@ -1,25 +1,26 @@
 # Tools
 
-All tools are **functions Gemma may call**. The runtime enforces caps (window length, FPS, export duration, frame budget).
+These are **Python functions our state machine runs**. Gemma does not call OpenAI-style tools. It only emits JSON (`do`: look, listen, search, …). Caps are enforced in Python.
 
 ## v1 (ship these)
 
-| Tool | Input | Output | Helps the bot |
+| JSON `do` | Python | Output | Helps |
 |---|---|---|---|
-| `get_meta` | video id | duration, fps, has_audio | Plan; refuse 2h gulp |
-| `search_transcript` | query string | `[{t, text, score}]` | Talk / “when did they say X” |
-| `search_visual` | phrase | `[{t, score}]` | Silent look-like search (bird, red light) |
-| `search_audio` | phrase | `[{t, score}]` | Chirp, clap, beep, gunshot |
-| `get_frames` | start, end, fps | images to Gemma | **Eyes** — skim or zoom |
-| `get_audio` | start, end | wav/slice to Gemma (keep ≤~30s) | **Ears** on a slice |
-| `export_clip` | start, end | HTTPS URL to mp4 | User leaves with video |
-| `export_audio` | start, end | HTTPS URL | User leaves with sound |
+| *(meta, not a chat verb)* | `get_meta` | duration, fps, has_audio | Plan; refuse 2h gulp |
+| `look` | `get_frames` | JPEGs + times to Gemma as **image parts** | **Eyes** |
+| `listen` | `get_audio` | wav to Gemma as **audio part** (≤30s) | **Ears** |
+| `search` | `search_transcript` | top ~8 `{t, text}` as **text** | Talk / “when did they say X” |
+| `search_visual` | `search_visual` | top ~8 `{t, score}` as **text** | Silent look-like search |
+| `search_audio` | `search_audio` | hits + merged count as **text** | Chirp, clap, beep |
+| `export_clip` | `export_clip` | GET URL to mp4 (≤60s) | User leaves with video |
+| `export_audio` | `export_audio` | GET URL to wav | User leaves with sound |
+| `answer` | *(stop)* | text + times | Done |
 
-### `get_frames` policy (server clamps)
+### `look` / `listen` policy (server clamps)
 
-- Skim: long span, **low** FPS (e.g. ≤0.25) or few frames
-- Zoom: **≤ ~8s**, FPS up to ~8–10
-- Never `get_frames(0, 7200, fps=1)` — rewrite or error
+- One rule: **64 photos or 30 seconds of sound**. Count before cut. Oversize → **reject** (do not silent-shrink).
+- Never extract 0–7200s at 1 FPS.
+- Temp JPEGs/wavs for Gemma are deleted after the round. Export files are **kept**.
 
 ## Later (low hanging / if needed)
 
@@ -27,25 +28,26 @@ All tools are **functions Gemma may call**. The runtime enforces caps (window le
 |---|---|
 | `crop_frame` | Tiny object in a frame already fetched (mini Agentic Vision) |
 | `ocr_frame` | Dense slide text Gemma misreads — **one frame**, not ingest |
-| `count_events` | Thin wrapper: search + merge + `len()` so the model doesn’t arithmetic-hallucinate |
+
+Counting is already inside `search_audio` (merge + `len()`). No extra verb required.
 
 ## Not tools in this product (v1)
 
 - `search_notes` — no caption diary
+- Native `tools=` / `tool_calls`
 - Arbitrary Python / full Agentic Vision sandbox
 - Web search, shell, calendar
+- ColQwen `search_slides`
 
 ## Agentic Vision vs these tools
 
 **Agentic Vision (Google, still images):** crop/zoom/annotate **one photo** via code, feed the crop back.
 
-**Agentic video (Google + us):** jump **in time**, change FPS.
-
-`crop_frame` is Vision. `get_frames(t0,t1,fps)` is Video. We need video first; crop is optional polish.
+**Agentic video (Google + us):** jump **in time**. `look` is Video. `crop_frame` is Vision. We need video first; crop is optional polish.
 
 ## Example: “Find the flying bird and give me the clip”
 
-1. `search_visual("bird flying")` → 1:04
-2. `get_frames(1:03, 1:06, fps=8)` → Gemma confirms
-3. `export_clip(1:03, 1:06)` → URL
-4. Text answer + timestamp + link
+1. JSON `search_visual` “bird flying” → 1:04
+2. JSON `look` 1:03–1:06 → Gemma confirms
+3. JSON `export_clip` → URL
+4. JSON `answer` + timestamp + link

@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). **All 12 phases are locked** as product. [13 — Implementation pass](13-implementation-pass.md) is **open** (how a coding agent builds it: libraries, Modal, size). [14 — From idea to production](14-from-idea-to-production.md) is the method: how to run agents without reading code.
+Start at the [root README](../README.md). **Source of truth = [12 — Build phases](12-build-phases.md) + `phases/`.** Docs 01–11 match those phases (not the old SQLite / 12B / Vite drafts). [13 — Implementation pass](13-implementation-pass.md) is **open** (libraries, Modal, size). [14 — From idea to production](14-from-idea-to-production.md) is the method: how to run agents without reading code.
 
 Then:
 
