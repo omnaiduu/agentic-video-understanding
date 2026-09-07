@@ -42,8 +42,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 6 | Sound index | CLAP + `search_audio` + Python count | **LOCKED** — [phase-06.md](phases/phase-06.md) |
 | 7 | Export | `export_clip` / `export_audio` + URL | **LOCKED** — [phase-07.md](phases/phase-07.md) |
 | 8 | Memory | Multi-turn last timestamps | **LOCKED** — [phase-08.md](phases/phase-08.md) |
-| 9 | UI shell | React app, pages, empty/loading/error | **OPEN** — [phase-09.md](phases/phase-09.md) |
-| 10 | Upload UI | Pick file, ingest progress | Proposed |
+| 9 | UI shell | TanStack Start + shadcn + Query | **LOCKED** — [phase-09.md](phases/phase-09.md) |
+| 10 | Upload UI | Pick file, ingest progress | **OPEN** — [phase-10.md](phases/phase-10.md) |
 | 11 | Watch + ask | Player, chat, seek on timestamps | Proposed |
 | 12 | Clips + polish | Download links, mobile, errors | Proposed |
 
@@ -111,35 +111,19 @@ Last 3 time windows; `session_id`; text pointers, not old photos. Last backend s
 
 # Phase 9 — UI shell
 
-Full brief: **[phases/phase-09.md](phases/phase-09.md)**
+**LOCKED.** Brief: [phases/phase-09.md](phases/phase-09.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-Vite + React pages: library + watch+ask shell. Empty / loading / error. No upload, player, or chat yet.
+TanStack Start + shadcn/Tailwind + TanStack Query. Library + watch+ask shell. FastAPI stays the API.
 
 ---
 
 # Phase 10 — Upload UI
 
-**In one sentence:** pick a file in the browser, see **processing → ready** (or error).
+Full brief: **[phases/phase-10.md](phases/phase-10.md)**
 
-## What it is doing
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-`POST /videos` multipart + poll `GET /videos/{id}`. This is why Phase 1 upload exists.
-
-## Plan
-
-1. File input, upload progress (bytes).
-2. Poll status until `ready` or `error`.
-3. Show ingest failure message.
-
-## Libraries
-
-- Same React app. `fetch` or a thin wrapper. No extra upload SDK.
-
-## Done when
-
-Upload a short mp4 in the UI; status becomes ready; it appears in the library.
+Pick a file in the browser; poll until ready or error.
 
 ---
 

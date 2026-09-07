@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). Phases 1–8 are locked. Phase 9 is **open** (first frontend slice). DB is **Postgres**.
+Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). Phases 1–9 are locked. Phase 10 is **open**. UI stack: TanStack Start + shadcn + Query. DB is **Postgres**.
 
 Then:
 
@@ -24,4 +24,5 @@ Then:
 18. [Phase 6](phases/phase-06.md) — sound phone book (**locked**)
 19. [Phase 7](phases/phase-07.md) — export a clip (**locked**)
 20. [Phase 8](phases/phase-08.md) — remember last times (**locked**)
-21. [Phase 9](phases/phase-09.md) — website shell (**open** — answers needed)
+21. [Phase 9](phases/phase-09.md) — website shell (**locked**; TanStack Start)
+22. [Phase 10](phases/phase-10.md) — upload in the browser (**open** — answers needed)
