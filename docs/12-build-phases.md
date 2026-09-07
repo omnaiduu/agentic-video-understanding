@@ -45,7 +45,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 9 | UI shell | TanStack Start + shadcn + Query | **LOCKED** — [phase-09.md](phases/phase-09.md) |
 | 10 | Upload UI | Pick file, ingest progress | **LOCKED** — [phase-10.md](phases/phase-10.md) |
 | 11 | Watch + ask | Video.js, chat, seek, collapsed trace | **LOCKED** — [phase-11.md](phases/phase-11.md) |
-| 12 | Clips + polish | Download links, mobile, errors | **OPEN** — [phase-12.md](phases/phase-12.md) |
+| 12 | Clips + polish | Clip in chat, phone stack, delete, README | **LOCKED** — [phase-12.md](phases/phase-12.md) |
 
 ---
 
@@ -135,11 +135,11 @@ Video.js; saved `session_id`; click-to-seek; Working…; collapsed tool trace. N
 
 # Phase 12 — Clips + polish
 
-Full brief: **[phases/phase-12.md](phases/phase-12.md)**
+**LOCKED.** Brief: [phases/phase-12.md](phases/phase-12.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
+Exported clip lives **in the scrollable chat**. Phone stacks player above chat. Delete button. Root README.
 
-Clip links, phone stack, readable errors, README. Last phase.
+**All 12 phases are locked.** An agent implements one brief at a time, in order, toward one production app.
 
 ---
 
