@@ -1,72 +1,69 @@
 # Frontend and backend
 
-Frontend was **not** locked in the earlier thread. This is the plan that fits the decisions.
+Locked with the 12 phases.
 
 ## Backend
 
 | Piece | Choice | Why |
 |---|---|---|
 | Language | **Python 3.11+** | Whisper, SigLIP, CLAP, Gemma clients |
-| HTTP | **FastAPI** | Async jobs (ingest) + chat |
-| Media | **ffmpeg** CLI | Cut frames/audio/clips; codecs just work |
-| Agent | OpenAI-compatible calls to **Modal**-hosted Gemma (tool calling) | User hosts models there |
-| Ingest workers | Modal jobs or FastAPI background + queue | Whisper/SigLIP/CLAP once |
-| Auth | None for local v1 | Add later |
+| HTTP | **FastAPI** | Upload, ingest jobs, chat |
+| ORM / DB | **SQLModel + PostgreSQL + pgvector** | Rows, FTS, vectors, sessions |
+| Media | **ffmpeg** CLI | Cut frames/audio/clips |
+| Agent | vLLM OpenAI client, **`response_format` JSON schema**, no `tools=` | Phase 3 |
+| Ingest | Same `ingest_video(id)` — BackgroundTasks on laptop, Modal `.spawn()` later | Doc 13 still open on *where* |
+| Auth | None | v1 |
+| Files | Local disk `data/videos/{id}/` | S3 later behind the same functions |
 
-### API sketch (v1)
+### API sketch
 
-- `POST /videos` — upload or register path; start ingest
-- `GET /videos/{id}` — status: processing | ready | error
-- `POST /videos/{id}/chat` — message; returns answer, citations `{t}`, tool trace, export URLs
-- `GET /videos/{id}/exports/{file}` — or public object-storage URLs
+- `POST /videos` — multipart upload **or** JSON path; copy + ffprobe; start ingest
+- `GET /videos` — library
+- `GET /videos/{id}` — metadata + overall status + per-index statuses
+- `GET /videos/{id}/file` — original bytes, **Range**
+- `DELETE /videos/{id}` — row + folder + sessions + exports
+- `POST /videos/{id}/chat` — `{ message, session_id? }` → `{ answer, citations, steps, session_id, export_url? }`
+- `GET /videos/{id}/exports/{export_id}` — clip/audio, Range
 
-### Data
+### Status
 
-| Store | Holds |
-|---|---|
-| **SQLite** | video rows, transcript lines (FTS), chat sessions, last timestamps |
-| **FAISS or sqlite-vec** | SigLIP + CLAP vectors + time |
-| **Object storage** | original mp4, exported clips/audio |
-
-Postgres + pgvector when there are many users/videos — not day one.
+Overall: `uploaded` → `processing` (ingest) → `ready` | `error`.  
+Books: `transcript_status` / `visual_status` / `audio_status` = pending | processing | ready | error | skipped.  
+Website polls overall status; **chat stays off until `ready`.**
 
 ### Session
 
-Persist `handle_id` (which video + indexes) and last tool times so “was a car in that frame?” does not re-search the whole tape.
+`session_id` on chat. Last **3** time windows as **text**. Omit id → new thread. Refresh keeps the same id (localStorage on the watch page).
 
 ## Frontend
 
-**Job:** upload (or pick a file), show ingest progress, chat, show timestamps (click to seek), show exported clip/audio links, empty/error/loading states.
+**Job:** library, upload with progress, player, chat, click-to-seek, clip **in the chat bubble**, phone stack, delete.
 
-**Proposed v1:** **Vite + React + TypeScript**, talks to FastAPI. Not a second ML stack.
+| Piece | Locked |
+|---|---|
+| App | **TanStack Start** in `web/` (React + Vite + file routes) |
+| Style | Tailwind + **shadcn/ui** |
+| Data | **TanStack Query** (`useQuery` / mutations / `refetchInterval`) |
+| Player | **Video.js** on FastAPI file URL + Range |
+| Routes | `/` library+upload, `/videos/$videoId` watch+ask |
+| ML | **Never** in Start server functions |
 
-Why not Next.js as a must: we never chose it; a SPA against FastAPI is enough. Swap later if we need SSR.
+Screens: empty library → upload → processing → watch+ask → clip in thread. API down → error, no crash. Phone: player above, chat below (~768px).
 
-Screens:
+## Not this stack
 
-1. Library — videos, ingest status
-2. Watch + ask — player, thread, timestamp chips, “download clip”
-3. Empty: no video yet
-4. Error: ingest failed / model down
-
-Desktop + mobile: player + chat stack on small screens.
-
-## ffmpeg vs MediaBunny vs Node vs Go
-
-- **ffmpeg:** backend cutter. Locked.
-- **MediaBunny:** browser trim/preview later; not the ML path.
-- **Node:** optional BFF; not required.
-- **Go:** later high-QPS cut service; not v1.
-
-## Local vs Modal
-
-- **Dev:** Ollama or vLLM on a GPU box; local ffmpeg; SQLite on disk.
-- **Prod:** Gemma + ingest on **Modal**; API can stay on Modal too; files on Volume/S3.
+- Next.js as the API
+- Node/Go cutting media
+- MediaBunny as the backend cutter
+- SQLite / FAISS
+- Login / signed URLs in v1
 
 ## Resources / throughput (honest ranges)
 
-- E4B 4-bit: more concurrent chats on one L4.
-- 12B 4-bit: typical **search + 20 frames + 2–4 tool rounds** often **~10–40s**, GPU-bound.
-- FAISS/CLAP query: milliseconds.
+- E4B 4-bit on an L4: comfortable for this loop.
+- Typical **search + frames + 2–4 rounds** often **~10–40s**, GPU-bound.
+- pgvector / CLAP query: milliseconds.
 - ffmpeg 5s export: sub-second to a few seconds.
-- Bottleneck = **Gemma + frames**, not SQLite.
+- Bottleneck = **Gemma + frames**, not Postgres.
+
+Hosting *where* (laptop vs Modal) is the remaining open talk in [13](13-implementation-pass.md).

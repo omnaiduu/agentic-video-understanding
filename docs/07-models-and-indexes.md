@@ -1,60 +1,59 @@
 # Models and indexes
 
-## Brain — Gemma 4 only (locked family)
+## Brain — Gemma 4 E4B default
 
-| | **E4B** | **12B Unified** |
+| | **E4B (default)** | **12B Unified (later switch)** |
 |---|---|---|
 | Modalities | Text, image, audio | Text, image, audio |
-| Role | Cheap / QPS | **Default agent** |
-| Tools | Weaker multi-step | Better planner |
+| Role | Fills JSON; we own the loop | Stronger planner if we need it |
+| Native tools | Weak (Tau2 ~42%) — **we do not use them** | Better, still not our path |
 | Video gulp | ~60s @ 1 FPS (card) | same class of limit |
 | Audio gulp | ~30s | ~30s |
 | Memory (4-bit, weights) | ~4.5 GB | ~6.7 GB |
-| Comfortable GPU | 12–16 GB | **16 GB min, 24 GB happier** |
+| Comfortable GPU | **L4 (24 GB) is enough** | 16 GB min, 24 GB happier |
 
 **12B is not “no VLM.”** Official card: E2B, E4B, **and 12B Unified** all take image + audio. 31B and 26B-A4B are vision+text **without** audio — don’t pick those as the omni brain.
 
-**Cost (order of magnitude, Modal public rates ~2026):** L4 ~$0.80/hr, A10 ~$1.10/hr. 12B ≈ **2.5–3× compute per token** vs E4B; often **~2–4× cost per video question** (slower + more KV from frames). Idle on Modal ≈ $0 if scaled to zero.
+**Cost (order of magnitude, Modal public rates ~2026):** L4 ~$0.80/hr, A10 ~$1.10/hr. Idle on Modal ≈ $0 if scaled to zero.
 
-**Qwen3-VL 8B:** often stronger **eyes/OCR**; **no native audio**. Not the locked brain; possible later A/B for `get_frames` only.
+**Qwen3-VL 8B:** often stronger **eyes/OCR**; **no native audio**. Not the locked brain.
 
 Gemma **does not** replace Whisper for a 2-hour transcript.
 
-## Speech index — Whisper
+## Speech index — Whisper + hybrid text RAG
 
-- **faster-whisper** (large-v3 or turbo) once per file → `{t, text}`
-- SQLite FTS or equivalent
-- This is **elaborate speech**, not a scene log
+- **faster-whisper turbo** once per file → `{t, text}` (model name swappable)
+- **Keyword:** Postgres `tsvector` + GIN
+- **Meaning:** E5-small (or MiniLM via config) → pgvector
+- **Merge:** Reciprocal Rank Fusion, top ~8
+- This is **speech words**, not a scene log. Not WhisperX. Not a speech-audio embedder.
 
 ## Picture index — SigLIP 2
 
 - CLIP-**style**, not a chatbot
-- ~1 photo/sec → vector → FAISS / sqlite-vec
+- ~1 photo/sec → `VisualFrame` in **pgvector**
+- Default: `google/siglip2-so400m-patch16-384`
 - Query: embed the **phrase**, nearest times
+- Delete bulk JPEGs after embed
 - **Why not 2021 CLIP:** SigLIP 2 is stronger, multilingual, Apache-2.0
-- **PE Core (Meta):** optional later if sports/CCTV retrieval is weak
-- **Cost:** 2h @ 1 FPS ≈ 7200 small forwards (minutes GPU / tens of minutes CPU), then queries in **ms**
-- Storage: tens of MB of vectors, not the video again
+- **PE Core (Meta):** optional later, same table + action
+- **Not hybrid:** pictures have no words. No caption-every-second.
 
 ## Sound index — CLAP family
 
-- **LAION-CLAP** or **GLAP** (Xiaomi, 2025) for v1
-- Stronger papers exist (M2D-CLAP, FineLAP, WavLink); **same tool API**, swap later
-- Chunk 1–5s → vector + time
+- **LAION-CLAP** default (`laion/larger_clap_general` or `clap-htsat-fused`; name in config)
+- **GLAP** later, same table, same `search_audio`
+- Chunk **3s**, hop **1.5s** → `AudioChunk` in pgvector
 - **Still needed if SigLIP exists:** chirps, claps, beeps are **not** in the picture index
 
 CLAP **finds**. It does **not** answer. Counting = threshold + merge + `len()`.
 
 ## What we do not train for v1
 
-Turning **E2B into an embedding model** (PyTorch contrastive on Modal): valid research (see Omni-Embed-Audio on 3B omni LLMs). **Worse ingest cost** than SigLIP/CLAP. If we have domain labels, **fine-tune CLAP**, don’t promote the brain to phone book.
+Turning **E2B into an embedding model**. If we have domain labels, **fine-tune CLAP**, don’t promote the brain to phone book.
 
-## Hosting (Modal)
+## Hosting
 
-Separate endpoints if needed:
+Exact laptop vs Modal split is **open** in [13](13-implementation-pass.md). Product rule that is already locked:
 
-1. Gemma chat (GPU, always-on or scale-to-zero)
-2. Batch ingest: Whisper + SigLIP + CLAP
-3. CPU ffmpeg export
-
-Don’t put 2h ingest and the chat loop on one tiny GPU fighting each other.
+Don’t put 2h ingest and the chat loop on one tiny GPU fighting each other. Ingest and vLLM are separate jobs even if they share a GPU *type*.
