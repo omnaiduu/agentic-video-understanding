@@ -4,7 +4,7 @@
 
 You do not read the code. If this file is empty, an agent will invent GPUs, dump 2k-line modules, and pick extra libraries. Talk through this. Then we append a short **card** onto each phase brief.
 
-Related: [phase map](12-build-phases.md) · [hosting notes](08-frontend-backend.md) · [Gemma sizes](07-models-and-indexes.md)
+Related: [phase map](12-build-phases.md) · [hosting notes](08-frontend-backend.md) · [Gemma sizes](07-models-and-indexes.md) · [from idea to production](14-from-idea-to-production.md) (the method: contracts, checks, stop)
 
 ---
 

@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). **All 12 phases are locked** as product. [13 — Implementation pass](13-implementation-pass.md) is **open** (how a coding agent builds it: libraries, Modal, size).
+Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). **All 12 phases are locked** as product. [13 — Implementation pass](13-implementation-pass.md) is **open** (how a coding agent builds it: libraries, Modal, size). [14 — From idea to production](14-from-idea-to-production.md) is the method: how to run agents without reading code.
 
 Then:
 
@@ -17,15 +17,16 @@ Then:
 11. [Glossary](11-glossary.md)
 12. [Build phases](12-build-phases.md) — complete app, slice by slice (map)
 13. [Implementation pass](13-implementation-pass.md) — libraries, Modal/GPU, size (**open**)
-14. [Phase 1](phases/phase-01.md) — hold a video (**locked**)
-15. [Phase 2](phases/phase-02.md) — scissors (**locked**)
-16. [Phase 3](phases/phase-03.md) — brain loop (**locked**)
-17. [Phase 4](phases/phase-04.md) — speech phone book (**locked**)
-18. [Phase 5](phases/phase-05.md) — picture phone book (**locked**)
-19. [Phase 6](phases/phase-06.md) — sound phone book (**locked**)
-20. [Phase 7](phases/phase-07.md) — export a clip (**locked**)
-21. [Phase 8](phases/phase-08.md) — remember last times (**locked**)
-22. [Phase 9](phases/phase-09.md) — website shell (**locked**; TanStack Start)
-23. [Phase 10](phases/phase-10.md) — upload in the browser (**locked**)
-24. [Phase 11](phases/phase-11.md) — watch and ask (**locked**; Video.js)
-25. [Phase 12](phases/phase-12.md) — clips and polish (**locked**)
+14. [From idea to production](14-from-idea-to-production.md) — how to run agents without reading code
+15. [Phase 1](phases/phase-01.md) — hold a video (**locked**)
+16. [Phase 2](phases/phase-02.md) — scissors (**locked**)
+17. [Phase 3](phases/phase-03.md) — brain loop (**locked**)
+18. [Phase 4](phases/phase-04.md) — speech phone book (**locked**)
+19. [Phase 5](phases/phase-05.md) — picture phone book (**locked**)
+20. [Phase 6](phases/phase-06.md) — sound phone book (**locked**)
+21. [Phase 7](phases/phase-07.md) — export a clip (**locked**)
+22. [Phase 8](phases/phase-08.md) — remember last times (**locked**)
+23. [Phase 9](phases/phase-09.md) — website shell (**locked**; TanStack Start)
+24. [Phase 10](phases/phase-10.md) — upload in the browser (**locked**)
+25. [Phase 11](phases/phase-11.md) — watch and ask (**locked**; Video.js)
+26. [Phase 12](phases/phase-12.md) — clips and polish (**locked**)

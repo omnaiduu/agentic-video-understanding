@@ -25,6 +25,7 @@ This repository is the **design, decisions, and conversation record**. Implement
 | [docs/11-glossary.md](docs/11-glossary.md) | CLIP, VLM, FPS, RAG, etc. |
 | [docs/12-build-phases.md](docs/12-build-phases.md) | How we build the complete app — phase map (1–12 **locked**) |
 | [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | How a coding agent implements it — **open** |
+| [docs/14-from-idea-to-production.md](docs/14-from-idea-to-production.md) | How to run agents from idea to deploy without reading code |
 | [docs/phases/phase-01.md](docs/phases/phase-01.md) | Phase 1 — hold a video (**locked**) |
 | [docs/phases/phase-02.md](docs/phases/phase-02.md) | Phase 2 — scissors (**locked**) |
 | [docs/phases/phase-03.md](docs/phases/phase-03.md) | Phase 3 — brain loop (**locked**) |

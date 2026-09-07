@@ -15,6 +15,7 @@ Old docs stay. They are the *why* and the *locked product*. This file is the *bu
 | [09 Implementation plan](09-implementation-plan.md) | Original build order (this file replaces it as the agent brief) |
 | [11 Glossary](11-glossary.md) | Words |
 | [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size — **open**, talk this next |
+| [14 From idea to production](14-from-idea-to-production.md) | How to run agents without reading code (method, any project) |
 
 **How an agent should use this file**
 
