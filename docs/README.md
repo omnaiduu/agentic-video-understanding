@@ -7,7 +7,7 @@ Then:
 1. [Goal and context](01-goal-and-context.md)
 2. [Conversation summary](02-conversation-summary.md)
 3. [Key decisions](03-key-decisions.md)
-4. [What we rejected](04-what-we-rejected.md) — includes the **ColQwen / `search_slides`** alternative (not v1)
+4. [What we rejected](04-what-we-rejected.md)
 5. [Architecture](05-architecture.md)
 6. [Tools](06-tools.md)
 7. [Models and indexes](07-models-and-indexes.md)
@@ -30,3 +30,4 @@ Then:
 24. [Phase 10](phases/phase-10.md) — upload in the browser (**locked**)
 25. [Phase 11](phases/phase-11.md) — watch and ask (**locked**; Video.js)
 26. [Phase 12](phases/phase-12.md) — clips and polish (**locked**)
+27. [Phase 13](phases/phase-13.md) — slide phone book (**locked**; ColQwen2.x + `search_slides`)

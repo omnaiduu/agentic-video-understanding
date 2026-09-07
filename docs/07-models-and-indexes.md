@@ -39,6 +39,18 @@ Gemma **does not** replace Whisper for a 2-hour transcript.
 - **PE Core (Meta):** optional later, same table + action
 - **Not hybrid:** pictures have no words. No caption-every-second.
 
+## Slide index — ColQwen2.x
+
+- Patch-level retriever (ColPali family), not a chatbot
+- Run on **unique slides** after dedup (pHash and/or SigLIP vs last kept frame), not every 1 FPS copy
+- Default: **ColQwen2.x** (vidore ColQwen2 / 2.5; name in config). Fallback ColPali
+- Query: text tokens → MaxSim vs patches → times
+- Chat action: **`search_slides`**
+- **Gemma still reads the real frame. ColQwen only finds the time.**
+- For “which slide had **Pro $99**?” when nobody **said** the number
+- **Does not replace SigLIP.** Birds / red lights stay `search_visual`
+- Store: `SlidePage` in the same **Postgres + pgvector**
+
 ## Sound index — CLAP family
 
 - **LAION-CLAP** default (`laion/larger_clap_general` or `clap-htsat-fused`; name in config)

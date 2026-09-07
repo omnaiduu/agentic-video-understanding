@@ -1,6 +1,6 @@
 # Implementation pass — how, not what
 
-**Status: OPEN.** Phases 1–12 are locked as **product**. This file is the **coding-agent** layer: packages, folders, Modal/GPU, how small to keep it.
+**Status: OPEN.** Phases 1–13 are locked as **product**. This file is the **coding-agent** layer: packages, folders, Modal/GPU, how small to keep it.
 
 You do not read the code. If this file is empty, an agent will invent GPUs, dump 2k-line modules, and pick extra libraries. Talk through this. Then we append a short **card** onto each phase brief.
 
@@ -10,7 +10,7 @@ Related: [phase map](12-build-phases.md) · [hosting notes](08-frontend-backend.
 
 ## Why the first pass felt abstract
 
-The 12 phases locked **jobs** (hold a file, cut, loop, search, UI). Questions were “Postgres or SQLite?”, “click to seek?”.
+The 13 phases locked **jobs** (hold a file, cut, loop, search, UI, slides). Questions were “Postgres or SQLite?”, “click to seek?”.
 
 They did **not** lock:
 
@@ -27,7 +27,7 @@ That was a miss for a human who plans with agents and never opens the diff.
 
 - Follow the phase brief **and** that phase’s card here.
 - Do **not** add a library that is not on the card.
-- Do **not** put Whisper/SigLIP/CLAP/Gemma in TanStack Start server functions.
+- Do **not** put Whisper/SigLIP/CLAP/ColQwen/Gemma in TanStack Start server functions.
 - Prefer **small modules** (one job per file). If a file is growing past ~200–300 lines, split. Do not “just generate more.”
 - FakeBrain / mock Query in tests. No GPU in CI.
 
@@ -42,6 +42,7 @@ That was a miss for a human who plans with agents and never opens the diff.
 | Brain | Gemma 4 **E4B** default, vLLM **JSON schema**, our state machine |
 | Speech | faster-whisper turbo, hybrid FTS + E5 |
 | Pictures | SigLIP 2 `so400m-patch16-384` |
+| Slides | ColQwen2.x on unique frames; `search_slides` |
 | Sound | LAION-CLAP, 3s / 1.5s hop |
 | UI | TanStack Start, shadcn, Tailwind, TanStack Query, Video.js |
 | Files | Local disk `data/videos/{id}/` (S3 later behind same functions) |
@@ -56,7 +57,7 @@ That was a miss for a human who plans with agents and never opens the diff.
 
 1. **API** — FastAPI (upload, chat HTTP, Postgres).
 2. **Brain** — vLLM serving Gemma (GPU, question time).
-3. **Ingest** — Whisper + SigLIP + CLAP (GPU or CPU, once per file). ffmpeg can stay CPU.
+3. **Ingest** — Whisper + SigLIP + CLAP + ColQwen (GPU or CPU, once per file). ffmpeg can stay CPU.
 
 If chat and a 2h ingest share **one small GPU**, chat dies while indexing. Older docs said split them ([07](07-models-and-indexes.md)).
 
@@ -94,6 +95,7 @@ Per phase, a coding agent should add **about this much**, not a framework:
 | 8 | session fields on existing chat | No Redis |
 | 9 | Start scaffold + 2 routes + `lib/api.ts` | No extra UI kits |
 | 10–12 | grow those routes | No new app |
+| 13 | `ingest/slides.py`, `search/slides.py`, `SlidePage` | No OCR-all-frames; no extra vector DB |
 
 If the agent needs a new library, **stop and ask**.
 

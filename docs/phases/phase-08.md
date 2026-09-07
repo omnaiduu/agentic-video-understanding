@@ -16,7 +16,7 @@ Turn 1 finds a moment. Turn 2 (“that frame”) uses **session last_times** as 
 
 Same idea as Google’s `step_list`. Memory is **our** state. No new JSON verb.
 
-This is the **last backend** slice.
+This is the last slice of the **first** backend pass (hold → scissors → loop → three books → export → memory). **Phase 13** adds the slide book after the website exists. Same app.
 
 ---
 

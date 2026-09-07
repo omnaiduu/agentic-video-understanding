@@ -14,7 +14,7 @@ Related: [SigLIP](../07-models-and-indexes.md) · [tools](../06-tools.md) · [re
 
 Once per file: ~**one photo per second** → **SigLIP 2** → numbers + time. Chat runs **dense search** on that notebook. Gemma gets a few times as **text**, may `look`, then `answer`. Second question does not run SigLIP again.
 
-This **is** RAG (retrieve, then generate). SigLIP finds times; Gemma understands by looking. Search scores are **not** the answer. Not hybrid (pictures have no words). Not sound (that is Phase 6).
+This **is** RAG (retrieve, then generate). SigLIP finds times; Gemma understands by looking. Search scores are **not** the answer. Not hybrid (pictures have no words). Not sound (that is Phase 6). Not printed slide text (that is Phase 13, ColQwen).
 
 ---
 

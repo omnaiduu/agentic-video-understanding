@@ -2,7 +2,7 @@
 
 This is **one production app**, built in slices. It is not a v1 toy that we later replace.
 
-**This file plus `docs/phases/` is the source of truth.** Docs 01–11 were rewritten to match. Older GitHub PRs (Node/Modal hybrid, ColQwen, WhisperX, 12B native tools) are **not** this app.
+**This file plus `docs/phases/` is the source of truth.** Docs 01–11 were rewritten to match. Older GitHub PRs (Node/Modal hybrid, WhisperX, 12B native tools) are **not** this app. **ColQwen2.x + `search_slides` is this app** (Phase 13).
 
 | Read this | For |
 |---|---|
@@ -10,7 +10,7 @@ This is **one production app**, built in slices. It is not a v1 toy that we late
 | [03 Key decisions](03-key-decisions.md) | Locked product choices |
 | [05 Architecture](05-architecture.md) | Ingest vs question loop |
 | [06 Tools](06-tools.md) | Tool list and caps |
-| [07 Models](07-models-and-indexes.md) | Gemma, Whisper, SigLIP, CLAP |
+| [07 Models](07-models-and-indexes.md) | Gemma, Whisper, SigLIP, CLAP, ColQwen |
 | [08 Frontend/backend](08-frontend-backend.md) | Stack |
 | [09 Implementation plan](09-implementation-plan.md) | Pointer here — do not implement the old 7-step list |
 | [11 Glossary](11-glossary.md) | Words |
@@ -26,9 +26,9 @@ This is **one production app**, built in slices. It is not a v1 toy that we late
 
 **End state (the complete app)**
 
-Upload a long video → indexes built once (speech, pictures, sounds) → ask questions → Gemma uses tools on short slices → timestamped answer → optional clip link → website for upload, player, chat. Second question does not re-ingest.
+Upload a long video → indexes built once (speech, pictures, sounds, **slides**) → ask questions → Gemma uses tools on short slices → timestamped answer → optional clip link → website for upload, player, chat. Second question does not re-ingest.
 
-Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
+Backend first (Phases 1–8). Frontend second (Phases 9–12). Slide book last (Phase 13). Same app.
 
 ---
 
@@ -48,6 +48,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 10 | Upload UI | Pick file, ingest progress | **LOCKED** — [phase-10.md](phases/phase-10.md) |
 | 11 | Watch + ask | Video.js, chat, seek, collapsed trace | **LOCKED** — [phase-11.md](phases/phase-11.md) |
 | 12 | Clips + polish | Clip in chat, phone stack, delete, README | **LOCKED** — [phase-12.md](phases/phase-12.md) |
+| 13 | Slide index | Unique slides + ColQwen2.x + `search_slides` | **LOCKED** — [phase-13.md](phases/phase-13.md) |
 
 ---
 
@@ -141,7 +142,15 @@ Video.js; saved `session_id`; click-to-seek; Working…; collapsed tool trace. N
 
 Exported clip lives **in the scrollable chat**. Phone stacks player above chat. Delete button. Root README.
 
-**All 12 phases are locked.** An agent implements one brief at a time, in order, toward one production app.
+---
+
+# Phase 13 — Slide index
+
+**LOCKED.** Brief: [phases/phase-13.md](phases/phase-13.md)
+
+Unique-slide dedup + **ColQwen2.x** + `search_slides`. For “which slide had **Pro $99**?” when nobody said the number. **Gemma still reads the real frame. ColQwen only finds the time.**
+
+**All 13 phases are locked.** An agent implements one brief at a time, in order, toward one production app.
 
 ---
 

@@ -1,6 +1,6 @@
 # Phase 12 — Clips and polish
 
-**Status: LOCKED** (clip **in the scrollable chat**; phone stack; delete button; root README). **Last phase.** The complete app is specified.
+**Status: LOCKED** (clip **in the scrollable chat**; phone stack; delete button; root README). UI complete. **Phase 13** still adds the slide book.
 
 Depends on: [Phase 7](phase-07.md) (`export_url`, `GET /videos/{id}/exports/{id}`), [Phase 11](phase-11.md) (watch + ask). Same TanStack Start + shadcn app.
 
@@ -64,6 +64,8 @@ Width < ~768px
 
 Implement only this file after 11.
 
-## Done when (complete app)
+## Done when (UI complete)
 
 From the **website**, a long video can: (a) speech question, (b) silent visual, (c) sound question, (d) follow-up without re-ingest, (e) clip **in the chat**, (f) usable on a phone — without loading the whole file into Gemma.
+
+Slide-text search (“which slide had **Pro $99**?”) is **Phase 13**.

@@ -6,6 +6,7 @@
                     INGEST (once per video)
   video.mp4 ──► disk  data/videos/{id}/
            ──► ffmpeg 1 FPS ──► SigLIP 2 ──► VisualFrame (pgvector)
+                    └── unique slides ──► ColQwen2.x ──► SlidePage (pgvector)
            ──► audio ──► Whisper turbo ──► TranscriptLine (tsvector + E5)
                     └──► 3s / 1.5s hop ──► CLAP ──► AudioChunk (pgvector)
 
@@ -19,13 +20,13 @@
                       └─► answer + timestamps + optional export_url
 ```
 
-On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP.
+On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP/ColQwen.
 
 ## Three jobs (do not mix)
 
 | Job | Who |
 |---|---|
-| **Find** the time | Indexes + `search` / `search_visual` / `search_audio` |
+| **Find** the time | Indexes + `search` / `search_visual` / `search_audio` / `search_slides` |
 | **Understand** | Gemma on `look` / `listen` (Phase 2 scissors) |
 | **Give the user a file** | `export_*` (kept file + GET URL) |
 
@@ -34,7 +35,7 @@ On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP.
 | Type | Example | Path |
 |---|---|---|
 | Talk | “What did she say about pricing?” | `search` → maybe `look` to confirm slide |
-| Slide text | “What number was on the slide then?” | Transcript (or visual) for time → `look` → Gemma reads |
+| Slide text | “Which slide had **Pro $99**?” (nobody said the number) | `search_slides` → `look` → Gemma **reads the real frame**. ColQwen only finds the time |
 | Silent visual | “Red light / flying bird” | `search_visual` → `look` |
 | Sound | “When did the bird chirp?” | `search_audio` → `listen` |
 | Count events | “How many claps?” | `search_audio` → merge hits → **count in code** → spot-check |
@@ -53,7 +54,7 @@ On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP.
 ## Why this matches Google
 
 Google: tools on the raw file, transcript-first, adaptive FPS, pay for slices.  
-We: same idea; **Act is our Python**. We **add** SigLIP + CLAP so long silent/sound queries are not a Gemma marathon.
+We: same idea; **Act is our Python**. We **add** SigLIP + CLAP + ColQwen so long silent/sound/slide queries are not a Gemma marathon.
 
 ## Counting (no architecture fork)
 

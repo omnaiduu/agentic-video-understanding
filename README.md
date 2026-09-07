@@ -4,7 +4,7 @@ An open-source system that copies **Google Gemini’s agentic video understandin
 
 This repository is the **design, decisions, and conversation record**. Implementation code is not in this repo yet.
 
-**Source of truth:** the **12 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, Node backend, or ColQwen — ignore it for v1. Those were earlier drafts. The ColQwen slide-search design is saved in [what we rejected](docs/04-what-we-rejected.md) as a later alternative, not this app.
+**Source of truth:** the **13 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, or Node backend — ignore it. Those were earlier drafts. They are not this app.
 
 **Goal:** Ask questions about long videos (talks, slides, sports, CCTV, sounds) without dumping the whole file into a large model. Find the moment, look or listen to a short slice, then answer — optionally export a clip with a link.
 
@@ -12,7 +12,9 @@ This repository is the **design, decisions, and conversation record**. Implement
 
 ## One-sentence product
 
-**Gemma 4 E4B (fills a JSON form) + our Python loop + ffmpeg (scissors) + three phone books built once: Whisper (speech), SigLIP 2 (pictures), CLAP (sounds) + a TanStack Start website.**
+**Gemma 4 E4B (fills a JSON form) + our Python loop + ffmpeg (scissors) + four phone books built once: Whisper (speech), SigLIP 2 (pictures), CLAP (sounds), ColQwen2.x (slides) + a TanStack Start website.**
+
+ColQwen2.x and `search_slides` are for questions like “which slide had **Pro $99**?” when nobody said the number. Gemma still reads the real frame; ColQwen only finds the time.
 
 ---
 
@@ -24,16 +26,16 @@ Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–
 |---|---|
 | [docs/01-goal-and-context.md](docs/01-goal-and-context.md) | What this is, why it exists |
 | [docs/02-conversation-summary.md](docs/02-conversation-summary.md) | Early thread, compressed (history) |
-| [docs/03-key-decisions.md](docs/03-key-decisions.md) | Locked choices — **matches the 12 phases** |
-| [docs/04-what-we-rejected.md](docs/04-what-we-rejected.md) | What we are not doing — **ColQwen design kept here as a later alternative** |
+| [docs/03-key-decisions.md](docs/03-key-decisions.md) | Locked choices — **matches the 13 phases** |
+| [docs/04-what-we-rejected.md](docs/04-what-we-rejected.md) | What we are not doing |
 | [docs/05-architecture.md](docs/05-architecture.md) | Ingest vs question loop |
 | [docs/06-tools.md](docs/06-tools.md) | JSON actions our Python runs |
-| [docs/07-models-and-indexes.md](docs/07-models-and-indexes.md) | E4B, Whisper, SigLIP, CLAP, Postgres |
+| [docs/07-models-and-indexes.md](docs/07-models-and-indexes.md) | E4B, Whisper, SigLIP, CLAP, ColQwen, Postgres |
 | [docs/08-frontend-backend.md](docs/08-frontend-backend.md) | FastAPI + Start + Video.js |
-| [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Pointer to the 12 phases |
+| [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Pointer to the 13 phases |
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
 | [docs/11-glossary.md](docs/11-glossary.md) | Words |
-| [docs/12-build-phases.md](docs/12-build-phases.md) | **Build order — phases 1–12 locked** |
+| [docs/12-build-phases.md](docs/12-build-phases.md) | **Build order — phases 1–13 locked** |
 | [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | Libraries, Modal, size — **open** |
 | [docs/14-from-idea-to-production.md](docs/14-from-idea-to-production.md) | How to run agents without reading code |
 | [docs/phases/](docs/phases/phase-01.md) | One brief per phase |

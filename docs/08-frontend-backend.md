@@ -1,12 +1,12 @@
 # Frontend and backend
 
-Locked with the 12 phases.
+Locked with the 13 phases.
 
 ## Backend
 
 | Piece | Choice | Why |
 |---|---|---|
-| Language | **Python 3.11+** | Whisper, SigLIP, CLAP, Gemma clients |
+| Language | **Python 3.11+** | Whisper, SigLIP, CLAP, ColQwen, Gemma clients |
 | HTTP | **FastAPI** | Upload, ingest jobs, chat |
 | ORM / DB | **SQLModel + PostgreSQL + pgvector** | Rows, FTS, vectors, sessions |
 | Media | **ffmpeg** CLI | Cut frames/audio/clips |
@@ -28,7 +28,7 @@ Locked with the 12 phases.
 ### Status
 
 Overall: `uploaded` → `processing` (ingest) → `ready` | `error`.  
-Books: `transcript_status` / `visual_status` / `audio_status` = pending | processing | ready | error | skipped.  
+Books: `transcript_status` / `visual_status` / `audio_status` / `slides_status` = pending | processing | ready | error | skipped.  
 Website polls overall status; **chat stays off until `ready`.**
 
 ### Session

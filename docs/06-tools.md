@@ -12,6 +12,7 @@ These are **Python functions our state machine runs**. Gemma does not call OpenA
 | `search` | `search_transcript` | top ~8 `{t, text}` as **text** | Talk / “when did they say X” |
 | `search_visual` | `search_visual` | top ~8 `{t, score}` as **text** | Silent look-like search |
 | `search_audio` | `search_audio` | hits + merged count as **text** | Chirp, clap, beep |
+| `search_slides` | `search_slides` | top ~8 `{t, score, slide_id}` as **text** | Printed slide text (“Pro $99”) |
 | `export_clip` | `export_clip` | GET URL to mp4 (≤60s) | User leaves with video |
 | `export_audio` | `export_audio` | GET URL to wav | User leaves with sound |
 | `answer` | *(stop)* | text + times | Done |
@@ -37,7 +38,6 @@ Counting is already inside `search_audio` (merge + `len()`). No extra verb requi
 - Native `tools=` / `tool_calls`
 - Arbitrary Python / full Agentic Vision sandbox
 - Web search, shell, calendar
-- ColQwen `search_slides` — design kept in [what we rejected](04-what-we-rejected.md); not a v1 tool
 
 ## Agentic Vision vs these tools
 
@@ -51,3 +51,13 @@ Counting is already inside `search_audio` (merge + `len()`). No extra verb requi
 2. JSON `look` 1:03–1:06 → Gemma confirms
 3. JSON `export_clip` → URL
 4. JSON `answer` + timestamp + link
+
+## Example: “Which slide had Pro $99?”
+
+Nobody said the number. SigLIP sees “a slide.” Whisper has no `$99`.
+
+1. JSON `search_slides` “Pro $99” → 12:04
+2. JSON `look` 12:04–12:08 → Gemma **reads the real frame**
+3. JSON `answer` + timestamp
+
+ColQwen **only finds the time**. Gemma still reads.
