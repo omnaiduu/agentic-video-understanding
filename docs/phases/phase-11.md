@@ -47,13 +47,19 @@ If the file is still `processing`, chat is disabled with a short “still indexi
 
 ## Words
 
-**Media URL** — `GET /videos/{id}/file`. That is the player `src`. Already locked in Phase 1 for this reason.
+**Player** — the box that plays the file. Play / pause / scrub. Built into the browser.
 
-**Seek** — jump the playhead to a citation time.
+**Seek** — jump to 1:04 when the answer says 1:04.
 
-**`session_id`** — keep it on this page so follow-ups hit the same thread (Phase 8).
+**`session_id`** — nametag for this chat on this video. Same tag → “that frame” still works (Phase 8).
 
-**Waiting** — input disabled, “Working…” until POST returns. No fake token stream.
+**Working…** — Gemma may look/listen several times. The API sends **one** answer when it is done. The page waits.
+
+**Tool trace** — a list of steps (look at 10s, search “pricing”). For debugging, not the main answer.
+
+**SSE** — stream words as they appear. We do **not** have that API. The loop finishes, then JSON.
+
+**Export link** — “download this 8-second clip.” API can already make it. Showing the button is Phase 12.
 
 ---
 
@@ -75,17 +81,51 @@ shadcn: Textarea, Button, Badge (timestamps). Optional collapsed “details” f
 
 ---
 
-## Options (what I would pick)
+## Options (read these, then answer)
 
-| Topic | My pick | Other options | Why my pick |
+This phase only picks **how watch + ask feels**. Not clip downloads. Not phone layout.
+
+### 1. Player — what plays the file
+
+| Option | What it is | Cost | When it wins |
 |---|---|---|---|
-| Player | Native **`<video>` / `<audio>`** | video.js, Media Chrome | Phase 1 already streams with Range. Extra player SDK is polish. |
-| Media | **`GET /videos/{id}/file`** | Copy to public folder | Same origin or `API_URL`; CORS/Range already planned. |
-| Session | **Keep `session_id` in the page + localStorage per video** | New session every load | “That frame” should survive refresh on the same file. |
-| Times | **Clickable chips → seek** | Times as plain text | This is the product: jump to the moment. |
-| While waiting | **Disable send, show Working…** | SSE / token stream | Backend is one JSON at the end. Streaming is a new API. |
-| Tool trace | **Collapsed “details”** | Hide completely | Useful when the loop looks stuck. Not the main UI. |
-| Export links | **Hide until Phase 12** | Render now | Phase 12 is that job. |
+| **A. Native `<video>` / `<audio>`** (my pick) | The browser’s own player. `src` = FastAPI `GET /videos/{id}/file`. | Zero extra library. Range seek already in Phase 1. | This demo. |
+| **B. video.js / Media Chrome** | Fancier controls, themes, extra buttons. | Another package. Same file underneath. | Later polish if native looks ugly. |
+| **C. Copy the file into `web/public`** | Player loads a static path, not the API. | Duplicates the file. Breaks DELETE. | Never. Phase 1 already streams. |
+
+**Pick A unless you say otherwise.** Audio-only files use `<audio>`. Chat still works.
+
+### 2. Session — does “that frame” survive refresh?
+
+| Option | What it is | Cost | When it wins |
+|---|---|---|---|
+| **A. Keep `session_id` on the page + localStorage per video** (my pick) | First answer returns an id. We save it. Next questions send it. Refresh → same chat. | Tiny. | Follow-ups were Phase 8’s whole point. |
+| **B. Keep it only in memory** | Refresh starts a **new** chat. Indexes do not rebuild; the **thread** is new. | Simpler. | If you want a clean slate every load. |
+| **C. New `session_id` every message** | Every question forgets “that.” | Breaks Phase 8 in the UI. | Don’t. |
+
+**Pick A.** Closing the tab later is fine; it is only in that browser.
+
+### 3. Timestamps — what a time in the answer does
+
+| Option | What it is | When it wins |
+|---|---|---|
+| **A. Chips you click → player jumps** (my pick) | Answer “at 1:04” is a button. Click → 1:04. | The product. |
+| **B. Plain text “1:04”** | You scrub by hand. | Worse. |
+| **C. Auto-seek with no click** | Every answer yanks the playhead. | Annoying if you were watching. |
+
+**Pick A.**
+
+### 4. Waiting, trace, clip links (one bundle)
+
+The backend today: think → look/listen/search → **then** one JSON. Not word-by-word.
+
+| Piece | A (my pick) | Other | Why A |
+|---|---|---|---|
+| While the API thinks | Disable send. Show **Working…** | SSE / fake typing | SSE needs a new backend. Fake typing lies. |
+| Tool trace (`steps`) | **Collapsed “details”** | Hide forever, or always show | Useful when it looks stuck. Not the headline. |
+| `export_url` in the answer | **Hide until Phase 12** | Show a download button now | Phase 12 is clip links + phone. |
+
+You can mix (e.g. hide the trace but keep Working…). Default is A for all three.
 
 ---
 
@@ -104,10 +144,16 @@ Implement **only** this file after 10. No clip download UI. No new backend verbs
 
 ## Questions (lock these)
 
-1. **Native `<video>` / `<audio>`**, `src` = `GET /videos/{id}/file`. OK?
-2. **Keep `session_id`** on the page and in localStorage for that video. OK?
-3. **Timestamp chips seek** the player. OK?
-4. **Wait for the full JSON** (no SSE). Collapsed tool-trace details. Hide export links until Phase 12. OK?
+Answer with the letter, or “yes” to take my picks (A, A, A, A).
+
+1. **Player:** A native `<video>`/`<audio>` from FastAPI · B video.js · C copy file into the web app  
+   I would take **A**.
+2. **Session:** A save `session_id` (page + localStorage) · B forget on refresh · C new id every message  
+   I would take **A**.
+3. **Times:** A click to seek · B plain text · C auto-jump with no click  
+   I would take **A**.
+4. **Wait / trace / clips:** A Working… + collapsed details + hide downloads until Phase 12 · mix if you say  
+   I would take **A**.
 
 When these are answered, mark **LOCKED**. Last phase is clips + phone polish.
 
