@@ -41,8 +41,8 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Same app.
 | 5 | Picture index | SigLIP 2 + `search_visual` | **LOCKED** — [phase-05.md](phases/phase-05.md) |
 | 6 | Sound index | CLAP + `search_audio` + Python count | **LOCKED** — [phase-06.md](phases/phase-06.md) |
 | 7 | Export | `export_clip` / `export_audio` + URL | **LOCKED** — [phase-07.md](phases/phase-07.md) |
-| 8 | Memory | Multi-turn last timestamps | **OPEN** — [phase-08.md](phases/phase-08.md) |
-| 9 | UI shell | React app, pages, empty/loading/error | Proposed |
+| 8 | Memory | Multi-turn last timestamps | **LOCKED** — [phase-08.md](phases/phase-08.md) |
+| 9 | UI shell | React app, pages, empty/loading/error | **OPEN** — [phase-09.md](phases/phase-09.md) |
 | 10 | Upload UI | Pick file, ingest progress | Proposed |
 | 11 | Watch + ask | Player, chat, seek on timestamps | Proposed |
 | 12 | Clips + polish | Download links, mobile, errors | Proposed |
@@ -103,49 +103,19 @@ LAION-CLAP on 3s chunks → pgvector; `search_audio` in the JSON loop. Counts ha
 
 # Phase 8 — Memory (multi-turn)
 
-Full brief: **[phases/phase-08.md](phases/phase-08.md)**
+**LOCKED.** Brief: [phases/phase-08.md](phases/phase-08.md)
 
-Do not implement from this map. Status: not locked until the human answers the questions there.
-
-Follow-up uses the same video and last times. No re-ingest. No Redis.
+Last 3 time windows; `session_id`; text pointers, not old photos. Last backend slice.
 
 ---
 
 # Phase 9 — UI shell
 
-**In one sentence:** a website exists with the right screens, talking to the API, even if upload/chat are still wired crudely.
+Full brief: **[phases/phase-09.md](phases/phase-09.md)**
 
-**Depends on:** backend Phases 1–8 already serving HTTP.
+Do not implement from this map. Status: not locked until the human answers the questions there.
 
-## What it is doing
-
-[08](08-frontend-backend.md): library, watch+ask, empty, error, loading. Desktop + mobile stack (player then chat on small screens).
-
-## Plan
-
-1. `web/` Vite + React + TypeScript.
-2. React Router: `/` library, `/videos/:id` watch+ask.
-3. API client (`VITE_API_URL`).
-4. Empty / loading / error components. Library can list `GET /videos`.
-5. No need for a design system. Simple CSS (see options).
-
-## Libraries
-
-| Piece | Proposed | Option |
-|---|---|---|
-| App | **Vite + React + TS** | Next.js — not required ([08](08-frontend-backend.md)) |
-| Routing | **react-router** | |
-| Style | **plain CSS** or **CSS modules** | Tailwind |
-| Player | later (Phase 11) | |
-
-## Technical decisions (lock later)
-
-- CSS vs Tailwind.
-- Whether library is usable with videos created only via API/curl (yes).
-
-## Done when
-
-Open `/`, see empty or a list from the API. Navigate to a video page shell. No crash if API is down (error state).
+Vite + React pages: library + watch+ask shell. Empty / loading / error. No upload, player, or chat yet.
 
 ---
 

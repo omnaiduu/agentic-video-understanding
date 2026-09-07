@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). Phases 1–7 are locked. Phase 8 is **open**. DB is **Postgres**.
+Start at the [root README](../README.md). Product decisions live in docs 01–11. Build order is [12 — Build phases](12-build-phases.md). Phases 1–8 are locked. Phase 9 is **open** (first frontend slice). DB is **Postgres**.
 
 Then:
 
@@ -23,4 +23,5 @@ Then:
 17. [Phase 5](phases/phase-05.md) — picture phone book (**locked**)
 18. [Phase 6](phases/phase-06.md) — sound phone book (**locked**)
 19. [Phase 7](phases/phase-07.md) — export a clip (**locked**)
-20. [Phase 8](phases/phase-08.md) — remember last times (**open** — answers needed)
+20. [Phase 8](phases/phase-08.md) — remember last times (**locked**)
+21. [Phase 9](phases/phase-09.md) — website shell (**open** — answers needed)
