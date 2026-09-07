@@ -4,7 +4,7 @@ A playbook for a human who will **not** open the source. Agents write the softwa
 
 This file is the **method**. This repo’s [phase map](12-build-phases.md) and [implementation pass](13-implementation-pass.md) are one **instance** of the method.
 
-You do not need to have written production software before. You need to be willing to lock contracts, run checks, and say no.
+You do not need to learn a language (Go, Python, TypeScript) before you start. You need to be willing to lock contracts, run checks, and ask **how** the code will be written — options, why this way, what it solves — before an agent implements a phase.
 
 ---
 
@@ -272,6 +272,45 @@ Paste the relevant block whenever an agent is about to “just implement.”
 - What did you write more than twice?
 - What did you work around?
 - What would you refactor if I let you — and why is that not a new phase yet?
+
+---
+
+## What to paste every phase (how the code is written)
+
+You do **not** need to learn Go (or any language) first. You need this round **before** the agent writes the phase — same as product questions, but for *how*.
+
+Paste:
+
+```
+This phase only. Do not write the app yet.
+
+1. What are 2 or 3 ways to write this, used in 2026 for this stack?
+   Search. Do not guess from memory.
+
+2. For each way:
+   - What problem does it solve?
+   - What still breaks if we use it?
+   - What is the simpler alternative?
+   - Why would you pick it vs the others?
+
+3. Which of these is your habit / default, not required by the spec?
+
+4. What check proves the winner? (one command or one short recording)
+
+Stop. I will lock one way. Then you implement only that.
+```
+
+After it built the phase, paste:
+
+```
+Why did you write it this way?
+What other way did you skip?
+If I skip the library/pattern you used, what bug appears?
+Show that bug on a tiny example if you can.
+Did you add anything not on the card?
+```
+
+Do not ask “what’s best” or “production-ready.” Ask **options, what it solves, why this, what you skipped.**
 
 ---
 
