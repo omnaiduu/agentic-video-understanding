@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     embedder: str = "fake"
     whisper_model: str = "turbo"
     embed_model: str = "intfloat/e5-small-v2"
+    visual_embedder: str = "fake"
+    siglip_model: str = "google/siglip2-so400m-patch16-384"
     ingest_secret: str = ""
     public_base_url: str = ""
     modal_ingest_app: str = "agentic-video-ingest"

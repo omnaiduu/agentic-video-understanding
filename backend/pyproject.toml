@@ -1,7 +1,7 @@
 [project]
 name = "agentic-video-backend"
 version = "0.1.0"
-description = "Phases 1–4: hold a video, cut slices, chat JSON loop, speech index."
+description = "Phases 1–5: hold a video, cut slices, chat JSON loop, speech index, picture index."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -21,6 +21,8 @@ dependencies = [
 local-ingest = [
     "faster-whisper>=1.1.0",
     "sentence-transformers>=3.3.0",
+    "transformers>=4.49.0",
+    "pillow>=10.0.0",
 ]
 
 [dependency-groups]

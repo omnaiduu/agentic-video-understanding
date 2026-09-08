@@ -79,3 +79,29 @@ def transcript_not_ready_message(status: str) -> dict:
             "Do not invent a full transcript."
         ),
     }
+
+
+def visual_search_message(hits: list, query: str) -> dict:
+    if not hits:
+        text = (
+            f"search_visual for {query!r} returned no picture hits. "
+            "Two hours of photos are not attached. Try another query or look."
+        )
+    else:
+        lines = [f"[{hit.t:.1f}s] score={hit.score:.3f}" for hit in hits]
+        text = (
+            f"picture hits for {query!r} (at most 8 times, not the whole file; "
+            "scores are not the answer; look to see):\n" + "\n".join(lines)
+        )
+    return {"role": "user", "content": text}
+
+
+def visual_not_ready_message(status: str) -> dict:
+    return {
+        "role": "user",
+        "content": (
+            f"picture index is not ready (status={status}). "
+            "No search_visual results. Timed look still works. "
+            "Do not invent a full photo log."
+        ),
+    }

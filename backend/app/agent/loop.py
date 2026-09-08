@@ -1,4 +1,4 @@
-"""Laptop-owned look / listen / search / answer loop. Caps stay in Phase 2 scissors."""
+"""Laptop-owned look / listen / search / search_visual / answer loop."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ from app.agent.parts import (
     refuse_message,
     search_message,
     transcript_not_ready_message,
+    visual_not_ready_message,
+    visual_search_message,
 )
 from app.agent.schema import (
     MAX_ROUNDS,
@@ -25,6 +27,7 @@ from app.agent.schema import (
 )
 from app.models import IndexStatus
 from app.search.transcript import TranscriptHit
+from app.search.visual import VisualHit
 from app.tools import ScissorsError, get_audio, get_frames, get_meta
 from app.tools.meta import VideoMeta
 
@@ -50,6 +53,7 @@ class LoopResult:
 
 
 SearchFn = Callable[[str], list[TranscriptHit]]
+VisualSearchFn = Callable[[str], list[VisualHit]]
 
 
 def _window(action: BrainAction) -> tuple[float, float]:
@@ -74,10 +78,13 @@ def run_loop(
     brain: Brain,
     *,
     search: SearchFn | None = None,
+    search_visual: VisualSearchFn | None = None,
     transcript_status: str | None = None,
+    visual_status: str | None = None,
 ) -> LoopResult:
     meta: VideoMeta = get_meta(path)
-    status = transcript_status or IndexStatus.pending.value
+    speech_status = transcript_status or IndexStatus.pending.value
+    picture_status = visual_status or IndexStatus.pending.value
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
@@ -85,7 +92,8 @@ def run_loop(
             "content": (
                 f"Video duration {meta.duration_s:.3f}s. "
                 f"has_video={meta.has_video} has_audio={meta.has_audio}. "
-                f"transcript_status={status}. "
+                f"transcript_status={speech_status}. "
+                f"visual_status={picture_status}. "
                 f"Question: {question}"
             ),
         },
@@ -95,11 +103,15 @@ def run_loop(
 
     while True:
         if rounds >= MAX_ROUNDS:
-            raise LoopError(f"stopped after {MAX_ROUNDS} look/listen/search rounds")
+            raise LoopError(
+                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual rounds"
+            )
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
-            raise LoopError("model did not return look/listen/search/answer JSON") from exc
+            raise LoopError(
+                "model did not return look/listen/search/search_visual/answer JSON"
+            ) from exc
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
         )
@@ -114,10 +126,10 @@ def run_loop(
         rounds += 1
         if action.do == "search":
             query = (action.query or question).strip()
-            if status != IndexStatus.ready.value:
-                messages.append(transcript_not_ready_message(status))
+            if speech_status != IndexStatus.ready.value:
+                messages.append(transcript_not_ready_message(speech_status))
                 steps.append(
-                    Step(do="search", ok=False, detail=f"transcript {status}")
+                    Step(do="search", ok=False, detail=f"transcript {speech_status}")
                 )
                 continue
             if search is None:
@@ -134,6 +146,43 @@ def run_loop(
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             steps.append(
                 Step(do="search", ok=True, detail=f"{query}: {shown}" if shown else query)
+            )
+            continue
+
+        if action.do == "search_visual":
+            query = (action.query or question).strip()
+            if picture_status != IndexStatus.ready.value:
+                messages.append(visual_not_ready_message(picture_status))
+                steps.append(
+                    Step(
+                        do="search_visual",
+                        ok=False,
+                        detail=f"visual {picture_status}",
+                    )
+                )
+                continue
+            if search_visual is None:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "search_visual is not wired. Use look, listen, or answer."
+                        ),
+                    }
+                )
+                steps.append(
+                    Step(do="search_visual", ok=False, detail="search_visual not wired")
+                )
+                continue
+            hits = search_visual(query)[:8]
+            messages.append(visual_search_message(hits, query))
+            shown = ",".join(f"{hit.t:.2f}" for hit in hits)
+            steps.append(
+                Step(
+                    do="search_visual",
+                    ok=True,
+                    detail=f"{query}: {shown}" if shown else query,
+                )
             )
             continue
 
