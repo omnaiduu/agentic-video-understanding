@@ -11,7 +11,9 @@ from app.agent.loop import LoopError, LoopResult, run_loop
 from app.db import get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
 from app.search.embed import Embedder, get_embedder
+from app.search.siglip import VisualEmbedder, get_visual_embedder
 from app.search.transcript import search_transcript
+from app.search.visual import search_visual
 from app.settings import Settings, get_settings
 
 router = APIRouter()
@@ -75,6 +77,7 @@ def chat(
     session: Session = Depends(get_session),
     brain: Brain = Depends(get_brain),
     embedder: Embedder = Depends(get_embedder),
+    visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
 ) -> ChatOut:
     video = session.get(Video, video_id)
     if video is None:
@@ -95,13 +98,18 @@ def chat(
     def _search(query: str):
         return search_transcript(session, video.id, query, embedder)
 
+    def _search_visual(query: str):
+        return search_visual(session, video.id, query, visual_embedder)
+
     try:
         result = run_loop(
             video.path,
             payload.message,
             brain,
             search=_search,
+            search_visual=_search_visual,
             transcript_status=video.transcript_status,
+            visual_status=video.visual_status,
         )
     except LoopError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

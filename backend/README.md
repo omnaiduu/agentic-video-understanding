@@ -1,6 +1,6 @@
-# Backend (Phases 1–4)
+# Backend (Phases 1–5)
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / **search** / answer loop. Whisper writes a speech index once in the background; chat hybrid-searches those lines. No website, no SigLIP/CLAP.
+Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / **search_visual** / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once. No website, no CLAP.
 
 ## What you need on the machine
 
@@ -24,59 +24,42 @@ Compose uses `pgvector/pgvector:pg16` and also creates a `video_test` database f
 Check:
 
 ```bash
-# multipart upload
 curl -F "file=@/path/to/clip.mp4" http://127.0.0.1:8000/videos
-
-# or copy from a path on this machine
-curl -H 'Content-Type: application/json' \
-  -d '{"path":"/path/to/clip.mp4"}' \
-  http://127.0.0.1:8000/videos
 ```
 
-A ready file returns `status: "ready"` and `duration_s` after ffprobe. `transcript_status` starts as `processing` (or `skipped` if there is no audio). POST `/videos` does **not** wait for Whisper. Garbage that ffprobe cannot read is stored with `status: "error"`. Files larger than **2 GB** (`MAX_UPLOAD_BYTES`) are rejected with **413**.
-
-Scissors are **Python functions**, not routes. Tests call them directly:
+A ready file returns `status: "ready"` after ffprobe. `transcript_status` and `visual_status` start as `processing` (or `skipped` if that channel does not apply). POST `/videos` does **not** wait for Whisper or SigLIP.
 
 ```bash
 uv run pytest
 ```
 
-Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Oversize is an error (no silent shrink, no whole-file ffmpeg). Whisper ingest extracts the **whole** audio track with a separate helper (not `get_audio`).
+Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Picture **ingest** is a separate ~1 FPS extract (not the look cap). Those bulk JPEGs are deleted after embed.
 
 ## Chat
 
-The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake` so pytest never calls a GPU.
+The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`.
 
-```bash
-# after a video is probe-ready (chat does not wait for Whisper)
-curl -H 'Content-Type: application/json' \
-  -d '{"message":"what did they say about pricing?"}' \
-  http://127.0.0.1:8000/videos/VIDEO_ID/chat
-```
+JSON moves: `look`, `listen`, `search`, `search_visual`, `answer`. `search_visual` is our Python (SigLIP text tower → pgvector KNN, top 8 `{t, score}` as text). Not vLLM `tools=`. Scores are not the answer; Gemma should `look`.
 
-JSON moves: `look`, `listen`, `search`, `answer`. `search` is our Python (`search_transcript`: Postgres FTS + pgvector + RRF, top 8 hits as text). Not vLLM `tools=`.
-
-Real Gemma: deploy `modal_brain.py` (`modal deploy modal_brain.py`), set `BRAIN=vllm` and `VLLM_BASE_URL` to that server’s `/v1` URL.
-
-Real Whisper: deploy `modal_ingest.py` (`modal deploy modal_ingest.py`), set `INGEST=modal`, `PUBLIC_BASE_URL` to a URL Modal can reach, and `INGEST_SECRET`. The worker POSTs lines back to `POST /internal/videos/{id}/transcript`. Default `INGEST=fake` writes an empty transcript so tests need no GPU.
+Real picture ingest: same `modal_ingest.py` app, function `embed_visual` (not the chat GPU). Laptop ffmpeg writes 1 FPS JPEGs; Modal embeds; POST `/internal/videos/{id}/visual`. Default `INGEST=fake` and `VISUAL_EMBEDDER=fake` so tests need no GPU.
 
 ## API
 
 | Method | Path | What it does |
 |---|---|---|
-| POST | `/videos` | Multipart `file` **or** JSON `{"path": "..."}`. Copies into `data/videos/{id}/original.{ext}`, probes, returns the row. Spawns transcript ingest in the background. |
+| POST | `/videos` | Multipart `file` **or** JSON `{"path": "..."}`. Probes, returns the row. Spawns speech + picture ingest in the background. |
 | GET | `/videos` | List |
-| GET | `/videos/{id}` | Metadata, including `transcript_status` |
-| GET | `/videos/{id}/file` | Stored bytes. `FileResponse` honors **Range** (for a later player). |
-| POST | `/videos/{id}/chat` | `{ "message", "session_id"? }` → `{ answer, citations, steps, session_id }`. Our JSON loop, not native tools. |
-| POST | `/internal/videos/{id}/transcript` | Modal (or tests) posts Whisper segments. Bearer `INGEST_SECRET`. |
-| GET | `/internal/videos/{id}/audio` | Full wav for the ingest worker. Bearer `INGEST_SECRET`. |
-| DELETE | `/videos/{id}` | Deletes the row, chat, transcript lines, **and** the folder |
+| GET | `/videos/{id}` | Metadata, including `transcript_status` and `visual_status` |
+| GET | `/videos/{id}/file` | Stored bytes. Range-friendly. |
+| POST | `/videos/{id}/chat` | `{ "message", "session_id"? }` → `{ answer, citations, steps, session_id }` |
+| POST | `/internal/videos/{id}/transcript` | Whisper segments. Bearer `INGEST_SECRET`. |
+| GET | `/internal/videos/{id}/audio` | Full wav for the ingest worker. |
+| POST | `/internal/videos/{id}/visual` | SigLIP frames `{t_s, embedding}`. Bearer `INGEST_SECRET`. |
+| GET | `/internal/videos/{id}/frames` | Tar of 1 FPS JPEGs for the ingest worker. |
+| DELETE | `/videos/{id}` | Deletes the row, chat, transcript, visual frames, **and** the folder |
 
 No auth on the public video/chat routes. CORS is open.
 
-Path JSON copies the file (no symlink). Paths that contain `..` are rejected.
-
 ## Layout
 
-`data/videos/{id}/original.{ext}` lives at the **repo root** `data/` (gitignored). Postgres URL is `DATABASE_URL`. Migrations are Alembic; do not use `create_all` for real runs. Optional `uv sync --extra local-ingest` if you want faster-whisper / E5 on the laptop instead of Modal.
+`data/videos/{id}/original.{ext}` lives at the **repo root** `data/` (gitignored). Optional `uv sync --extra local-ingest` if you want Whisper / E5 / SigLIP on the laptop instead of Modal.
