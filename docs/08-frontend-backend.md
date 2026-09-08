@@ -11,7 +11,7 @@ Locked with the 13 phases.
 | ORM / DB | **SQLModel + PostgreSQL + pgvector** | Rows, FTS, vectors, sessions |
 | Media | **ffmpeg** CLI | Cut frames/audio/clips |
 | Agent | vLLM OpenAI client, **`response_format` JSON schema**, no `tools=` | Phase 3 |
-| Ingest | Same `ingest_video(id)` — BackgroundTasks on laptop, Modal `.spawn()` later | Doc 13 still open on *where* |
+| Ingest | Same `ingest_video(id)` — laptop FastAPI **`.spawn()`s a Modal worker** (not the chat GPU) | [13](13-implementation-pass.md) **locked** |
 | Auth | None | v1 |
 | Files | Local disk `data/videos/{id}/` | S3 later behind the same functions |
 
@@ -29,7 +29,7 @@ Locked with the 13 phases.
 
 Overall: `uploaded` → `processing` (ingest) → `ready` | `error`.  
 Books: `transcript_status` / `visual_status` / `audio_status` / `slides_status` = pending | processing | ready | error | skipped.  
-Website polls overall status; **chat stays off until `ready`.**
+Website polls overall + per-book status; **spinner + four live lines** while ingesting; **chat stays off until `ready`.**
 
 ### Session
 
@@ -37,7 +37,7 @@ Website polls overall status; **chat stays off until `ready`.**
 
 ## Frontend
 
-**Job:** library, upload with progress, player, chat, click-to-seek, clip **in the chat bubble**, phone stack, delete.
+**Job:** library, upload with progress, **live index spinner**, player, chat, click-to-seek, clip **in the chat bubble**, phone stack, delete.
 
 | Piece | Locked |
 |---|---|
@@ -48,7 +48,7 @@ Website polls overall status; **chat stays off until `ready`.**
 | Routes | `/` library+upload, `/videos/$videoId` watch+ask |
 | ML | **Never** in Start server functions |
 
-Screens: empty library → upload → processing → watch+ask → clip in thread. API down → error, no crash. Phone: player above, chat below (~768px).
+Screens: empty library → upload → **live index panel** → watch+ask → clip in thread. API down → error, no crash. Phone: player above, chat below (~768px).
 
 ## Not this stack
 
@@ -66,4 +66,4 @@ Screens: empty library → upload → processing → watch+ask → clip in threa
 - ffmpeg 5s export: sub-second to a few seconds.
 - Bottleneck = **Gemma + frames**, not Postgres.
 
-Hosting *where* (laptop vs Modal) is the remaining open talk in [13](13-implementation-pass.md).
+Hosting is **locked** in [13](13-implementation-pass.md): laptop API + files + ffmpeg; all models on Modal; L4; slices only; live ingest UI.

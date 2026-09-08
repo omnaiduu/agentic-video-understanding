@@ -14,12 +14,13 @@ This is **one production app**, built in slices. It is not a v1 toy that we late
 | [08 Frontend/backend](08-frontend-backend.md) | Stack |
 | [09 Implementation plan](09-implementation-plan.md) | Pointer here — do not implement the old 7-step list |
 | [11 Glossary](11-glossary.md) | Words |
-| [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size — **open**, talk this next |
+| [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size — **locked** |
 | [14 From idea to production](14-from-idea-to-production.md) | How to run agents without reading code (method, any project) |
 
 **How an agent should use this file**
 
-- Do **only** the phase you were told to do.
+- Read [13](13-implementation-pass.md) for where things run (laptop vs Modal).
+- Do **only** the phase you were told to do. First code = Phase 1.
 - Do not skip ahead (no Whisper in Phase 1, no React in Phase 3).
 - Leave seams for later phases (folder layout, status field, tool module). Do not implement those later phases.
 - When a phase says **LOCKED**, follow it. When it says **OPEN**, stop and ask the human.
@@ -45,7 +46,7 @@ Backend first (Phases 1–8). Frontend second (Phases 9–12). Slide book last (
 | 7 | Export | `export_clip` / `export_audio` + URL | **LOCKED** — [phase-07.md](phases/phase-07.md) |
 | 8 | Memory | Multi-turn last timestamps | **LOCKED** — [phase-08.md](phases/phase-08.md) |
 | 9 | UI shell | TanStack Start + shadcn + Query | **LOCKED** — [phase-09.md](phases/phase-09.md) |
-| 10 | Upload UI | Pick file, ingest progress | **LOCKED** — [phase-10.md](phases/phase-10.md) |
+| 10 | Upload UI | Pick file, live index status | **LOCKED** — [phase-10.md](phases/phase-10.md) |
 | 11 | Watch + ask | Video.js, chat, seek, collapsed trace | **LOCKED** — [phase-11.md](phases/phase-11.md) |
 | 12 | Clips + polish | Clip in chat, phone stack, delete, README | **LOCKED** — [phase-12.md](phases/phase-12.md) |
 | 13 | Slide index | Unique slides + ColQwen2.x + `search_slides` | **LOCKED** — [phase-13.md](phases/phase-13.md) |
@@ -124,7 +125,7 @@ TanStack Start + shadcn/Tailwind + TanStack Query. Library + watch+ask shell. Fa
 
 **LOCKED.** Brief: [phases/phase-10.md](phases/phase-10.md)
 
-File picker on the library; byte progress; Query poll; jump to `/videos/:id`.
+File picker on the library; byte progress; **live four-line index panel**; jump to `/videos/:id` **while processing**.
 
 ---
 

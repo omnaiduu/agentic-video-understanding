@@ -1,39 +1,14 @@
 # Implementation pass — how, not what
 
-**Status: OPEN.** Phases 1–13 are locked as **product**. This file is the **coding-agent** layer: packages, folders, Modal/GPU, how small to keep it.
+**Status: LOCKED.** Product phases 1–13 stay locked. This file is the **how**: where it runs, which GPU, how ingest starts, how small the code stays.
 
-You do not read the code. If this file is empty, an agent will invent GPUs, dump 2k-line modules, and pick extra libraries. Talk through this. Then we append a short **card** onto each phase brief.
+A coding agent follows the phase brief **and** that phase’s card below. Do **not** implement the whole app. One phase at a time, starting at [Phase 1](phases/phase-01.md).
 
-Related: [phase map](12-build-phases.md) · [hosting notes](08-frontend-backend.md) · [Gemma sizes](07-models-and-indexes.md) · [from idea to production](14-from-idea-to-production.md) (the method: contracts, checks, stop)
-
----
-
-## Why the first pass felt abstract
-
-The 13 phases locked **jobs** (hold a file, cut, loop, search, UI, slides). Questions were “Postgres or SQLite?”, “click to seek?”.
-
-They did **not** lock:
-
-- Exact **libraries** and **why that one** (Vite vs TanStack Start changes the error surface).
-- **Methods** (FastAPI `BackgroundTasks` vs a Modal function vs a queue).
-- **Modal.com** GPU, scale-to-zero, one box vs two.
-- **Size**: a phase should be a handful of files, not a generated novel.
-
-That was a miss for a human who plans with agents and never opens the diff.
+Related: [phase map](12-build-phases.md) · [hosting](08-frontend-backend.md) · [models](07-models-and-indexes.md) · [method](14-from-idea-to-production.md)
 
 ---
 
-## Rule for coding agents (once locked)
-
-- Follow the phase brief **and** that phase’s card here.
-- Do **not** add a library that is not on the card.
-- Do **not** put Whisper/SigLIP/CLAP/ColQwen/Gemma in TanStack Start server functions.
-- Prefer **small modules** (one job per file). If a file is growing past ~200–300 lines, split. Do not “just generate more.”
-- FakeBrain / mock Query in tests. No GPU in CI.
-
----
-
-## What is already locked (do not reopen)
+## What you already locked (do not reopen)
 
 | Piece | Locked |
 |---|---|
@@ -45,79 +20,121 @@ That was a miss for a human who plans with agents and never opens the diff.
 | Slides | ColQwen2.x on unique frames; `search_slides` |
 | Sound | LAION-CLAP, 3s / 1.5s hop |
 | UI | TanStack Start, shadcn, Tailwind, TanStack Query, Video.js |
-| Files | Local disk `data/videos/{id}/` (S3 later behind same functions) |
+| Files | Laptop disk `data/videos/{id}/` (S3 later behind the same functions) |
 
 ---
 
-## What we still must lock (talk)
+## Hosting (locked this pass)
 
-### A. Where things run
+**This is the real setup, not a throwaway.**
 
-**Three jobs, three possible boxes**
-
-1. **API** — FastAPI (upload, chat HTTP, Postgres).
-2. **Brain** — vLLM serving Gemma (GPU, question time).
-3. **Ingest** — Whisper + SigLIP + CLAP + ColQwen (GPU or CPU, once per file). ffmpeg can stay CPU.
-
-If chat and a 2h ingest share **one small GPU**, chat dies while indexing. Older docs said split them ([07](07-models-and-indexes.md)).
-
-| Option | What it is | When |
+| Job | Where | GPU |
 |---|---|---|
-| **1. Laptop only** | API + ffmpeg + Postgres local. Gemma on a local GPU or skip (FakeBrain). | Writing the app, no Modal bill. |
-| **2. API local, Gemma on Modal** | You run FastAPI at home. Chat calls Modal vLLM. Ingest local or Modal. | Cheap while coding UI. |
-| **3. Everything on Modal** | FastAPI + Volume for files + vLLM + ingest jobs. Scale to zero. | Demo on the internet. |
+| Website + FastAPI + Postgres + ffmpeg (scissors) | **Your laptop** | none |
+| Chat brain (Gemma via vLLM) | **Modal**, own worker | **L4** (24 GB). A10 only if L4 is unavailable. Not A100. |
+| Ingest (Whisper, SigLIP, CLAP, ColQwen) | **Modal**, **different worker** from chat | **L4**. A10 if one book does not fit. Not A100. |
 
-**GPU for E4B (4-bit ~4.5 GB):** an **L4 (24 GB)** is enough and cheaper. **A10** is fine. **A100** is overkill for E4B. 12B later → 24 GB happier.
+**$30 Modal credit** is enough for this shape (L4 ≈ $0.80/hr, billed per second, idle ≈ $0). Do not keep a GPU warm.
 
-**Ingest GPU:** same L4 as a **second** Modal function (not the vLLM replica), or CPU if you accept slow SigLIP. Do not run 2h Whisper on the vLLM worker.
+**Two workers, not two products.** Chat and ingest never share one running GPU replica. Same *type* of card is fine. Ingest runs the four books **in order** on that ingest worker (speech → pictures → sounds → slides) so we do not pay two GPUs at once unless chat is asked during ingest.
 
-### B. How ingest is started (method)
+**Modal only gets slices.** The video file stays on the laptop. Laptop ffmpeg cuts audio/frames. Modal receives those pieces, returns transcript / vectors / Gemma JSON, and does not keep the full file.
 
-| Option | What it is |
-|---|---|
-| **FastAPI BackgroundTasks** | Simple. Dies if the API process restarts mid-Whisper. OK for laptop. |
-| **Modal function `.spawn()`** | Survives; right for Modal ingest. |
-| **Redis/Celery queue** | Extra box. Not unless we have many users. |
+**How ingest starts:** laptop FastAPI calls Modal `.spawn()` on `ingest_video(id)`. Same Python ingest function. Not Whisper on the laptop. Not Redis/Celery.
 
-Laptop: BackgroundTasks. Modal: spawn. Same Python `ingest_video(id)` function either way.
+**Laptop-only Phase 1–2:** no Modal yet. FakeBrain in tests. First Modal call is Phase 3 (Gemma) and Phase 4 (Whisper).
 
-### C. Size budget (so agents don’t write thousands of lines)
-
-Per phase, a coding agent should add **about this much**, not a framework:
-
-| Phase | Rough new files | Stay out |
-|---|---|---|
-| 1 | `main.py`, `models.py`, `db.py`, `media/probe.py`, routes | No torch |
-| 2 | `tools/frames.py`, `audio.py`, `caps.py` | No HTTP extras |
-| 3 | `agent/loop.py`, `client.py`, `schema.py` | No `tools=` |
-| 4–6 | `ingest/*.py`, `search/*.py`, one table each | No extra vector DBs |
-| 7 | `tools/export.py` | No S3 SDK yet |
-| 8 | session fields on existing chat | No Redis |
-| 9 | Start scaffold + 2 routes + `lib/api.ts` | No extra UI kits |
-| 10–12 | grow those routes | No new app |
-| 13 | `ingest/slides.py`, `search/slides.py`, `SlidePage` | No OCR-all-frames; no extra vector DB |
-
-If the agent needs a new library, **stop and ask**.
+**Scale to zero.** After a job, the GPU shuts off.
 
 ---
 
-## Questions (answer these — this is the “bottom”)
+## Size (locked)
 
-**Hosting**
+- A handful of new files per phase, about **200–300 lines** each. Split if bigger.
+- **No new library** that is not on the phase card. Stop and ask.
+- FakeBrain / mock Query in tests. **No GPU in CI.**
+- Do **not** put Whisper / SigLIP / CLAP / ColQwen / Gemma in TanStack Start server functions.
 
-1. **Where does FastAPI live for the first real run?** laptop · Modal web · both (laptop dev, Modal later)?
-2. **Where does Gemma live?** local vLLM · **Modal vLLM** · Ollama (weaker multimodal)?
-3. **Chat GPU?** **L4** · A10 · A100. I would take **L4** for E4B, scale to zero.
-4. **Ingest?** **Separate Modal function** (same GPU type, not the chat replica) · same process as API (laptop) · CPU only.
+---
 
-**Ingest method**
+## Live ingest on the website (locked)
 
-5. **Laptop = BackgroundTasks, Modal = `.spawn()` on the same `ingest_video` function.** OK?
+While a video is indexing, the UI must show **what is being built**, not a silent wait.
 
-**Size**
+- After the file **finishes uploading**, go to `/videos/:id` even if status is still `processing`.
+- Spinner + four lines, updated by polling `GET /videos/{id}`:
+  - Speech index
+  - Picture index
+  - Sound index
+  - Slide index
+- Each line: waiting / building / ready / skipped / error.
+- Chat stays **off** until overall `ready`.
+- Library row may say “Indexing…”; the four-line list lives on the video page.
 
-6. **Small files (~200–300 lines), no extra libraries without asking.** OK?
+Backend already has `transcript_status` · `visual_status` · `audio_status` · `slides_status`. UI must **show** them live. Phase 10 builds this panel; Phase 11 keeps it while chat is off.
 
-When these are answered, we write a **card** under each phase (packages + folder + Modal bits) so a coding agent has the bottom without you reading code.
+---
 
-Do **not** implement from this file until it says LOCKED and the cards exist.
+## Phase cards (how to write the code)
+
+### Phase 1 — Hold a video
+
+Laptop only. `backend/`: FastAPI, SQLModel, Postgres, ffprobe. Libraries already listed in [phase-01.md](phases/phase-01.md). No Modal, no torch. Status `uploaded` → `ready`/`error` (`processing` unused until ingest exists).
+
+### Phase 2 — Scissors
+
+Laptop ffmpeg. `tools/frames.py`, `audio.py`, `caps.py`. Caps 64 photos / 30s. No HTTP extras.
+
+### Phase 3 — Brain loop
+
+Laptop owns the JSON loop. Gemma lives on **Modal vLLM (L4)**. Send **slices** (frames/audio already cut), not the file. Tests: FakeBrain, no GPU.
+
+### Phase 4 — Speech
+
+Laptop extracts audio slice/file for Whisper. Modal **ingest worker** (L4) runs faster-whisper turbo. Writes lines into laptop Postgres (API receives results). `transcript_status` updates as it goes.
+
+### Phase 5 — Pictures
+
+Laptop ffmpeg ~1 FPS. Modal ingest worker embeds with SigLIP. `visual_status` live. Delete bulk JPEGs after embed.
+
+### Phase 6 — Sound
+
+Same ingest worker, CLAP on 3s chunks. `audio_status` live. Counts in Python.
+
+### Phase 7 — Export
+
+Laptop ffmpeg. Local GET URL. No S3. No Modal.
+
+### Phase 8 — Memory
+
+Session fields on existing chat. No Redis. No Modal change.
+
+### Phase 9 — UI shell
+
+`web/` TanStack Start. Two routes. `lib/api.ts` talks to FastAPI. No extra UI kits.
+
+### Phase 10 — Upload + live index panel
+
+File picker on `/`. Byte % during POST. Then **open the video page while processing**. Spinner + four index lines (poll). Chat still off. No player yet.
+
+### Phase 11 — Watch + ask
+
+Video.js + chat. If still `processing`, keep the live index panel; chat disabled. After `ready`, chat on. Working… on send.
+
+### Phase 12 — Clips + polish
+
+Clip in chat. Phone stack. Delete. README. Same live panel if someone opens a video that is still indexing.
+
+### Phase 13 — Slides
+
+Same ingest worker after pictures. ColQwen2.x on unique frames. `slides_status` live. Gemma still reads the real frame.
+
+---
+
+## Point a coding agent here
+
+1. Read this file (how) + [phase-01.md](phases/phase-01.md) (what).
+2. Implement **only Phase 1**.
+3. Stop. Do not start Phase 2 until we lock go-ahead for that slice.
+
+There is **no application code in this repo yet**. First code = `backend/` from Phase 1.

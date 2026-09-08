@@ -14,7 +14,7 @@ Related: [frontend](../08-frontend-backend.md) · [phase map](../12-build-phases
 
 On `/videos/:id`: Video.js plays `GET /videos/{id}/file`. You ask; POST chat with saved **`session_id`**. Wait for one JSON. Click a time → player seeks. Collapsed **details** show look/search/listen steps.
 
-Audio-only: Video.js with audio (or audio-only tech). Chat still works. Still indexing → chat off.
+Audio-only: Video.js with audio (or audio-only tech). Chat still works. Still indexing → chat off; keep the **live four-line index panel** from Phase 10 (spinner + speech / pictures / sounds / slides).
 
 ---
 
@@ -28,6 +28,7 @@ Audio-only: Video.js with audio (or audio-only tech). Chat still works. Still in
 | While waiting | Disable send. Show **Working…**. No SSE, no fake typing |
 | Tool trace | **Collapsed “details”** (`steps`). Not hidden, not always open |
 | Export links | **Hide until Phase 12** |
+| Still indexing | **Chat off.** Keep Phase 10 **live index panel** (spinner + four books) until overall `ready` |
 
 Do not copy the file into `web/public`. Browser still does not call Gemma.
 
@@ -51,7 +52,8 @@ TanStack Query mutation. shadcn Textarea, Button, Badge.
 ## Plan (agent)
 
 1. Video.js on the watch page; `src` FastAPI file; audio-only still plays
-2. Chat history, input, Working…, mutation
+2. If overall status is `processing`, show Phase 10 live index panel; chat disabled
+3. Chat history, input, Working…, mutation (only when `ready`)
 3. Persist `session_id` (memory + localStorage)
 4. Citation chips → `player.currentTime(t)`
 5. Collapsed details for `steps`; no `export_url` UI
@@ -65,4 +67,5 @@ Implement only this file after 10.
 - Click a time → player jumps
 - Refresh keeps the same session on that video
 - Trace is one click away
+- Open a still-indexing video → live books + chat off
 - No clip-download UI yet

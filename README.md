@@ -2,7 +2,9 @@
 
 An open-source system that copies **Google Gemini’s agentic video understanding** (announced 1 Sep 2026): a model with a remote control on a video timeline, not a model that watches every second.
 
-This repository is the **design, decisions, and conversation record**. Implementation code is not in this repo yet.
+This repository is the **design, decisions, and conversation record**. Implementation code is not in this repo yet — no `backend/` or `web/` folder.
+
+**To start code:** [docs/13-implementation-pass.md](docs/13-implementation-pass.md) (how) + [docs/phases/phase-01.md](docs/phases/phase-01.md) (what). One phase only.
 
 **Source of truth:** the **13 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, or Node backend — ignore it. Those were earlier drafts. They are not this app.
 
@@ -20,7 +22,7 @@ ColQwen2.x and `search_slides` are for questions like “which slide had **Pro $
 
 ## Read in this order
 
-Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11 (now aligned with the phases). How a coding agent writes code is [13](docs/13-implementation-pass.md) (**still open**: Modal/GPU cards).
+Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). First code: [Phase 1](docs/phases/phase-01.md) only.
 
 | Doc | What it is |
 |---|---|
@@ -36,7 +38,7 @@ Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
 | [docs/11-glossary.md](docs/11-glossary.md) | Words |
 | [docs/12-build-phases.md](docs/12-build-phases.md) | **Build order — phases 1–13 locked** |
-| [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | Libraries, Modal, size — **open** |
+| [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | Libraries, Modal, size — **locked** |
 | [docs/14-from-idea-to-production.md](docs/14-from-idea-to-production.md) | How to run agents without reading code |
 | [docs/phases/](docs/phases/phase-01.md) | One brief per phase |
 
