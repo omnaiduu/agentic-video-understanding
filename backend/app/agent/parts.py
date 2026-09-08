@@ -53,3 +53,29 @@ def refuse_message(detail: str) -> dict:
             "Try a smaller window. Do not dump the whole file."
         ),
     }
+
+
+def search_message(hits: list, query: str) -> dict:
+    if not hits:
+        text = (
+            f"search for {query!r} returned no transcript hits. "
+            "The whole talk is not attached. Try another query, look, or listen."
+        )
+    else:
+        lines = [f"[{hit.t:.1f}s] {hit.text}" for hit in hits]
+        text = (
+            f"transcript hits for {query!r} (at most 8, not the whole file):\n"
+            + "\n".join(lines)
+        )
+    return {"role": "user", "content": text}
+
+
+def transcript_not_ready_message(status: str) -> dict:
+    return {
+        "role": "user",
+        "content": (
+            f"transcript is not ready (status={status}). "
+            "No search results. Timed look and listen still work. "
+            "Do not invent a full transcript."
+        ),
+    }

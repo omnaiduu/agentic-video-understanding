@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 
 MAX_ROUNDS = 8
-DoKind = Literal["look", "listen", "answer"]
+DoKind = Literal["look", "listen", "search", "answer"]
 
 
 class BrainAction(BaseModel):
@@ -17,6 +17,7 @@ class BrainAction(BaseModel):
     start_s: float | None = None
     end_s: float | None = None
     fps: float | None = None
+    query: str | None = None
     answer: str | None = None
     times: list[float] = Field(default_factory=list)
 
@@ -24,14 +25,15 @@ class BrainAction(BaseModel):
 BRAIN_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "do": {"type": "string", "enum": ["look", "listen", "answer"]},
+        "do": {"type": "string", "enum": ["look", "listen", "search", "answer"]},
         "start_s": {"type": ["number", "null"]},
         "end_s": {"type": ["number", "null"]},
         "fps": {"type": ["number", "null"]},
+        "query": {"type": ["string", "null"]},
         "answer": {"type": ["string", "null"]},
         "times": {"type": "array", "items": {"type": "number"}},
     },
-    "required": ["do", "start_s", "end_s", "fps", "answer", "times"],
+    "required": ["do", "start_s", "end_s", "fps", "query", "answer", "times"],
     "additionalProperties": False,
 }
 
@@ -49,11 +51,12 @@ SYSTEM_PROMPT = """You fill a JSON form about one video. You do not call tools.
 Moves:
 - look: we cut JPEG frames from start_s to end_s (optional fps). Cap: seconds × fps ≤ 64 photos. Oversize is refused; pick a smaller window. We ignore answer.
 - listen: we cut 16 kHz mono wav from start_s to end_s. Cap: 30 seconds. Oversize is refused. We ignore answer.
+- search: we hybrid-search the Whisper transcript (keyword + meaning). Put the phrase in query, or null to use the user question. We return at most 8 {t, text} hits as text, never the whole talk. We ignore answer. If the transcript is not ready, we say so; use look or listen instead.
 - answer: you are done. Put the user-facing text in answer and citation timestamps (seconds) in times.
 
-After look or listen we send the cut as a normal user message with image or audio parts, not as a tool result.
+After look, listen, or search we send the result as a normal user message, not as a tool result.
 
-Only look, listen, and answer exist now. No search. Return only the JSON object."""
+Only look, listen, search, and answer exist now. Return only the JSON object."""
 
 RETRY_PROMPT = "Return only the JSON object that matches the schema. No markdown, no extra keys."
 
@@ -75,4 +78,4 @@ def parse_action(raw: str) -> BrainAction:
     try:
         return BrainAction.model_validate(payload)
     except ValidationError as exc:
-        raise BrainParseError("JSON did not match look/listen/answer") from exc
+        raise BrainParseError("JSON did not match look/listen/search/answer") from exc

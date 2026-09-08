@@ -1,5 +1,6 @@
 from collections.abc import Generator
 
+from sqlalchemy import event
 from sqlmodel import Session, create_engine
 
 from app.settings import get_settings
@@ -7,10 +8,17 @@ from app.settings import get_settings
 _engine = None
 
 
+def _register_vector(dbapi_connection, _connection_record) -> None:
+    from pgvector.psycopg import register_vector
+
+    register_vector(dbapi_connection)
+
+
 def get_engine():
     global _engine
     if _engine is None:
         _engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+        event.listen(_engine, "connect", _register_vector)
     return _engine
 
 
