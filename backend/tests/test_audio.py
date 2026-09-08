@@ -48,6 +48,16 @@ def _plant(
     session.commit()
 
 
+def _wipe_chunks(session: Session, video_id) -> None:
+    from sqlalchemy import text
+
+    session.execute(
+        text("DELETE FROM audio_chunks WHERE video_id = :vid"),
+        {"vid": video_id},
+    )
+    session.commit()
+
+
 def _override(brain: FakeBrain) -> None:
     app.dependency_overrides[get_brain] = lambda: brain
 
@@ -75,6 +85,7 @@ def test_bird_chirp_surfaces_a_time(client, tiny_mp4: Path) -> None:
     with Session(engine) as session:
         video = session.get(Video, video_id)
         assert video is not None
+        _wipe_chunks(session, video.id)
         _plant(session, video.id, 8.0, 11.0, target)
         _plant(session, video.id, 1.0, 4.0, other)
         result = search_audio(
@@ -197,6 +208,7 @@ def test_stadium_blob_is_one_span(client, tiny_mp4: Path) -> None:
     with Session(engine) as session:
         video = session.get(Video, video_id)
         assert video is not None
+        _wipe_chunks(session, video.id)
         for i in range(12):
             start = 60.0 + i * 1.5
             _plant(session, video.id, start, start + 3.0, applause)
@@ -208,7 +220,7 @@ def test_stadium_blob_is_one_span(client, tiny_mp4: Path) -> None:
         )
     assert result.count == 1
     assert abs(result.clusters[0].start_s - 60.0) < 0.01
-    assert result.clusters[0].end_s > 75.0
+    assert abs(result.clusters[0].end_s - 73.5) < 0.01
 
 
 def test_two_claps_count_two(client, tiny_mp4: Path) -> None:
@@ -220,6 +232,7 @@ def test_two_claps_count_two(client, tiny_mp4: Path) -> None:
     with Session(engine) as session:
         video = session.get(Video, video_id)
         assert video is not None
+        _wipe_chunks(session, video.id)
         _plant(session, video.id, 10.0, 13.0, clap)
         _plant(session, video.id, 40.0, 43.0, clap)
         result = search_audio(
