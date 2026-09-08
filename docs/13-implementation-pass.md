@@ -1,6 +1,6 @@
 # Implementation pass — how, not what
 
-**Status: OPEN.** Phases 1–13 are locked as **product**. This file is the **coding-agent** layer: packages, folders, Modal/GPU, how small to keep it.
+**Status: OPEN** for hosting / GPU / ingest. **Phase 1 how-to card is LOCKED.**
 
 You do not read the code. If this file is empty, an agent will invent GPUs, dump 2k-line modules, and pick extra libraries. Talk through this. Then we append a short **card** onto each phase brief.
 
@@ -46,6 +46,36 @@ That was a miss for a human who plans with agents and never opens the diff.
 | Sound | LAION-CLAP, 3s / 1.5s hop |
 | UI | TanStack Start, shadcn, Tailwind, TanStack Query, Video.js |
 | Files | Local disk `data/videos/{id}/` (S3 later behind same functions) |
+| Phase 1 how | Card below. Hosting/GPU still **open** (does not block Phase 1). |
+
+---
+
+## Phase 1 card — **LOCKED** (how to write it)
+
+Product brief stays [phase-01.md](phases/phase-01.md). An agent follows **this card** plus that brief. No extra libraries.
+
+| Piece | Locked how | In easy words |
+|---|---|---|
+| Shop | **FastAPI** + uvicorn + CORS open | Keep the API we already named |
+| Packages | **uv** + `pyproject.toml` + lockfile | One tool to install Python deps |
+| Filing cabinet | **Postgres in Docker Compose**. App talks via `DATABASE_URL` | A box on the same machine as the files |
+| Cable | **psycopg3** (`psycopg`), **sync** SQLModel `Session` | Wait for save+probe, then answer. No async DB yet |
+| Table diary | **Alembic** from day 1. Do **not** rely on `create_all` in “real” runs. Tests may use a throwaway DB + migrations | Later phases add columns without breaking the old table |
+| Measure file | **ffmpeg-python** `ffmpeg.probe()` (still needs **ffmpeg/ffprobe installed** on the machine — not inside the Postgres container) | Helper that calls ffprobe |
+| Upload | **`UploadFile`**, read in **chunks**, count bytes, **413** if over 2 GB. Never `await file.read()` with no size | Sip the file so 2 GB does not fill RAM |
+| Path JSON | Copy into `data/videos/{id}/`. No symlink | Same as product |
+| Fetch file | **`FileResponse`** (Starlette Range is built in). `content_disposition_type="inline"` so a player can play, not force-download | Skip-to-time works later |
+| Settings | pydantic-settings, `.env` gitignored | |
+| Tests | pytest + httpx. Tiny mp4/audio fixtures. No GPU | |
+| Size | Handful of files: `main.py`, `models.py`, `db.py`, `media/probe.py`, routes, `docker-compose.yml`, Alembic. ~200–300 lines each, split if bigger | |
+
+**On the machine, not in pip:** ffmpeg (gives ffprobe). Docker for Postgres.
+
+**Not this phase:** torch, Whisper, Gemma, React, S3, Modal, Redis, Celery, async SQL.
+
+---
+
+## What we still must lock (talk)
 
 ---
 
@@ -118,6 +148,6 @@ If the agent needs a new library, **stop and ask**.
 
 6. **Small files (~200–300 lines), no extra libraries without asking.** OK?
 
-When these are answered, we write a **card** under each phase (packages + folder + Modal bits) so a coding agent has the bottom without you reading code.
+When these are answered, we write cards for phases **2–13**. Phase 1’s card is already locked above. You can **implement Phase 1** without answering 1–6. Those are for Gemma / ingest / Modal.
 
-Do **not** implement from this file until it says LOCKED and the cards exist.
+Do **not** implement later phases from this file until those cards exist.

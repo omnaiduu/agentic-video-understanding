@@ -73,16 +73,18 @@ DELETE /videos/{id}   row + folder
 
 ## Plan (agent)
 
-1. `backend/` Python 3.11+, `pyproject.toml`
+1. `backend/` Python 3.11+, `pyproject.toml` via **uv**
 2. FastAPI, CORS open, pydantic-settings
-3. SQLModel + **PostgreSQL** (`DATABASE_URL`)
+3. SQLModel + **PostgreSQL** in **Docker Compose** (`DATABASE_URL`), **Alembic**, **psycopg3** sync
 4. Routes above
-5. Reject over 2 GB (413)
-6. Tests: tiny mp4, tiny audio, garbage → error, oversize, delete removes files
-7. `backend/README.md` — ffmpeg/ffprobe required
+5. Reject over 2 GB (413) while **chunk-reading** `UploadFile`
+6. Tests: tiny mp4, tiny audio, garbage → error, oversize, delete removes files, Range on GET file
+7. `backend/README.md` — **ffmpeg/ffprobe** on the host; Docker for Postgres
 8. gitignore `data/`, `.env`
 
-**Libraries:** fastapi, uvicorn, python-multipart, pydantic-settings, sqlmodel, pytest, httpx.
+**Libraries:** fastapi, uvicorn, python-multipart, pydantic-settings, sqlmodel, **psycopg** (psycopg3), **alembic**, **ffmpeg-python**, pytest, httpx. Install with **uv**. Postgres via **Docker Compose**.
+
+**How (locked):** [Phase 1 card](../13-implementation-pass.md). Chunked `UploadFile`. `FileResponse` for Range. Sync SQLModel. Alembic. `ffmpeg.probe()`.
 
 No torch, whisper, openai, React. No `web/` folder.
 
@@ -95,6 +97,6 @@ No torch, whisper, openai, React. No `web/` folder.
 - Audio → `kind=audio`
 - Garbage → `error`
 - Over 2 GB → rejected
-- GET file returns bytes
+- GET file returns bytes **and** honors Range (`FileResponse`)
 - DELETE removes row and files
 - No chat, no UI, no frame cutting
