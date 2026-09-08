@@ -79,6 +79,8 @@ Moves:
 - export_audio: we re-encode a wav from start_s to end_s onto disk. Cap: 60 seconds. Oversize is refused. We return a GET URL for the human. You do not get the wav bytes. We ignore answer.
 - answer: you are done. Put the user-facing text in answer and citation timestamps (seconds) in times. If we exported, include the URL.
 
+Follow-ups: if last time windows are listed, use them first for "that" / "there" / "the clip" / "that frame". You may look or listen again at those times. Do not search the whole tape from scratch unless the new question needs a new find. Old photos and audio are not re-attached.
+
 After look, listen, search, search_visual, search_audio, export_clip, or export_audio we send the result as a normal user message, not as a tool result.
 
 Only look, listen, search, search_visual, search_audio, export_clip, export_audio, and answer exist now. Return only the JSON object."""
