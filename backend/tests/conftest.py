@@ -87,6 +87,7 @@ def configured_env(data_dir: Path) -> None:
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
     os.environ["DATA_DIR"] = str(data_dir)
     os.environ["MAX_UPLOAD_BYTES"] = str(2 * 1024 * 1024 * 1024)
+    os.environ["BRAIN"] = "fake"
 
     from app.db import reset_engine
     from app.settings import get_settings

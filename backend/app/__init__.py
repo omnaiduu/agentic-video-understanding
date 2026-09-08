@@ -1,1 +1,1 @@
-"""Backend: store a video, measure it, cut short slices."""
+"""Backend: store a video, cut slices, run the JSON chat loop."""

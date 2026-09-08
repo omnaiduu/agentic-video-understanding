@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routes.chat import router as chat_router
 from app.routes.videos import router as videos_router
 
 
@@ -14,6 +15,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(videos_router)
+    app.include_router(chat_router)
     return app
 
 

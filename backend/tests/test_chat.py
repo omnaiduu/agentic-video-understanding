@@ -1,0 +1,302 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from app.agent.client import FakeBrain, VllmBrain
+from app.agent.loop import LoopError, run_loop
+from app.agent.schema import RESPONSE_FORMAT, parse_action
+from app.main import app
+from app.models import ChatMessage, ChatSession, Video
+from app.routes.chat import get_brain
+from sqlmodel import Session, select
+
+
+def _upload(client, path: Path):
+    with path.open("rb") as handle:
+        return client.post(
+            "/videos",
+            files={"file": (path.name, handle, "application/octet-stream")},
+        )
+
+
+def _look_then_answer() -> FakeBrain:
+    return FakeBrain(
+        [
+            {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.5,
+                "fps": 2,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "answer": "A dark frame at 0.1s.",
+                "times": [0.1],
+            },
+        ]
+    )
+
+
+def _override(brain: FakeBrain) -> None:
+    app.dependency_overrides[get_brain] = lambda: brain
+
+
+def _clear_override() -> None:
+    app.dependency_overrides.pop(get_brain, None)
+
+
+def test_chat_look_then_answer_attaches_images(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = _look_then_answer()
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?"},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["answer"] == "A dark frame at 0.1s."
+    assert body["citations"] == [0.1]
+    assert body["session_id"]
+    assert [step["do"] for step in body["steps"]] == ["look", "answer"]
+    assert body["steps"][0]["ok"] is True
+    assert len(brain.calls) == 2
+    observation = brain.calls[1][-1]
+    assert observation["role"] == "user"
+    parts = observation["content"]
+    assert isinstance(parts, list)
+    assert any(part.get("type") == "image_url" for part in parts)
+    assert all(part.get("type") != "tool" for part in parts)
+
+
+def test_oversize_look_never_extracts(client, tiny_mp4: Path, monkeypatch) -> None:
+    from app.tools import ffmpeg_cli
+
+    def boom(*_args, **_kwargs) -> None:
+        raise AssertionError("extract ffmpeg must not run for an oversize look")
+
+    monkeypatch.setattr(ffmpeg_cli, "run_ffmpeg", boom)
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = FakeBrain(
+        [
+            {
+                "do": "look",
+                "start_s": 0,
+                "end_s": 7200,
+                "fps": 1,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "answer": "Need a smaller window.",
+                "times": [],
+            },
+        ]
+    )
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?"},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["steps"][0]["do"] == "look"
+    assert body["steps"][0]["ok"] is False
+    assert "64" in body["steps"][0]["detail"]
+    refuse = brain.calls[1][-1]["content"]
+    assert "refused" in refuse
+    assert body["answer"] == "Need a smaller window."
+
+
+def test_listen_attaches_audio_part(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = FakeBrain(
+        [
+            {
+                "do": "listen",
+                "start_s": 0.0,
+                "end_s": 0.5,
+                "fps": None,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "answer": "A tone.",
+                "times": [0.0],
+            },
+        ]
+    )
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what do I hear at the start?"},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    parts = brain.calls[1][-1]["content"]
+    assert any(part.get("type") == "input_audio" for part in parts)
+
+
+def test_chat_stores_text_not_jpegs(client, tiny_mp4: Path) -> None:
+    from app.db import get_engine
+
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    _override(_look_then_answer())
+    try:
+        body = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?"},
+        ).json()
+    finally:
+        _clear_override()
+    engine = get_engine()
+    with Session(engine) as session:
+        rows = session.exec(select(ChatMessage)).all()
+        assert rows
+        joined = " ".join(row.content for row in rows)
+        assert "\xff\xd8" not in joined
+        assert "data:image" not in joined
+        chat = session.get(ChatSession, body["session_id"])
+        assert chat is not None
+        assert str(chat.video_id) == video_id
+
+
+def test_delete_video_removes_sessions(client, tiny_mp4: Path) -> None:
+    from app.db import get_engine
+
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    _override(_look_then_answer())
+    try:
+        session_id = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?"},
+        ).json()["session_id"]
+    finally:
+        _clear_override()
+    assert client.delete(f"/videos/{video_id}").status_code == 204
+    engine = get_engine()
+    with Session(engine) as session:
+        assert session.get(ChatSession, session_id) is None
+        assert session.exec(select(ChatMessage)).all() == []
+        assert session.get(Video, video_id) is None
+
+
+def test_wrong_session_404(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    missing = "00000000-0000-0000-0000-000000000099"
+    response = client.post(
+        f"/videos/{video_id}/chat",
+        json={"message": "hello", "session_id": missing},
+    )
+    assert response.status_code == 404
+
+
+def test_chat_without_injected_brain_503(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    response = client.post(
+        f"/videos/{video_id}/chat",
+        json={"message": "what happens at 0:10?"},
+    )
+    assert response.status_code == 503
+
+
+def test_chat_missing_video_404(client) -> None:
+    missing = "00000000-0000-0000-0000-000000000001"
+    response = client.post(f"/videos/{missing}/chat", json={"message": "hello"})
+    assert response.status_code == 404
+
+
+def test_chat_error_video_409(client) -> None:
+    created = client.post(
+        "/videos",
+        files={"file": ("junk.mp4", b"not a media file" * 32, "video/mp4")},
+    ).json()
+    response = client.post(
+        f"/videos/{created['id']}/chat",
+        json={"message": "what happens at 0:10?"},
+    )
+    assert response.status_code == 409
+
+
+def test_loop_invalid_json_retries_then_fails(tiny_mp4: Path) -> None:
+    class RawBrain:
+        def complete(self, messages):
+            return "nope"
+
+    try:
+        run_loop(tiny_mp4, "what happens at 0:10?", RawBrain())
+        raise AssertionError("expected LoopError")
+    except LoopError as exc:
+        assert "JSON" in str(exc)
+
+
+def test_vllm_brain_uses_json_schema_not_tools(monkeypatch) -> None:
+    captured: dict = {}
+
+    class FakeResponse:
+        class Choice:
+            class Message:
+                content = (
+                    '{"do":"answer","start_s":null,"end_s":null,'
+                    '"fps":null,"answer":"ok","times":[]}'
+                )
+
+            message = Message()
+
+        choices = [Choice()]
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return FakeResponse()
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeOpenAI:
+        def __init__(self, **_kwargs) -> None:
+            self.chat = FakeChat()
+
+    monkeypatch.setattr("openai.OpenAI", FakeOpenAI)
+    from app.settings import Settings
+
+    brain = VllmBrain(
+        Settings(
+            database_url="postgresql+psycopg://video:video@127.0.0.1:5432/video_test",
+            vllm_base_url="http://vllm.example/v1",
+            vllm_model="google/gemma-4-E4B-it",
+        )
+    )
+    text = brain.complete([{"role": "user", "content": "hi"}])
+    assert "ok" in text
+    assert "tools" not in captured
+    assert captured["response_format"] == RESPONSE_FORMAT
+
+
+def test_parse_action_accepts_look() -> None:
+    action = parse_action(
+        '{"do":"look","start_s":10,"end_s":14,"fps":2,"answer":null,"times":[]}'
+    )
+    assert action.do == "look"
+    assert action.start_s == 10

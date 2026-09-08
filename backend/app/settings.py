@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://video:video@localhost:5432/video"
     data_dir: Path = _DEFAULT_DATA_DIR
     max_upload_bytes: int = Field(default=_TWO_GIB, ge=1)
+    brain: str = "fake"
+    vllm_base_url: str = ""
+    vllm_api_key: str = "EMPTY"
+    vllm_model: str = "google/gemma-4-E4B-it"
 
 
 @lru_cache
