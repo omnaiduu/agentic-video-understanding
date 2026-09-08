@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     vllm_base_url: str = ""
     vllm_api_key: str = "EMPTY"
     vllm_model: str = "google/gemma-4-E4B-it"
+    ingest: str = "fake"
+    embedder: str = "fake"
+    whisper_model: str = "turbo"
+    embed_model: str = "intfloat/e5-small-v2"
+    ingest_secret: str = ""
+    public_base_url: str = ""
+    modal_ingest_app: str = "agentic-video-ingest"
 
 
 @lru_cache

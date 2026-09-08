@@ -4,15 +4,16 @@ import mimetypes
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 from starlette.datastructures import UploadFile
 
 from app.db import get_session
+from app.ingest.speech import schedule_transcript
 from app.media.probe import ProbeError, probe
-from app.models import Video, VideoOut, VideoStatus
+from app.models import IndexStatus, Video, VideoOut, VideoStatus
 from app.settings import Settings, get_settings
 from app.storage import (
     OversizeError,
@@ -44,6 +45,7 @@ def _apply_probe(video: Video, dest: Path) -> None:
         result = probe(dest)
     except ProbeError as exc:
         video.status = VideoStatus.error.value
+        video.transcript_status = IndexStatus.skipped.value
         video.error_message = str(exc)[:2000]
         if not video.kind:
             video.kind = _guess_kind(video.original_filename)
@@ -86,6 +88,7 @@ def _resolve_source(raw: str) -> Path:
 @router.post("/videos", response_model=VideoOut, status_code=201)
 async def create_video(
     request: Request,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
     settings: Settings = Depends(get_settings),
 ) -> VideoOut:
@@ -111,8 +114,12 @@ async def create_video(
             path=str(dest),
             kind=_guess_kind(filename),
             status=VideoStatus.uploaded.value,
+            transcript_status=IndexStatus.pending.value,
         )
-        return _to_out(_insert(session, video))
+        video = _insert(session, video)
+        schedule_transcript(session, video, background_tasks, settings)
+        session.refresh(video)
+        return _to_out(video)
 
     if "multipart/form-data" not in content_type:
         raise HTTPException(status_code=400, detail="send a multipart file or JSON path")
@@ -137,8 +144,12 @@ async def create_video(
         path=str(dest),
         kind=_guess_kind(filename),
         status=VideoStatus.uploaded.value,
+        transcript_status=IndexStatus.pending.value,
     )
-    return _to_out(_insert(session, video))
+    video = _insert(session, video)
+    schedule_transcript(session, video, background_tasks, settings)
+    session.refresh(video)
+    return _to_out(video)
 
 
 @router.get("/videos", response_model=list[VideoOut])

@@ -10,6 +10,8 @@ from app.agent.client import Brain, build_brain
 from app.agent.loop import LoopError, LoopResult, run_loop
 from app.db import get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
+from app.search.embed import Embedder, get_embedder
+from app.search.transcript import search_transcript
 from app.settings import Settings, get_settings
 
 router = APIRouter()
@@ -72,6 +74,7 @@ def chat(
     payload: ChatIn,
     session: Session = Depends(get_session),
     brain: Brain = Depends(get_brain),
+    embedder: Embedder = Depends(get_embedder),
 ) -> ChatOut:
     video = session.get(Video, video_id)
     if video is None:
@@ -89,8 +92,17 @@ def chat(
         if chat_row is None or chat_row.video_id != video.id:
             raise HTTPException(status_code=404, detail="session not found")
 
+    def _search(query: str):
+        return search_transcript(session, video.id, query, embedder)
+
     try:
-        result = run_loop(video.path, payload.message, brain)
+        result = run_loop(
+            video.path,
+            payload.message,
+            brain,
+            search=_search,
+            transcript_status=video.transcript_status,
+        )
     except LoopError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except RuntimeError as exc:

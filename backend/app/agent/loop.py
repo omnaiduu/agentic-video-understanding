@@ -1,13 +1,20 @@
-"""Laptop-owned look / listen / answer loop. Caps stay in Phase 2 scissors."""
+"""Laptop-owned look / listen / search / answer loop. Caps stay in Phase 2 scissors."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from app.agent.client import Brain
-from app.agent.parts import listen_message, look_message, refuse_message
+from app.agent.parts import (
+    listen_message,
+    look_message,
+    refuse_message,
+    search_message,
+    transcript_not_ready_message,
+)
 from app.agent.schema import (
     MAX_ROUNDS,
     RETRY_PROMPT,
@@ -16,6 +23,8 @@ from app.agent.schema import (
     BrainParseError,
     parse_action,
 )
+from app.models import IndexStatus
+from app.search.transcript import TranscriptHit
 from app.tools import ScissorsError, get_audio, get_frames, get_meta
 from app.tools.meta import VideoMeta
 
@@ -40,6 +49,9 @@ class LoopResult:
     steps: list[Step] = field(default_factory=list)
 
 
+SearchFn = Callable[[str], list[TranscriptHit]]
+
+
 def _window(action: BrainAction) -> tuple[float, float]:
     if action.start_s is None or action.end_s is None:
         raise ScissorsError("look/listen need start_s and end_s")
@@ -56,8 +68,16 @@ def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
         return parse_action(raw)
 
 
-def run_loop(path: str | Path, question: str, brain: Brain) -> LoopResult:
+def run_loop(
+    path: str | Path,
+    question: str,
+    brain: Brain,
+    *,
+    search: SearchFn | None = None,
+    transcript_status: str | None = None,
+) -> LoopResult:
     meta: VideoMeta = get_meta(path)
+    status = transcript_status or IndexStatus.pending.value
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
@@ -65,6 +85,7 @@ def run_loop(path: str | Path, question: str, brain: Brain) -> LoopResult:
             "content": (
                 f"Video duration {meta.duration_s:.3f}s. "
                 f"has_video={meta.has_video} has_audio={meta.has_audio}. "
+                f"transcript_status={status}. "
                 f"Question: {question}"
             ),
         },
@@ -74,11 +95,11 @@ def run_loop(path: str | Path, question: str, brain: Brain) -> LoopResult:
 
     while True:
         if rounds >= MAX_ROUNDS:
-            raise LoopError(f"stopped after {MAX_ROUNDS} look/listen rounds")
+            raise LoopError(f"stopped after {MAX_ROUNDS} look/listen/search rounds")
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
-            raise LoopError("model did not return look/listen/answer JSON") from exc
+            raise LoopError("model did not return look/listen/search/answer JSON") from exc
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
         )
@@ -91,6 +112,31 @@ def run_loop(path: str | Path, question: str, brain: Brain) -> LoopResult:
             return LoopResult(answer=text, citations=list(action.times), steps=steps)
 
         rounds += 1
+        if action.do == "search":
+            query = (action.query or question).strip()
+            if status != IndexStatus.ready.value:
+                messages.append(transcript_not_ready_message(status))
+                steps.append(
+                    Step(do="search", ok=False, detail=f"transcript {status}")
+                )
+                continue
+            if search is None:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": "search is not wired. Use look, listen, or answer.",
+                    }
+                )
+                steps.append(Step(do="search", ok=False, detail="search not wired"))
+                continue
+            hits = search(query)[:8]
+            messages.append(search_message(hits, query))
+            shown = ",".join(f"{hit.t:.2f}" for hit in hits)
+            steps.append(
+                Step(do="search", ok=True, detail=f"{query}: {shown}" if shown else query)
+            )
+            continue
+
         try:
             start_s, end_s = _window(action)
             if action.do == "look":

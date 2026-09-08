@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 
 import sqlalchemy as sa
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, DateTime, Text
 from sqlmodel import Field, SQLModel
 
@@ -17,6 +18,14 @@ class VideoStatus(str, Enum):
     processing = "processing"
     ready = "ready"
     error = "error"
+
+
+class IndexStatus(str, Enum):
+    pending = "pending"
+    processing = "processing"
+    ready = "ready"
+    error = "error"
+    skipped = "skipped"
 
 
 def _utcnow() -> datetime:
@@ -35,6 +44,7 @@ class Video(SQLModel, table=True):
     has_audio: bool = False
     has_video: bool = False
     status: str = VideoStatus.uploaded.value
+    transcript_status: str = IndexStatus.pending.value
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     created_at: datetime = Field(
         default_factory=_utcnow,
@@ -81,6 +91,27 @@ class ChatMessage(SQLModel, table=True):
     )
 
 
+class TranscriptLine(SQLModel, table=True):
+    __tablename__ = "transcript_lines"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    video_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            sa.ForeignKey("videos.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    start_s: float
+    end_s: float
+    text: str = Field(sa_column=Column(Text, nullable=False))
+    embedding: list[float] | None = Field(
+        default=None,
+        sa_column=Column(Vector(384), nullable=True),
+    )
+
+
 class VideoOut(SQLModel):
     id: uuid.UUID
     original_filename: str
@@ -91,5 +122,6 @@ class VideoOut(SQLModel):
     has_audio: bool
     has_video: bool
     status: str
+    transcript_status: str
     error_message: str | None
     created_at: datetime
