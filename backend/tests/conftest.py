@@ -67,6 +67,36 @@ def tiny_audio(media_dir: Path) -> Path:
     return path
 
 
+@pytest.fixture(scope="session")
+def tiny_mute(media_dir: Path) -> Path:
+    path = media_dir / "mute.wav"
+    _run_ffmpeg(
+        ["-y", "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono:d=1", str(path)]
+    )
+    return path
+
+
+@pytest.fixture(scope="session")
+def tiny_video_only(media_dir: Path) -> Path:
+    path = media_dir / "silent.mp4"
+    _run_ffmpeg(
+        [
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=black:s=64x64:d=1",
+            "-an",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            str(path),
+        ]
+    )
+    return path
+
+
 def _ensure_test_database() -> None:
     admin = create_engine(
         "postgresql+psycopg://video:video@127.0.0.1:5432/postgres",
@@ -91,6 +121,7 @@ def configured_env(data_dir: Path) -> None:
     os.environ["INGEST"] = "fake"
     os.environ["EMBEDDER"] = "fake"
     os.environ["VISUAL_EMBEDDER"] = "fake"
+    os.environ["AUDIO_EMBEDDER"] = "fake"
     os.environ["INGEST_SECRET"] = "test-ingest-secret"
 
     from app.db import reset_engine

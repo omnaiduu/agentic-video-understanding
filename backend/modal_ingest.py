@@ -1,7 +1,8 @@
 """Modal ingest worker: faster-whisper turbo on L4. Not the chat GPU.
 
-Laptop extracts the full audio track (no 30s listen cap) and 1 FPS JPEGs.
-This worker transcribes (faster-whisper turbo) and embeds pictures (SigLIP 2).
+Laptop extracts the full audio track (no 30s listen cap), 1 FPS JPEGs, and
+3s / 1.5s-hop wav chunks. This worker transcribes (faster-whisper turbo),
+embeds pictures (SigLIP 2), and embeds sounds (LAION-CLAP).
 It POSTs results to the laptop API and never opens laptop Postgres.
 
 Deploy from backend/:
@@ -188,5 +189,115 @@ def embed_visual(
             callback_url,
             headers=headers,
             json={"status": "error", "error_message": "siglip failed", "frames": []},
+            timeout=30.0,
+        )
+
+
+CLAP_NAME = "laion/larger_clap_general"
+
+clap_image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install(
+        "torch>=2.4.0",
+        "transformers>=4.49.0",
+        "numpy>=1.26.0",
+        "httpx>=0.27.0",
+    )
+    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+)
+
+
+@app.function(
+    image=clap_image,
+    gpu="L4",
+    timeout=60 * MINUTES,
+    scaledown_window=2 * MINUTES,
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+def embed_audio(
+    video_id: str,
+    chunks_url: str,
+    callback_url: str,
+    secret: str,
+    clap_model: str = CLAP_NAME,
+) -> None:
+    import io
+    import json
+    import tarfile
+    import wave
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    import httpx
+    import numpy as np
+    import torch
+    from transformers import ClapModel, ClapProcessor
+
+    del video_id
+    headers = {"Authorization": f"Bearer {secret}"}
+    tar_bytes = httpx.get(chunks_url, headers=headers, timeout=300.0).content
+    chunks: list[dict] = []
+    try:
+        with TemporaryDirectory(prefix="ingest-clap-") as tmp:
+            tar_path = Path(tmp) / "chunks.tar"
+            tar_path.write_bytes(tar_bytes)
+            extract_dir = Path(tmp) / "chunks"
+            extract_dir.mkdir()
+            with tarfile.open(tar_path, "r") as tar:
+                tar.extractall(extract_dir, filter="data")
+            manifest_path = extract_dir / "manifest.json"
+            if manifest_path.is_file():
+                items = json.loads(manifest_path.read_text(encoding="utf-8"))
+            else:
+                files = sorted(extract_dir.glob("chunk_*.wav"))
+                items = [
+                    {
+                        "file": path.name,
+                        "start_s": float(index) * 1.5,
+                        "end_s": float(index) * 1.5 + 3.0,
+                    }
+                    for index, path in enumerate(files)
+                ]
+            model = ClapModel.from_pretrained(clap_model).eval()
+            processor = ClapProcessor.from_pretrained(clap_model)
+            for item in items:
+                wav_path = extract_dir / item["file"]
+                if not wav_path.is_file():
+                    continue
+                with wave.open(io.BytesIO(wav_path.read_bytes()), "rb") as handle:
+                    n_frames = handle.getnframes()
+                    rate = handle.getframerate()
+                    raw = handle.readframes(n_frames)
+                    width = handle.getsampwidth()
+                if width != 2:
+                    continue
+                samples = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+                inputs = processor(
+                    audios=[samples],
+                    sampling_rate=rate,
+                    return_tensors="pt",
+                    padding=True,
+                )
+                with torch.no_grad():
+                    vector = model.get_audio_features(**inputs)
+                    vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
+                chunks.append(
+                    {
+                        "start_s": float(item["start_s"]),
+                        "end_s": float(item["end_s"]),
+                        "embedding": [float(x) for x in vector[0].tolist()],
+                    }
+                )
+        httpx.post(
+            callback_url,
+            headers=headers,
+            json={"status": "ready", "chunks": chunks},
+            timeout=120.0,
+        ).raise_for_status()
+    except Exception:
+        httpx.post(
+            callback_url,
+            headers=headers,
+            json={"status": "error", "error_message": "clap failed", "chunks": []},
             timeout=30.0,
         )

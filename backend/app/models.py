@@ -46,6 +46,7 @@ class Video(SQLModel, table=True):
     status: str = VideoStatus.uploaded.value
     transcript_status: str = IndexStatus.pending.value
     visual_status: str = IndexStatus.pending.value
+    audio_status: str = IndexStatus.pending.value
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     created_at: datetime = Field(
         default_factory=_utcnow,
@@ -132,6 +133,26 @@ class VisualFrame(SQLModel, table=True):
     )
 
 
+class AudioChunk(SQLModel, table=True):
+    __tablename__ = "audio_chunks"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    video_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            sa.ForeignKey("videos.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    start_s: float
+    end_s: float
+    embedding: list[float] | None = Field(
+        default=None,
+        sa_column=Column(Vector(512), nullable=True),
+    )
+
+
 class VideoOut(SQLModel):
     id: uuid.UUID
     original_filename: str
@@ -144,5 +165,6 @@ class VideoOut(SQLModel):
     status: str
     transcript_status: str
     visual_status: str
+    audio_status: str
     error_message: str | None
     created_at: datetime

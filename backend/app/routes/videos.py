@@ -12,6 +12,7 @@ from starlette.datastructures import UploadFile
 
 from app.db import get_session
 from app.ingest.speech import schedule_transcript
+from app.ingest.sound import schedule_sound
 from app.ingest.visual import schedule_visual
 from app.media.probe import ProbeError, probe
 from app.models import IndexStatus, Video, VideoOut, VideoStatus
@@ -48,6 +49,7 @@ def _apply_probe(video: Video, dest: Path) -> None:
         video.status = VideoStatus.error.value
         video.transcript_status = IndexStatus.skipped.value
         video.visual_status = IndexStatus.skipped.value
+        video.audio_status = IndexStatus.skipped.value
         video.error_message = str(exc)[:2000]
         if not video.kind:
             video.kind = _guess_kind(video.original_filename)
@@ -118,10 +120,12 @@ async def create_video(
             status=VideoStatus.uploaded.value,
             transcript_status=IndexStatus.pending.value,
             visual_status=IndexStatus.pending.value,
+            audio_status=IndexStatus.pending.value,
         )
         video = _insert(session, video)
         schedule_transcript(session, video, background_tasks, settings)
         schedule_visual(session, video, background_tasks, settings)
+        schedule_sound(session, video, background_tasks, settings)
         session.refresh(video)
         return _to_out(video)
 
@@ -150,10 +154,12 @@ async def create_video(
         status=VideoStatus.uploaded.value,
         transcript_status=IndexStatus.pending.value,
         visual_status=IndexStatus.pending.value,
+        audio_status=IndexStatus.pending.value,
     )
     video = _insert(session, video)
     schedule_transcript(session, video, background_tasks, settings)
     schedule_visual(session, video, background_tasks, settings)
+    schedule_sound(session, video, background_tasks, settings)
     session.refresh(video)
     return _to_out(video)
 

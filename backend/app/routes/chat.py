@@ -10,6 +10,8 @@ from app.agent.client import Brain, build_brain
 from app.agent.loop import LoopError, LoopResult, run_loop
 from app.db import get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
+from app.search.audio import search_audio
+from app.search.clap import AudioEmbedder, get_audio_embedder
 from app.search.embed import Embedder, get_embedder
 from app.search.siglip import VisualEmbedder, get_visual_embedder
 from app.search.transcript import search_transcript
@@ -78,6 +80,7 @@ def chat(
     brain: Brain = Depends(get_brain),
     embedder: Embedder = Depends(get_embedder),
     visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
+    audio_embedder: AudioEmbedder = Depends(get_audio_embedder),
 ) -> ChatOut:
     video = session.get(Video, video_id)
     if video is None:
@@ -101,6 +104,9 @@ def chat(
     def _search_visual(query: str):
         return search_visual(session, video.id, query, visual_embedder)
 
+    def _search_audio(query: str):
+        return search_audio(session, video.id, query, audio_embedder)
+
     try:
         result = run_loop(
             video.path,
@@ -108,8 +114,10 @@ def chat(
             brain,
             search=_search,
             search_visual=_search_visual,
+            search_audio=_search_audio,
             transcript_status=video.transcript_status,
             visual_status=video.visual_status,
+            audio_status=video.audio_status,
         )
     except LoopError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

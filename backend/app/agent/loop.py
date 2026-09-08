@@ -1,4 +1,4 @@
-"""Laptop-owned look / listen / search / search_visual / answer loop."""
+"""Laptop-owned look / listen / search / search_visual / search_audio / answer loop."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ from typing import Any
 
 from app.agent.client import Brain
 from app.agent.parts import (
+    audio_not_ready_message,
+    audio_search_message,
     listen_message,
     look_message,
     refuse_message,
@@ -26,6 +28,7 @@ from app.agent.schema import (
     parse_action,
 )
 from app.models import IndexStatus
+from app.search.audio import AudioSearchResult
 from app.search.transcript import TranscriptHit
 from app.search.visual import VisualHit
 from app.tools import ScissorsError, get_audio, get_frames, get_meta
@@ -54,6 +57,7 @@ class LoopResult:
 
 SearchFn = Callable[[str], list[TranscriptHit]]
 VisualSearchFn = Callable[[str], list[VisualHit]]
+AudioSearchFn = Callable[[str], AudioSearchResult]
 
 
 def _window(action: BrainAction) -> tuple[float, float]:
@@ -79,12 +83,15 @@ def run_loop(
     *,
     search: SearchFn | None = None,
     search_visual: VisualSearchFn | None = None,
+    search_audio: AudioSearchFn | None = None,
     transcript_status: str | None = None,
     visual_status: str | None = None,
+    audio_status: str | None = None,
 ) -> LoopResult:
     meta: VideoMeta = get_meta(path)
     speech_status = transcript_status or IndexStatus.pending.value
     picture_status = visual_status or IndexStatus.pending.value
+    sound_status = audio_status or IndexStatus.pending.value
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
@@ -94,6 +101,7 @@ def run_loop(
                 f"has_video={meta.has_video} has_audio={meta.has_audio}. "
                 f"transcript_status={speech_status}. "
                 f"visual_status={picture_status}. "
+                f"audio_status={sound_status}. "
                 f"Question: {question}"
             ),
         },
@@ -104,13 +112,13 @@ def run_loop(
     while True:
         if rounds >= MAX_ROUNDS:
             raise LoopError(
-                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual rounds"
+                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio rounds"
             )
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
             raise LoopError(
-                "model did not return look/listen/search/search_visual/answer JSON"
+                "model did not return look/listen/search/search_visual/search_audio/answer JSON"
             ) from exc
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
@@ -180,6 +188,44 @@ def run_loop(
             steps.append(
                 Step(
                     do="search_visual",
+                    ok=True,
+                    detail=f"{query}: {shown}" if shown else query,
+                )
+            )
+            continue
+
+        if action.do == "search_audio":
+            query = (action.query or question).strip()
+            if sound_status != IndexStatus.ready.value:
+                messages.append(audio_not_ready_message(sound_status))
+                steps.append(
+                    Step(
+                        do="search_audio",
+                        ok=False,
+                        detail=f"audio {sound_status}",
+                    )
+                )
+                continue
+            if search_audio is None:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "search_audio is not wired. Use look, listen, or answer."
+                        ),
+                    }
+                )
+                steps.append(
+                    Step(do="search_audio", ok=False, detail="search_audio not wired")
+                )
+                continue
+            result = search_audio(query)
+            hits = result.hits[:8]
+            messages.append(audio_search_message(result, query))
+            shown = ",".join(f"{hit.start_s:.2f}" for hit in hits)
+            steps.append(
+                Step(
+                    do="search_audio",
                     ok=True,
                     detail=f"{query}: {shown}" if shown else query,
                 )
