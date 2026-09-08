@@ -1,1 +1,1 @@
-"""Phase 1 backend: store a video, measure it, give it an id."""
+"""Backend: store a video, measure it, cut short slices."""

@@ -1,7 +1,7 @@
 [project]
 name = "agentic-video-backend"
 version = "0.1.0"
-description = "Phase 1: hold a video (upload, probe, Postgres)."
+description = "Phases 1–2: hold a video, then cut short frames/audio."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
