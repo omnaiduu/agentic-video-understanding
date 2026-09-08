@@ -24,7 +24,7 @@
 | **Export** | Write a clip/audio to disk and return a GET URL |
 | **Agentic Vision** | Zoom/crop **inside one still** (Google). Not the video timeline |
 | **search_notes** | Search VLM **captions** from ingest. **We don’t do this** |
-| **Modal** | GPU host we may use for Gemma / ingest (hosting still open in doc 13) |
+| **Modal** | GPU host for Gemma (chat worker) and ingest (other worker). Laptop keeps the API and files. |
 | **E4B / 12B** | Gemma 4 sizes. **E4B = default.** 12B = later env switch. |
 | **ColQwen / ColPali** | Patch-level slide retriever (MaxSim). **This app** (Phase 13). `search_slides`. Gemma still reads the real frame; ColQwen only finds the time. |
 | **search_slides** | JSON action: find a unique slide by on-screen text (“Pro $99”). |

@@ -66,6 +66,8 @@ Turning **E2B into an embedding model**. If we have domain labels, **fine-tune C
 
 ## Hosting
 
-Exact laptop vs Modal split is **open** in [13](13-implementation-pass.md). Product rule that is already locked:
+Exact laptop vs Modal split is **locked** in [13](13-implementation-pass.md):
 
-Don’t put 2h ingest and the chat loop on one tiny GPU fighting each other. Ingest and vLLM are separate jobs even if they share a GPU *type*.
+- Laptop: FastAPI, Postgres, files, ffmpeg.
+- Modal: Gemma (chat worker) and ingest (other worker). **L4.** Slices only. Scale to zero.
+- Don’t put 2h ingest and the chat loop on one running GPU replica.

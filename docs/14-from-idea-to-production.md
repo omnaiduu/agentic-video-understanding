@@ -389,4 +389,4 @@ If you cannot answer, the agent wrote software **you do not own**. Fix the cards
 
 ## This repo, as an example of the method
 
-Product stages 0–4 were done in docs 01–12 (journeys, boxes, phases, locked behavior). Stage 3 was **thin on implementation**: UI libraries showed up as defaults instead of as earned behavior. [Doc 13](13-implementation-pass.md) is the missing implementation card for this app. Use **this file** as the method for any new idea; use 12 and 13 when you implement **this** idea.
+Product stages 0–4 were done in docs 01–12 (journeys, boxes, phases, locked behavior). [Doc 13](13-implementation-pass.md) is now **locked** (laptop API, Modal models, L4, slices only, live ingest UI). Use **this file** as the method for any new idea; use 12 and 13 when you implement **this** idea. First code is Phase 1 only.

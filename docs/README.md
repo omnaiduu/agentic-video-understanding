@@ -1,6 +1,6 @@
 # Docs index
 
-Start at the [root README](../README.md). **Source of truth = [12 — Build phases](12-build-phases.md) + `phases/`.** Docs 01–11 match those phases (not the old SQLite / 12B / Vite drafts). [13 — Implementation pass](13-implementation-pass.md) is **open** (libraries, Modal, size). [14 — From idea to production](14-from-idea-to-production.md) is the method: how to run agents without reading code.
+Start at the [root README](../README.md). **Source of truth = [12 — Build phases](12-build-phases.md) + `phases/`.** Docs 01–11 match those phases (not the old SQLite / 12B / Vite drafts). [13 — Implementation pass](13-implementation-pass.md) is **locked** (laptop API, Modal models, L4, live ingest UI). [14 — From idea to production](14-from-idea-to-production.md) is the method: how to run agents without reading code.
 
 Then:
 
@@ -16,7 +16,7 @@ Then:
 10. [References](10-references.md)
 11. [Glossary](11-glossary.md)
 12. [Build phases](12-build-phases.md) — complete app, slice by slice (map)
-13. [Implementation pass](13-implementation-pass.md) — libraries, Modal/GPU, size (**open**)
+13. [Implementation pass](13-implementation-pass.md) — libraries, Modal/GPU, size (**locked**)
 14. [From idea to production](14-from-idea-to-production.md) — how to run agents without reading code
 15. [Phase 1](phases/phase-01.md) — hold a video (**locked**)
 16. [Phase 2](phases/phase-02.md) — scissors (**locked**)
@@ -27,7 +27,7 @@ Then:
 21. [Phase 7](phases/phase-07.md) — export a clip (**locked**)
 22. [Phase 8](phases/phase-08.md) — remember last times (**locked**)
 23. [Phase 9](phases/phase-09.md) — website shell (**locked**; TanStack Start)
-24. [Phase 10](phases/phase-10.md) — upload in the browser (**locked**)
+24. [Phase 10](phases/phase-10.md) — upload in the browser + **live index status** (**locked**)
 25. [Phase 11](phases/phase-11.md) — watch and ask (**locked**; Video.js)
 26. [Phase 12](phases/phase-12.md) — clips and polish (**locked**)
 27. [Phase 13](phases/phase-13.md) — slide phone book (**locked**; ColQwen2.x + `search_slides`)

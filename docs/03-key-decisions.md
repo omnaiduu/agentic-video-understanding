@@ -40,14 +40,14 @@ Locked. Short. This file matches the **13 build phases**. Do not follow older SQ
 - After save + ffprobe the file exists.
 - Then ingest runs in the background. Overall `status` = **`processing`**, then **`ready`** (or `error`).
 - Per book: `transcript_status` · `visual_status` · `audio_status` · `slides_status` (`skipped` if that channel does not apply).
-- Website: poll until overall `ready`; **chat off until then**. Timed look via API may still work if someone curls early.
+- Website: poll until overall `ready`; **chat off until then**. Show a **spinner + four live lines** (speech, pictures, sounds, slides) while ingesting. Timed look via API may still work if someone curls early.
 - Upload cap: **2 GB**.
 
 ## Stack
 
 - API: **Python FastAPI** + SQLModel. Not Node.
 - Cut media: **ffmpeg** CLI.
-- Serve Gemma: **vLLM** (laptop or Modal — hosting cards still **open** in [13](13-implementation-pass.md)).
+- Serve Gemma: **vLLM on Modal (L4)**. Laptop FastAPI. Ingest is a **separate** Modal worker. Cards in [13](13-implementation-pass.md).
 - UI: **TanStack Start** + Tailwind + shadcn/ui + TanStack Query + **Video.js**. FastAPI is the only ML API.
 - Auth: none for v1.
 

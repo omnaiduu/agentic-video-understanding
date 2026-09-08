@@ -6,7 +6,7 @@ Read:
 
 1. [12 — Build phases](12-build-phases.md) — map
 2. [phases/phase-01.md](phases/phase-01.md) through [phase-13.md](phases/phase-13.md) — one slice at a time
-3. [13 — Implementation pass](13-implementation-pass.md) — libraries / Modal / size (**open** — do not invent GPUs)
+3. [13 — Implementation pass](13-implementation-pass.md) — libraries / Modal / size (**locked**)
 
 Do not implement from the old 7-step skeleton (SQLite, 12B native tools, Vite-only). That list is history.
 
