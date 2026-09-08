@@ -20,6 +20,7 @@ from app.agent.parts import (
     visual_not_ready_message,
     visual_search_message,
 )
+from app.agent.memory import memory_text
 from app.agent.schema import (
     MAX_ROUNDS,
     RETRY_PROMPT,
@@ -93,24 +94,28 @@ def run_loop(
     transcript_status: str | None = None,
     visual_status: str | None = None,
     audio_status: str | None = None,
+    history: list[tuple[str, str]] | None = None,
+    last_times: list[dict] | None = None,
 ) -> LoopResult:
     meta: VideoMeta = get_meta(path)
     speech_status = transcript_status or IndexStatus.pending.value
     picture_status = visual_status or IndexStatus.pending.value
     sound_status = audio_status or IndexStatus.pending.value
+    opening = (
+        f"Video duration {meta.duration_s:.3f}s. "
+        f"has_video={meta.has_video} has_audio={meta.has_audio}. "
+        f"transcript_status={speech_status}. "
+        f"visual_status={picture_status}. "
+        f"audio_status={sound_status}."
+    )
+    remembered = memory_text(history, last_times)
+    question_line = f"Question: {question}"
+    user_text = (
+        f"{opening}\n{remembered}\n{question_line}" if remembered else f"{opening} {question_line}"
+    )
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": (
-                f"Video duration {meta.duration_s:.3f}s. "
-                f"has_video={meta.has_video} has_audio={meta.has_audio}. "
-                f"transcript_status={speech_status}. "
-                f"visual_status={picture_status}. "
-                f"audio_status={sound_status}. "
-                f"Question: {question}"
-            ),
-        },
+        {"role": "user", "content": user_text},
     ]
     steps: list[Step] = []
     last_export_url: str | None = None
@@ -164,8 +169,15 @@ def run_loop(
             hits = search(query)[:8]
             messages.append(search_message(hits, query))
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
+            first = hits[0] if hits else None
             steps.append(
-                Step(do="search", ok=True, detail=f"{query}: {shown}" if shown else query)
+                Step(
+                    do="search",
+                    start_s=first.t if first is not None else None,
+                    end_s=first.t if first is not None else None,
+                    ok=True,
+                    detail=f"{query}: {shown}" if shown else query,
+                )
             )
             continue
 
@@ -197,9 +209,12 @@ def run_loop(
             hits = search_visual(query)[:8]
             messages.append(visual_search_message(hits, query))
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
+            first = hits[0] if hits else None
             steps.append(
                 Step(
                     do="search_visual",
+                    start_s=first.t if first is not None else None,
+                    end_s=first.t if first is not None else None,
                     ok=True,
                     detail=f"{query}: {shown}" if shown else query,
                 )
@@ -235,9 +250,12 @@ def run_loop(
             hits = result.hits[:8]
             messages.append(audio_search_message(result, query))
             shown = ",".join(f"{hit.start_s:.2f}" for hit in hits)
+            first = hits[0] if hits else None
             steps.append(
                 Step(
                     do="search_audio",
+                    start_s=first.start_s if first is not None else None,
+                    end_s=first.end_s if first is not None else None,
                     ok=True,
                     detail=f"{query}: {shown}" if shown else query,
                 )

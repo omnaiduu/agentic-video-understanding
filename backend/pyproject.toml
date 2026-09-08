@@ -1,7 +1,7 @@
 [project]
 name = "agentic-video-backend"
 version = "0.1.0"
-description = "Phases 1–7: hold a video, cut slices, chat JSON loop, speech/picture/sound indexes, and clip export."
+description = "Phases 1–8: hold a video, cut slices, chat JSON loop, three indexes, clip export, and multi-turn memory."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

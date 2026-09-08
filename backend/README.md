@@ -1,6 +1,6 @@
-# Backend (Phases 1–7)
+# Backend (Phases 1–8)
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / search_visual / search_audio / **export_clip** / **export_audio** / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once; CLAP writes a sound index once. Export re-encodes a ≤60s mp4 or wav onto disk and returns a GET URL. No website.
+Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / search_visual / search_audio / export_clip / export_audio / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once; CLAP writes a sound index once. Export re-encodes a ≤60s mp4 or wav onto disk and returns a GET URL. A follow-up reuses the same `session_id` and the last 3 time windows as **text**. No website.
 
 ## What you need on the machine
 
@@ -39,7 +39,7 @@ Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`, **6
 
 The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`.
 
-JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `export_clip`, `export_audio`, `answer`. `search_audio` is our Python (CLAP text tower → pgvector KNN, top 8 windows, then merge nearby hits and `len()`). Export re-encodes on the laptop (not stream-copy) and returns `/videos/{id}/exports/{export_id}`. Gemma gets that URL as text, never the clip bytes. Not vLLM `tools=`.
+JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `export_clip`, `export_audio`, `answer`. `search_audio` is our Python (CLAP text tower → pgvector KNN, top 8 windows, then merge nearby hits and `len()`). Export re-encodes on the laptop (not stream-copy) and returns `/videos/{id}/exports/{export_id}`. Gemma gets that URL as text, never the clip bytes. Follow-ups send the same `session_id`; last 3 look/listen/search/export windows go into the prompt as text (not old JPEGs/wavs). Not vLLM `tools=`.
 
 Real sound ingest: same `modal_ingest.py` app, function `embed_audio` (not the chat GPU). Laptop ffmpeg writes 3s chunks; Modal embeds; POST `/internal/videos/{id}/sound`. Default `INGEST=fake` and `AUDIO_EMBEDDER=fake` so tests need no GPU.
 
@@ -51,7 +51,7 @@ Real sound ingest: same `modal_ingest.py` app, function `embed_audio` (not the c
 | GET | `/videos` | List |
 | GET | `/videos/{id}` | Metadata, including `transcript_status`, `visual_status`, and `audio_status` |
 | GET | `/videos/{id}/file` | Stored bytes. Range-friendly. |
-| POST | `/videos/{id}/chat` | `{ "message", "session_id"? }` → `{ answer, citations, steps, session_id, export_url? }` |
+| POST | `/videos/{id}/chat` | `{ "message", "session_id"? }` → `{ answer, citations, steps, session_id, export_url? }`. Omit `session_id` for a new thread. |
 | GET | `/videos/{id}/exports/{export_id}` | Exported mp4 or wav. Range-friendly. |
 | POST | `/internal/videos/{id}/transcript` | Whisper segments. Bearer `INGEST_SECRET`. |
 | GET | `/internal/videos/{id}/audio` | Full wav for the ingest worker. |

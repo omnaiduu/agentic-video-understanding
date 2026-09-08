@@ -70,6 +70,10 @@ class ChatSession(SQLModel, table=True):
         default_factory=_utcnow,
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
+    last_times: list[dict] = Field(
+        default_factory=list,
+        sa_column=Column(sa.JSON, nullable=False),
+    )
 
 
 class ChatMessage(SQLModel, table=True):
@@ -85,6 +89,7 @@ class ChatMessage(SQLModel, table=True):
         )
     )
     role: str
+    kind: str = "question"
     content: str = Field(sa_column=Column(Text, nullable=False))
     shown_times: list[float] | None = Field(default=None, sa_column=Column(sa.JSON, nullable=True))
     created_at: datetime = Field(

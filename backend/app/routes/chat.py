@@ -4,10 +4,11 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.agent.client import Brain, build_brain
 from app.agent.loop import LoopError, LoopResult, run_loop
+from app.agent.memory import HISTORY_KINDS, collect_windows, push_windows
 from app.db import get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
 from app.search.audio import search_audio
@@ -50,6 +51,15 @@ def get_brain(settings: Settings = Depends(get_settings)) -> Brain:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+def _history(session: Session, chat: ChatSession) -> list[tuple[str, str]]:
+    rows = session.exec(
+        select(ChatMessage)
+        .where(ChatMessage.session_id == chat.id)
+        .order_by(ChatMessage.created_at)
+    ).all()
+    return [(row.role, row.content) for row in rows if row.kind in HISTORY_KINDS]
+
+
 def _save_turn(
     session: Session,
     chat: ChatSession,
@@ -57,7 +67,13 @@ def _save_turn(
     result: LoopResult,
 ) -> None:
     session.add(
-        ChatMessage(session_id=chat.id, role="user", content=question, shown_times=None)
+        ChatMessage(
+            session_id=chat.id,
+            role="user",
+            kind="question",
+            content=question,
+            shown_times=None,
+        )
     )
     for step in result.steps:
         times: list[float] | None = None
@@ -67,10 +83,15 @@ def _save_turn(
             ChatMessage(
                 session_id=chat.id,
                 role="assistant" if step.do == "answer" else "user",
+                kind=step.do,
                 content=step.detail or step.do,
                 shown_times=times,
             )
         )
+    row = session.get(ChatSession, chat.id)
+    if row is not None:
+        row.last_times = push_windows(row.last_times, collect_windows(result.steps))
+        session.add(row)
     session.commit()
 
 
@@ -100,6 +121,9 @@ def chat(
         if chat_row is None or chat_row.video_id != video.id:
             raise HTTPException(status_code=404, detail="session not found")
 
+    history = _history(session, chat_row)
+    last_times = list(chat_row.last_times or [])
+
     def _search(query: str):
         return search_transcript(session, video.id, query, embedder)
 
@@ -128,6 +152,8 @@ def chat(
             transcript_status=video.transcript_status,
             visual_status=video.visual_status,
             audio_status=video.audio_status,
+            history=history,
+            last_times=last_times,
         )
     except LoopError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
