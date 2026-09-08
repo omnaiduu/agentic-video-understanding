@@ -8,6 +8,7 @@ __pycache__/
 *.pyc
 .env
 .env.*
+!.env.example
 node_modules/
 
 # Agent scratch (not part of this project)
