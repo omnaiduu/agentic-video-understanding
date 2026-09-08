@@ -1,6 +1,6 @@
-# Backend (Phases 1–2)
+# Backend (Phases 1–3)
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors (`get_meta` / `get_frames` / `get_audio`) cut a short slice. No chat HTTP, no website.
+Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / answer loop. No website, no search, no Whisper.
 
 ## What you need on the machine
 
@@ -43,6 +43,19 @@ uv run pytest
 
 Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Oversize is an error (no silent shrink, no whole-file ffmpeg).
 
+## Chat
+
+The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake` so pytest never calls a GPU.
+
+```bash
+# after a video is ready
+curl -H 'Content-Type: application/json' \
+  -d '{"message":"what happens at 0:10?"}' \
+  http://127.0.0.1:8000/videos/VIDEO_ID/chat
+```
+
+Real Gemma: deploy `modal_brain.py` (`modal deploy modal_brain.py`), set `BRAIN=vllm` and `VLLM_BASE_URL` to that server’s `/v1` URL. The client uses `response_format` JSON schema and never sends `tools=`. Cuts are attached as user image/audio parts.
+
 ## API
 
 | Method | Path | What it does |
@@ -51,7 +64,8 @@ Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Ove
 | GET | `/videos` | List |
 | GET | `/videos/{id}` | Metadata |
 | GET | `/videos/{id}/file` | Stored bytes. `FileResponse` honors **Range** (for a later player). |
-| DELETE | `/videos/{id}` | Deletes the row **and** the folder |
+| POST | `/videos/{id}/chat` | `{ "message", "session_id"? }` → `{ answer, citations, steps, session_id }`. Our JSON loop, not native tools. |
+| DELETE | `/videos/{id}` | Deletes the row, chat sessions, **and** the folder |
 
 No auth. CORS is open.
 

@@ -1,0 +1,78 @@
+"""JSON form Gemma fills. vLLM constrains the shape; the prompt teaches meaning."""
+
+from __future__ import annotations
+
+import json
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field, ValidationError
+
+
+MAX_ROUNDS = 8
+DoKind = Literal["look", "listen", "answer"]
+
+
+class BrainAction(BaseModel):
+    do: DoKind
+    start_s: float | None = None
+    end_s: float | None = None
+    fps: float | None = None
+    answer: str | None = None
+    times: list[float] = Field(default_factory=list)
+
+
+BRAIN_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "do": {"type": "string", "enum": ["look", "listen", "answer"]},
+        "start_s": {"type": ["number", "null"]},
+        "end_s": {"type": ["number", "null"]},
+        "fps": {"type": ["number", "null"]},
+        "answer": {"type": ["string", "null"]},
+        "times": {"type": "array", "items": {"type": "number"}},
+    },
+    "required": ["do", "start_s", "end_s", "fps", "answer", "times"],
+    "additionalProperties": False,
+}
+
+RESPONSE_FORMAT: dict[str, Any] = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "brain_action",
+        "schema": BRAIN_JSON_SCHEMA,
+        "strict": True,
+    },
+}
+
+SYSTEM_PROMPT = """You fill a JSON form about one video. You do not call tools.
+
+Moves:
+- look: we cut JPEG frames from start_s to end_s (optional fps). Cap: seconds × fps ≤ 64 photos. Oversize is refused; pick a smaller window. We ignore answer.
+- listen: we cut 16 kHz mono wav from start_s to end_s. Cap: 30 seconds. Oversize is refused. We ignore answer.
+- answer: you are done. Put the user-facing text in answer and citation timestamps (seconds) in times.
+
+After look or listen we send the cut as a normal user message with image or audio parts, not as a tool result.
+
+Only look, listen, and answer exist now. No search. Return only the JSON object."""
+
+RETRY_PROMPT = "Return only the JSON object that matches the schema. No markdown, no extra keys."
+
+
+class BrainParseError(ValueError):
+    """Model output was not valid BrainAction JSON."""
+
+
+def parse_action(raw: str) -> BrainAction:
+    text = (raw or "").strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        inner = [line for line in lines if not line.startswith("```")]
+        text = "\n".join(inner).strip()
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise BrainParseError("model did not return JSON") from exc
+    try:
+        return BrainAction.model_validate(payload)
+    except ValidationError as exc:
+        raise BrainParseError("JSON did not match look/listen/answer") from exc

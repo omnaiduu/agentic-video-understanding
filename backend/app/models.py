@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 
+import sqlalchemy as sa
 from sqlalchemy import Column, DateTime, Text
 from sqlmodel import Field, SQLModel
 
@@ -35,6 +36,45 @@ class Video(SQLModel, table=True):
     has_video: bool = False
     status: str = VideoStatus.uploaded.value
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    created_at: datetime = Field(
+        default_factory=_utcnow,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class ChatSession(SQLModel, table=True):
+    __tablename__ = "chat_sessions"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    video_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            sa.ForeignKey("videos.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    created_at: datetime = Field(
+        default_factory=_utcnow,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class ChatMessage(SQLModel, table=True):
+    __tablename__ = "chat_messages"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    session_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            sa.ForeignKey("chat_sessions.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    role: str
+    content: str = Field(sa_column=Column(Text, nullable=False))
+    shown_times: list[float] | None = Field(default=None, sa_column=Column(sa.JSON, nullable=True))
     created_at: datetime = Field(
         default_factory=_utcnow,
         sa_column=Column(DateTime(timezone=True), nullable=False),
