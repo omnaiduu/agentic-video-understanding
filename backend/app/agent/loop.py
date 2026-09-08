@@ -1,4 +1,4 @@
-"""Laptop-owned look / listen / search / search_visual / search_audio / answer loop."""
+"""Laptop-owned look / listen / search / search_visual / search_audio / export / answer loop."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from app.agent.client import Brain
 from app.agent.parts import (
     audio_not_ready_message,
     audio_search_message,
+    export_message,
     listen_message,
     look_message,
     refuse_message,
@@ -32,6 +33,7 @@ from app.search.audio import AudioSearchResult
 from app.search.transcript import TranscriptHit
 from app.search.visual import VisualHit
 from app.tools import ScissorsError, get_audio, get_frames, get_meta
+from app.tools.export import ExportResult
 from app.tools.meta import VideoMeta
 
 
@@ -53,16 +55,18 @@ class LoopResult:
     answer: str
     citations: list[float]
     steps: list[Step] = field(default_factory=list)
+    export_url: str | None = None
 
 
 SearchFn = Callable[[str], list[TranscriptHit]]
 VisualSearchFn = Callable[[str], list[VisualHit]]
 AudioSearchFn = Callable[[str], AudioSearchResult]
+ExportFn = Callable[[float, float], ExportResult]
 
 
 def _window(action: BrainAction) -> tuple[float, float]:
     if action.start_s is None or action.end_s is None:
-        raise ScissorsError("look/listen need start_s and end_s")
+        raise ScissorsError("look/listen/export need start_s and end_s")
     return action.start_s, action.end_s
 
 
@@ -84,6 +88,8 @@ def run_loop(
     search: SearchFn | None = None,
     search_visual: VisualSearchFn | None = None,
     search_audio: AudioSearchFn | None = None,
+    export_clip: ExportFn | None = None,
+    export_audio: ExportFn | None = None,
     transcript_status: str | None = None,
     visual_status: str | None = None,
     audio_status: str | None = None,
@@ -107,18 +113,19 @@ def run_loop(
         },
     ]
     steps: list[Step] = []
+    last_export_url: str | None = None
     rounds = 0
 
     while True:
         if rounds >= MAX_ROUNDS:
             raise LoopError(
-                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio rounds"
+                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio/export rounds"
             )
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
             raise LoopError(
-                "model did not return look/listen/search/search_visual/search_audio/answer JSON"
+                "model did not return look/listen/search/search_visual/search_audio/export/answer JSON"
             ) from exc
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
@@ -129,7 +136,12 @@ def run_loop(
             if not text:
                 raise LoopError("answer JSON had an empty answer")
             steps.append(Step(do="answer", detail=text, ok=True))
-            return LoopResult(answer=text, citations=list(action.times), steps=steps)
+            return LoopResult(
+                answer=text,
+                citations=list(action.times),
+                steps=steps,
+                export_url=last_export_url,
+            )
 
         rounds += 1
         if action.do == "search":
@@ -228,6 +240,51 @@ def run_loop(
                     do="search_audio",
                     ok=True,
                     detail=f"{query}: {shown}" if shown else query,
+                )
+            )
+            continue
+
+        if action.do in ("export_clip", "export_audio"):
+            fn = export_clip if action.do == "export_clip" else export_audio
+            if fn is None:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            f"{action.do} is not wired. Use look, listen, or answer."
+                        ),
+                    }
+                )
+                steps.append(
+                    Step(do=action.do, ok=False, detail=f"{action.do} not wired")
+                )
+                continue
+            try:
+                start_s, end_s = _window(action)
+                result = fn(start_s, end_s)
+            except ScissorsError as exc:
+                messages.append(refuse_message(str(exc)))
+                steps.append(
+                    Step(
+                        do=action.do,
+                        start_s=action.start_s,
+                        end_s=action.end_s,
+                        ok=False,
+                        detail=str(exc),
+                    )
+                )
+                continue
+            last_export_url = result.url
+            messages.append(
+                export_message(result.kind, result.start_s, result.end_s, result.url)
+            )
+            steps.append(
+                Step(
+                    do=action.do,
+                    start_s=result.start_s,
+                    end_s=result.end_s,
+                    ok=True,
+                    detail=result.url,
                 )
             )
             continue

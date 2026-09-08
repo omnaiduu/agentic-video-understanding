@@ -17,6 +17,7 @@ from app.search.siglip import VisualEmbedder, get_visual_embedder
 from app.search.transcript import search_transcript
 from app.search.visual import search_visual
 from app.settings import Settings, get_settings
+from app.tools.export import create_export
 
 router = APIRouter()
 
@@ -39,6 +40,7 @@ class ChatOut(BaseModel):
     citations: list[float]
     steps: list[StepOut]
     session_id: uuid.UUID
+    export_url: str | None = None
 
 
 def get_brain(settings: Settings = Depends(get_settings)) -> Brain:
@@ -107,6 +109,12 @@ def chat(
     def _search_audio(query: str):
         return search_audio(session, video.id, query, audio_embedder)
 
+    def _export_clip(start_s: float, end_s: float):
+        return create_export(session, video, "clip", start_s, end_s)
+
+    def _export_audio(start_s: float, end_s: float):
+        return create_export(session, video, "audio", start_s, end_s)
+
     try:
         result = run_loop(
             video.path,
@@ -115,6 +123,8 @@ def chat(
             search=_search,
             search_visual=_search_visual,
             search_audio=_search_audio,
+            export_clip=_export_clip,
+            export_audio=_export_audio,
             transcript_status=video.transcript_status,
             visual_status=video.visual_status,
             audio_status=video.audio_status,
@@ -130,4 +140,5 @@ def chat(
         citations=result.citations,
         steps=[StepOut.model_validate(step, from_attributes=True) for step in result.steps],
         session_id=chat_row.id,
+        export_url=result.export_url,
     )
