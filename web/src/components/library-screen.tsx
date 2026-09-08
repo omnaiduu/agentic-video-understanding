@@ -29,7 +29,7 @@ export function LibraryScreen({
       <div className="space-y-2">
         <p className="font-medium">Could not load videos.</p>
         <p className="text-sm text-muted-foreground">
-          {error?.message || "The API is down."} Start FastAPI on port 8000 and
+          {error?.message || "The API is down"}. Start FastAPI on port 8000 and
           retry.
         </p>
       </div>
