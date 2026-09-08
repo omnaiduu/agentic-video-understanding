@@ -153,10 +153,10 @@ Same ingest worker after pictures. ColQwen2.x on unique frames. `slides_status` 
 
 ---
 
-## Point a coding agent here
+**Point a coding agent here**
 
-1. Read this file (how) + [phase-01.md](phases/phase-01.md) (what).
-2. Implement **only Phase 1**.
-3. Stop. Do not start Phase 2 until we lock go-ahead for that slice.
+1. Read this file (how) + the matching `docs/phases/phase-XX.md` (what).
+2. Implement **only** the phase you were told to do.
+3. Stop. Do not start the next phase until we lock go-ahead for that slice.
 
-There is **no application code in this repo yet**. First code = `backend/` from Phase 1.
+Phase 1 code lives in `backend/`. Next code is Phase 2 only.
