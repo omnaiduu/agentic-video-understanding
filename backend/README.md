@@ -1,6 +1,6 @@
-# Phase 1 — Hold a video
+# Backend (Phases 1–2)
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. No chat, no website, no frame cutting.
+Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors (`get_meta` / `get_frames` / `get_audio`) cut a short slice. No chat HTTP, no website.
 
 ## What you need on the machine
 
@@ -35,9 +35,13 @@ curl -H 'Content-Type: application/json' \
 
 A ready file returns `status: "ready"` and `duration_s`. Garbage that ffprobe cannot read is stored with `status: "error"`. Files larger than **2 GB** (`MAX_UPLOAD_BYTES`) are rejected with **413**.
 
+Scissors are **Python functions**, not routes. Tests call them directly:
+
 ```bash
 uv run pytest
 ```
+
+Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Oversize is an error (no silent shrink, no whole-file ffmpeg).
 
 ## API
 
