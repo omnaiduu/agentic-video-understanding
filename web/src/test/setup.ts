@@ -1,6 +1,11 @@
+import { cleanup } from "@testing-library/react"
 import { createElement, type ReactNode } from "react"
-import { vi } from "vitest"
+import { afterEach, vi } from "vitest"
 import "@testing-library/jest-dom/vitest"
+
+afterEach(() => {
+  cleanup()
+})
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
