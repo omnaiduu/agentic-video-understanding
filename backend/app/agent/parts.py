@@ -105,3 +105,42 @@ def visual_not_ready_message(status: str) -> dict:
             "Do not invent a full photo log."
         ),
     }
+
+
+def audio_search_message(result, query: str) -> dict:
+    hits = getattr(result, "hits", result)
+    clusters = getattr(result, "clusters", [])
+    count = getattr(result, "count", len(clusters))
+    if not hits:
+        text = (
+            f"search_audio for {query!r} returned no sound hits. "
+            "Two hours of audio are not attached. Try another query or listen."
+        )
+    else:
+        lines = [
+            f"[{hit.start_s:.1f}s–{hit.end_s:.1f}s] score={hit.score:.3f}"
+            for hit in hits
+        ]
+        cluster_lines = [
+            f"{cluster.start_s:.1f}s–{cluster.end_s:.1f}s (n={cluster.n_hits})"
+            for cluster in clusters
+        ]
+        merged = ", ".join(cluster_lines) if cluster_lines else "none"
+        text = (
+            f"sound hits for {query!r} (at most 8 windows, not the whole file; "
+            "scores are not the answer; listen to hear):\n"
+            + "\n".join(lines)
+            + f"\nmerged events: count={count} via Python merge+len: {merged}"
+        )
+    return {"role": "user", "content": text}
+
+
+def audio_not_ready_message(status: str) -> dict:
+    return {
+        "role": "user",
+        "content": (
+            f"sound index is not ready (status={status}). "
+            "No search_audio results. Timed listen still works. "
+            "Do not invent a full sound log."
+        ),
+    }

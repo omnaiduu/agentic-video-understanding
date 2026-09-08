@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 
 MAX_ROUNDS = 8
-DoKind = Literal["look", "listen", "search", "search_visual", "answer"]
+DoKind = Literal["look", "listen", "search", "search_visual", "search_audio", "answer"]
 
 
 class BrainAction(BaseModel):
@@ -27,7 +27,14 @@ BRAIN_JSON_SCHEMA: dict[str, Any] = {
     "properties": {
         "do": {
             "type": "string",
-            "enum": ["look", "listen", "search", "search_visual", "answer"],
+            "enum": [
+                "look",
+                "listen",
+                "search",
+                "search_visual",
+                "search_audio",
+                "answer",
+            ],
         },
         "start_s": {"type": ["number", "null"]},
         "end_s": {"type": ["number", "null"]},
@@ -56,11 +63,12 @@ Moves:
 - listen: we cut 16 kHz mono wav from start_s to end_s. Cap: 30 seconds. Oversize is refused. We ignore answer.
 - search: we hybrid-search the Whisper transcript (keyword + meaning). Put the phrase in query, or null to use the user question. We return at most 8 {t, text} hits as text, never the whole talk. We ignore answer. If the transcript is not ready, we say so; use look or listen instead.
 - search_visual: we dense-search the SigLIP picture index. Put the phrase in query, or null to use the user question. We return at most 8 {t, score} hits as text, never two hours of photos. Scores are not the answer; look at a hit to see. We ignore answer. If the picture book is not ready, we say so; timed look still works.
+- search_audio: we dense-search the CLAP sound index. Put the phrase in query, or null to use the user question. We return at most 8 {start, end, score} hits plus merged event count as text, never two hours of audio. Count is Python merge+len, not a guess. Scores are not the answer; listen at a hit to hear. We ignore answer. If the sound book is not ready, we say so; timed listen still works.
 - answer: you are done. Put the user-facing text in answer and citation timestamps (seconds) in times.
 
-After look, listen, search, or search_visual we send the result as a normal user message, not as a tool result.
+After look, listen, search, search_visual, or search_audio we send the result as a normal user message, not as a tool result.
 
-Only look, listen, search, search_visual, and answer exist now. Return only the JSON object."""
+Only look, listen, search, search_visual, search_audio, and answer exist now. Return only the JSON object."""
 
 RETRY_PROMPT = "Return only the JSON object that matches the schema. No markdown, no extra keys."
 
@@ -83,5 +91,5 @@ def parse_action(raw: str) -> BrainAction:
         return BrainAction.model_validate(payload)
     except ValidationError as exc:
         raise BrainParseError(
-            "JSON did not match look/listen/search/search_visual/answer"
+            "JSON did not match look/listen/search/search_visual/search_audio/answer"
         ) from exc

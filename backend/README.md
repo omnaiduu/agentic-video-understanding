@@ -1,6 +1,6 @@
-# Backend (Phases 1–5)
+# Backend (Phases 1–6)
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / **search_visual** / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once. No website, no CLAP.
+Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / search_visual / **search_audio** / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once; CLAP writes a sound index once. No website.
 
 ## What you need on the machine
 
@@ -27,39 +27,41 @@ Check:
 curl -F "file=@/path/to/clip.mp4" http://127.0.0.1:8000/videos
 ```
 
-A ready file returns `status: "ready"` after ffprobe. `transcript_status` and `visual_status` start as `processing` (or `skipped` if that channel does not apply). POST `/videos` does **not** wait for Whisper or SigLIP.
+A ready file returns `status: "ready"` after ffprobe. `transcript_status`, `visual_status`, and `audio_status` start as `processing` (or `skipped` if that channel does not apply). POST `/videos` does **not** wait for Whisper, SigLIP, or CLAP.
 
 ```bash
 uv run pytest
 ```
 
-Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Picture **ingest** is a separate ~1 FPS extract (not the look cap). Those bulk JPEGs are deleted after embed.
+Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`. Picture **ingest** is a separate ~1 FPS extract (not the look cap). Sound **ingest** is 3s chunks with a 1.5s hop (not the listen cap). Bulk JPEGs and chunk wavs are deleted after embed.
 
 ## Chat
 
 The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`.
 
-JSON moves: `look`, `listen`, `search`, `search_visual`, `answer`. `search_visual` is our Python (SigLIP text tower → pgvector KNN, top 8 `{t, score}` as text). Not vLLM `tools=`. Scores are not the answer; Gemma should `look`.
+JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `answer`. `search_audio` is our Python (CLAP text tower → pgvector KNN, top 8 windows, then merge nearby hits and `len()`). Not vLLM `tools=`. Scores are not the answer; Gemma should `listen`. Count is code, not a guess.
 
-Real picture ingest: same `modal_ingest.py` app, function `embed_visual` (not the chat GPU). Laptop ffmpeg writes 1 FPS JPEGs; Modal embeds; POST `/internal/videos/{id}/visual`. Default `INGEST=fake` and `VISUAL_EMBEDDER=fake` so tests need no GPU.
+Real sound ingest: same `modal_ingest.py` app, function `embed_audio` (not the chat GPU). Laptop ffmpeg writes 3s chunks; Modal embeds; POST `/internal/videos/{id}/sound`. Default `INGEST=fake` and `AUDIO_EMBEDDER=fake` so tests need no GPU.
 
 ## API
 
 | Method | Path | What it does |
 |---|---|---|
-| POST | `/videos` | Multipart `file` **or** JSON `{"path": "..."}`. Probes, returns the row. Spawns speech + picture ingest in the background. |
+| POST | `/videos` | Multipart `file` **or** JSON `{"path": "..."}`. Probes, returns the row. Spawns speech + picture + sound ingest in the background. |
 | GET | `/videos` | List |
-| GET | `/videos/{id}` | Metadata, including `transcript_status` and `visual_status` |
+| GET | `/videos/{id}` | Metadata, including `transcript_status`, `visual_status`, and `audio_status` |
 | GET | `/videos/{id}/file` | Stored bytes. Range-friendly. |
 | POST | `/videos/{id}/chat` | `{ "message", "session_id"? }` → `{ answer, citations, steps, session_id }` |
 | POST | `/internal/videos/{id}/transcript` | Whisper segments. Bearer `INGEST_SECRET`. |
 | GET | `/internal/videos/{id}/audio` | Full wav for the ingest worker. |
 | POST | `/internal/videos/{id}/visual` | SigLIP frames `{t_s, embedding}`. Bearer `INGEST_SECRET`. |
 | GET | `/internal/videos/{id}/frames` | Tar of 1 FPS JPEGs for the ingest worker. |
-| DELETE | `/videos/{id}` | Deletes the row, chat, transcript, visual frames, **and** the folder |
+| POST | `/internal/videos/{id}/sound` | CLAP chunks `{start_s, end_s, embedding}`. Bearer `INGEST_SECRET`. |
+| GET | `/internal/videos/{id}/chunks` | Tar of 3s wav slices for the ingest worker. |
+| DELETE | `/videos/{id}` | Deletes the row, chat, transcript, visual frames, audio chunks, **and** the folder |
 
 No auth on the public video/chat routes. CORS is open.
 
 ## Layout
 
-`data/videos/{id}/original.{ext}` lives at the **repo root** `data/` (gitignored). Optional `uv sync --extra local-ingest` if you want Whisper / E5 / SigLIP on the laptop instead of Modal.
+`data/videos/{id}/original.{ext}` lives at the **repo root** `data/` (gitignored). Optional `uv sync --extra local-ingest` if you want Whisper / E5 / SigLIP / CLAP on the laptop instead of Modal.
