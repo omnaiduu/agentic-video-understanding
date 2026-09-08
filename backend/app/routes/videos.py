@@ -15,7 +15,7 @@ from app.ingest.speech import schedule_transcript
 from app.ingest.sound import schedule_sound
 from app.ingest.visual import schedule_visual
 from app.media.probe import ProbeError, probe
-from app.models import IndexStatus, Video, VideoOut, VideoStatus
+from app.models import Export, IndexStatus, Video, VideoOut, VideoStatus
 from app.settings import Settings, get_settings
 from app.storage import (
     OversizeError,
@@ -193,6 +193,36 @@ def get_video_file(
     return FileResponse(
         path=path,
         filename=video.original_filename,
+        media_type=media_type,
+        content_disposition_type="inline",
+    )
+
+
+@router.get("/videos/{video_id}/exports/{export_id}")
+def get_export(
+    video_id: uuid.UUID,
+    export_id: uuid.UUID,
+    session: Session = Depends(get_session),
+) -> FileResponse:
+    video = session.get(Video, video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="video not found")
+    row = session.get(Export, export_id)
+    if row is None or row.video_id != video.id:
+        raise HTTPException(status_code=404, detail="export not found")
+    path = Path(row.path)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="file not found")
+    folder = Path(video.path).resolve().parent
+    try:
+        path.resolve().relative_to(folder)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="file not found") from exc
+    media_type = "video/mp4" if row.kind == "clip" else "audio/wav"
+    filename = "clip.mp4" if row.kind == "clip" else "audio.wav"
+    return FileResponse(
+        path=path,
+        filename=filename,
         media_type=media_type,
         content_disposition_type="inline",
     )

@@ -135,6 +135,19 @@ def audio_search_message(result, query: str) -> dict:
     return {"role": "user", "content": text}
 
 
+def export_message(kind: str, start_s: float, end_s: float, url: str) -> dict:
+    label = "clip (mp4)" if kind == "clip" else "audio (wav)"
+    return {
+        "role": "user",
+        "content": (
+            f"exported {label} from {start_s:.2f}s to {end_s:.2f}s. "
+            f"URL for the human: {url}. "
+            "The cut file is not attached to this message and you do not get the bytes. "
+            "Put this URL in your answer if the user asked for a file."
+        ),
+    }
+
+
 def audio_not_ready_message(status: str) -> dict:
     return {
         "role": "user",

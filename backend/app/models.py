@@ -133,6 +133,28 @@ class VisualFrame(SQLModel, table=True):
     )
 
 
+class Export(SQLModel, table=True):
+    __tablename__ = "exports"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    video_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            sa.ForeignKey("videos.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    kind: str
+    start_s: float
+    end_s: float
+    path: str
+    created_at: datetime = Field(
+        default_factory=_utcnow,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
 class AudioChunk(SQLModel, table=True):
     __tablename__ = "audio_chunks"
 

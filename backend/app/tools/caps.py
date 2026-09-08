@@ -7,6 +7,7 @@ import math
 
 MAX_FRAMES = 64
 MAX_AUDIO_SECONDS = 30.0
+MAX_EXPORT_SECONDS = 60.0
 SHORT_SPAN_S = 8.0
 DEFAULT_SHORT_FPS = 4.0
 DEFAULT_LONG_FPS = 1.0
@@ -50,6 +51,14 @@ def require_audio_span(span_s: float) -> None:
     if span_s > MAX_AUDIO_SECONDS:
         raise ScissorsError(
             f"requested {span_s:.3f}s of audio; cap is {MAX_AUDIO_SECONDS:.0f}s. "
+            "Refuse, do not shrink."
+        )
+
+
+def require_export_span(span_s: float) -> None:
+    if span_s > MAX_EXPORT_SECONDS:
+        raise ScissorsError(
+            f"requested {span_s:.3f}s export; cap is {MAX_EXPORT_SECONDS:.0f}s. "
             "Refuse, do not shrink."
         )
 
