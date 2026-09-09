@@ -1,9 +1,11 @@
+import { useCallback, useRef } from "react"
 import { Link } from "@tanstack/react-router"
 
+import { ChatPanel } from "@/components/chat-panel"
 import { IndexPanel } from "@/components/index-panel"
 import { StatusBadge } from "@/components/status-badge"
 import { buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { VideoPlayer, type SeekFn } from "@/components/video-player"
 import { isNotFound, type Video } from "@/lib/api"
 import { formatDuration } from "@/lib/format"
 import { chatLocked } from "@/lib/indexes"
@@ -19,6 +21,11 @@ export function VideoScreen({
   error: Error | null
   video: Video | undefined
 }) {
+  const seekRef = useRef<SeekFn>(() => undefined)
+  const handlePlayerReady = useCallback((seek: SeekFn) => {
+    seekRef.current = seek
+  }, [])
+
   if (isPending) {
     return <p className="text-muted-foreground">Loading video…</p>
   }
@@ -57,24 +64,12 @@ export function VideoScreen({
         ) : null}
       </div>
       <IndexPanel video={video} />
-      <Card>
-        <CardHeader>
-          <CardTitle>Player (Phase 11)</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          The source file will play here later. No player in this phase.
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Chat (Phase 11)</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          {locked
-            ? "Chat stays off until the indexes are ready."
-            : "Ask questions here later. This shell does not POST chat and never talks to Gemma from the browser."}
-        </CardContent>
-      </Card>
+      <VideoPlayer video={video} onReady={handlePlayerReady} />
+      <ChatPanel
+        videoId={video.id}
+        locked={locked}
+        onSeek={(seconds) => seekRef.current(seconds)}
+      />
     </div>
   )
 }

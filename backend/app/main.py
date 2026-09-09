@@ -14,6 +14,7 @@ def create_app() -> FastAPI:
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Accept-Ranges", "Content-Range", "Content-Length"],
     )
     app.include_router(videos_router)
     app.include_router(chat_router)
