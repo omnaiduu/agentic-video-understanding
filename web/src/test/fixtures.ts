@@ -14,6 +14,7 @@ export function sampleVideo(overrides: Partial<Video> = {}): Video {
     transcript_status: "ready",
     visual_status: "ready",
     audio_status: "ready",
+    slides_status: "ready",
     error_message: null,
     created_at: "2026-04-08T12:00:00Z",
     ...overrides,

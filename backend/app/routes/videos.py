@@ -12,6 +12,7 @@ from starlette.datastructures import UploadFile
 
 from app.db import get_session
 from app.ingest.speech import schedule_transcript
+from app.ingest.slides import schedule_slides, skip_stale_pending_slides
 from app.ingest.sound import schedule_sound
 from app.ingest.visual import schedule_visual
 from app.media.probe import ProbeError, probe
@@ -38,6 +39,14 @@ def _to_out(video: Video) -> VideoOut:
     return VideoOut.model_validate(video, from_attributes=True)
 
 
+def _read_out(session: Session, video: Video) -> VideoOut:
+    if skip_stale_pending_slides(video):
+        session.add(video)
+        session.commit()
+        session.refresh(video)
+    return _to_out(video)
+
+
 def _guess_kind(filename: str) -> str:
     return "video" if Path(filename).suffix.lower() == ".mp4" else "audio"
 
@@ -50,6 +59,7 @@ def _apply_probe(video: Video, dest: Path) -> None:
         video.transcript_status = IndexStatus.skipped.value
         video.visual_status = IndexStatus.skipped.value
         video.audio_status = IndexStatus.skipped.value
+        video.slides_status = IndexStatus.skipped.value
         video.error_message = str(exc)[:2000]
         if not video.kind:
             video.kind = _guess_kind(video.original_filename)
@@ -121,11 +131,13 @@ async def create_video(
             transcript_status=IndexStatus.pending.value,
             visual_status=IndexStatus.pending.value,
             audio_status=IndexStatus.pending.value,
+            slides_status=IndexStatus.pending.value,
         )
         video = _insert(session, video)
         schedule_transcript(session, video, background_tasks, settings)
         schedule_visual(session, video, background_tasks, settings)
         schedule_sound(session, video, background_tasks, settings)
+        schedule_slides(session, video, background_tasks, settings)
         session.refresh(video)
         return _to_out(video)
 
@@ -155,11 +167,13 @@ async def create_video(
         transcript_status=IndexStatus.pending.value,
         visual_status=IndexStatus.pending.value,
         audio_status=IndexStatus.pending.value,
+        slides_status=IndexStatus.pending.value,
     )
     video = _insert(session, video)
     schedule_transcript(session, video, background_tasks, settings)
     schedule_visual(session, video, background_tasks, settings)
     schedule_sound(session, video, background_tasks, settings)
+    schedule_slides(session, video, background_tasks, settings)
     session.refresh(video)
     return _to_out(video)
 
@@ -167,6 +181,13 @@ async def create_video(
 @router.get("/videos", response_model=list[VideoOut])
 def list_videos(session: Session = Depends(get_session)) -> list[VideoOut]:
     rows = session.exec(select(Video).order_by(Video.created_at.desc())).all()
+    changed = False
+    for row in rows:
+        if skip_stale_pending_slides(row):
+            session.add(row)
+            changed = True
+    if changed:
+        session.commit()
     return [_to_out(row) for row in rows]
 
 
@@ -175,7 +196,7 @@ def get_video(video_id: uuid.UUID, session: Session = Depends(get_session)) -> V
     video = session.get(Video, video_id)
     if video is None:
         raise HTTPException(status_code=404, detail="video not found")
-    return _to_out(video)
+    return _read_out(session, video)
 
 
 @router.get("/videos/{video_id}/file")

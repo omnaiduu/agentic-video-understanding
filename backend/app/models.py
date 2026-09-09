@@ -47,6 +47,7 @@ class Video(SQLModel, table=True):
     transcript_status: str = IndexStatus.pending.value
     visual_status: str = IndexStatus.pending.value
     audio_status: str = IndexStatus.pending.value
+    slides_status: str = IndexStatus.pending.value
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     created_at: datetime = Field(
         default_factory=_utcnow,
@@ -138,6 +139,23 @@ class VisualFrame(SQLModel, table=True):
     )
 
 
+class SlidePage(SQLModel, table=True):
+    __tablename__ = "slide_pages"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    video_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            sa.ForeignKey("videos.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    t_start_s: float
+    t_end_s: float
+    embeddings: list[list[float]] = Field(sa_column=Column(sa.JSON, nullable=False))
+
+
 class Export(SQLModel, table=True):
     __tablename__ = "exports"
 
@@ -193,5 +211,6 @@ class VideoOut(SQLModel):
     transcript_status: str
     visual_status: str
     audio_status: str
+    slides_status: str
     error_message: str | None
     created_at: datetime

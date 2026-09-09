@@ -13,8 +13,10 @@ from app.db import get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
 from app.search.audio import search_audio
 from app.search.clap import AudioEmbedder, get_audio_embedder
+from app.search.colqwen import SlideEmbedder, get_slide_embedder
 from app.search.embed import Embedder, get_embedder
 from app.search.siglip import VisualEmbedder, get_visual_embedder
+from app.search.slides import search_slides
 from app.search.transcript import search_transcript
 from app.search.visual import search_visual
 from app.settings import Settings, get_settings
@@ -104,6 +106,7 @@ def chat(
     embedder: Embedder = Depends(get_embedder),
     visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
     audio_embedder: AudioEmbedder = Depends(get_audio_embedder),
+    slide_embedder: SlideEmbedder = Depends(get_slide_embedder),
 ) -> ChatOut:
     video = session.get(Video, video_id)
     if video is None:
@@ -133,6 +136,9 @@ def chat(
     def _search_audio(query: str):
         return search_audio(session, video.id, query, audio_embedder)
 
+    def _search_slides(query: str):
+        return search_slides(session, video.id, query, slide_embedder)
+
     def _export_clip(start_s: float, end_s: float):
         return create_export(session, video, "clip", start_s, end_s)
 
@@ -147,11 +153,13 @@ def chat(
             search=_search,
             search_visual=_search_visual,
             search_audio=_search_audio,
+            search_slides=_search_slides,
             export_clip=_export_clip,
             export_audio=_export_audio,
             transcript_status=video.transcript_status,
             visual_status=video.visual_status,
             audio_status=video.audio_status,
+            slides_status=video.slides_status,
             history=history,
             last_times=last_times,
         )

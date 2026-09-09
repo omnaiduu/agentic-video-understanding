@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     siglip_model: str = "google/siglip2-so400m-patch16-384"
     audio_embedder: str = "fake"
     clap_model: str = "laion/larger_clap_general"
+    slide_embedder: str = "fake"
+    colqwen_model: str = "vidore/colqwen2.5-v0.2"
     ingest_secret: str = ""
     public_base_url: str = ""
     modal_ingest_app: str = "agentic-video-ingest"

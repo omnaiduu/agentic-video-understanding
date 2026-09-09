@@ -1,4 +1,4 @@
-"""Laptop-owned look / listen / search / search_visual / search_audio / export / answer loop."""
+"""Laptop-owned look / listen / search / search_visual / search_audio / search_slides / export / answer loop."""
 
 from __future__ import annotations
 
@@ -16,6 +16,8 @@ from app.agent.parts import (
     look_message,
     refuse_message,
     search_message,
+    slide_search_message,
+    slides_not_ready_message,
     transcript_not_ready_message,
     visual_not_ready_message,
     visual_search_message,
@@ -32,6 +34,7 @@ from app.agent.schema import (
 from app.models import IndexStatus
 from app.search.audio import AudioSearchResult
 from app.search.transcript import TranscriptHit
+from app.search.slides import SlideHit
 from app.search.visual import VisualHit
 from app.tools import ScissorsError, get_audio, get_frames, get_meta
 from app.tools.export import ExportResult
@@ -62,6 +65,7 @@ class LoopResult:
 SearchFn = Callable[[str], list[TranscriptHit]]
 VisualSearchFn = Callable[[str], list[VisualHit]]
 AudioSearchFn = Callable[[str], AudioSearchResult]
+SlideSearchFn = Callable[[str], list[SlideHit]]
 ExportFn = Callable[[float, float], ExportResult]
 
 
@@ -89,11 +93,13 @@ def run_loop(
     search: SearchFn | None = None,
     search_visual: VisualSearchFn | None = None,
     search_audio: AudioSearchFn | None = None,
+    search_slides: SlideSearchFn | None = None,
     export_clip: ExportFn | None = None,
     export_audio: ExportFn | None = None,
     transcript_status: str | None = None,
     visual_status: str | None = None,
     audio_status: str | None = None,
+    slides_status: str | None = None,
     history: list[tuple[str, str]] | None = None,
     last_times: list[dict] | None = None,
 ) -> LoopResult:
@@ -101,12 +107,14 @@ def run_loop(
     speech_status = transcript_status or IndexStatus.pending.value
     picture_status = visual_status or IndexStatus.pending.value
     sound_status = audio_status or IndexStatus.pending.value
+    slide_status = slides_status or IndexStatus.pending.value
     opening = (
         f"Video duration {meta.duration_s:.3f}s. "
         f"has_video={meta.has_video} has_audio={meta.has_audio}. "
         f"transcript_status={speech_status}. "
         f"visual_status={picture_status}. "
-        f"audio_status={sound_status}."
+        f"audio_status={sound_status}. "
+        f"slides_status={slide_status}."
     )
     remembered = memory_text(history, last_times)
     question_line = f"Question: {question}"
@@ -124,13 +132,13 @@ def run_loop(
     while True:
         if rounds >= MAX_ROUNDS:
             raise LoopError(
-                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio/export rounds"
+                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio/search_slides/export rounds"
             )
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
             raise LoopError(
-                "model did not return look/listen/search/search_visual/search_audio/export/answer JSON"
+                "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
             ) from exc
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
@@ -256,6 +264,46 @@ def run_loop(
                     do="search_audio",
                     start_s=first.start_s if first is not None else None,
                     end_s=first.end_s if first is not None else None,
+                    ok=True,
+                    detail=f"{query}: {shown}" if shown else query,
+                )
+            )
+            continue
+
+        if action.do == "search_slides":
+            query = (action.query or question).strip()
+            if slide_status != IndexStatus.ready.value:
+                messages.append(slides_not_ready_message(slide_status))
+                steps.append(
+                    Step(
+                        do="search_slides",
+                        ok=False,
+                        detail=f"slides {slide_status}",
+                    )
+                )
+                continue
+            if search_slides is None:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "search_slides is not wired. Use look, listen, or answer."
+                        ),
+                    }
+                )
+                steps.append(
+                    Step(do="search_slides", ok=False, detail="search_slides not wired")
+                )
+                continue
+            hits = search_slides(query)[:8]
+            messages.append(slide_search_message(hits, query))
+            shown = ",".join(f"{hit.t:.2f}" for hit in hits)
+            first = hits[0] if hits else None
+            steps.append(
+                Step(
+                    do="search_slides",
+                    start_s=first.t if first is not None else None,
+                    end_s=first.t_end if first is not None else None,
                     ok=True,
                     detail=f"{query}: {shown}" if shown else query,
                 )

@@ -19,9 +19,23 @@ const TONES: Record<string, IndexTone> = {
   error: "error",
 }
 
+const TERMINAL = new Set(["ready", "skipped", "error"])
+
+function otherBooksFinished(video: Video): boolean {
+  return (
+    TERMINAL.has(video.transcript_status) &&
+    TERMINAL.has(video.visual_status) &&
+    TERMINAL.has(video.audio_status)
+  )
+}
+
 export function bookStatus(video: Video, key: IndexBookKey): string {
   if (key === "slides_status") {
-    return video.slides_status ?? "skipped"
+    const raw = video.slides_status ?? "skipped"
+    if (raw === "pending" && otherBooksFinished(video)) {
+      return "skipped"
+    }
+    return raw
   }
   return video[key]
 }

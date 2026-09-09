@@ -2,7 +2,8 @@
 
 Laptop extracts the full audio track (no 30s listen cap), 1 FPS JPEGs, and
 3s / 1.5s-hop wav chunks. This worker transcribes (faster-whisper turbo),
-embeds pictures (SigLIP 2), and embeds sounds (LAION-CLAP).
+embeds pictures (SigLIP 2), embeds sounds (LAION-CLAP), and embeds unique
+slides (ColQwen2.x).
 It POSTs results to the laptop API and never opens laptop Postgres.
 
 Deploy from backend/:
@@ -299,5 +300,113 @@ def embed_audio(
             callback_url,
             headers=headers,
             json={"status": "error", "error_message": "clap failed", "chunks": []},
+            timeout=30.0,
+        )
+
+
+COLQWEN_NAME = "vidore/colqwen2.5-v0.2"
+
+colqwen_image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install(
+        "torch>=2.4.0",
+        "transformers>=4.49.0",
+        "pillow>=10.0.0",
+        "colpali-engine>=0.3.0",
+        "httpx>=0.27.0",
+    )
+    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+)
+
+
+@app.function(
+    image=colqwen_image,
+    gpu="L4",
+    timeout=60 * MINUTES,
+    scaledown_window=2 * MINUTES,
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+def embed_slides(
+    video_id: str,
+    slides_url: str,
+    callback_url: str,
+    secret: str,
+    colqwen_model: str = COLQWEN_NAME,
+) -> None:
+    import io
+    import json
+    import tarfile
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    import httpx
+    import torch
+    from PIL import Image
+
+    del video_id
+    headers = {"Authorization": f"Bearer {secret}"}
+    tar_bytes = httpx.get(slides_url, headers=headers, timeout=300.0).content
+    slides: list[dict] = []
+    try:
+        name = (colqwen_model or "").lower()
+        if "2.5" in name or "2_5" in name:
+            from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
+
+            model = ColQwen2_5.from_pretrained(colqwen_model).eval()
+            processor = ColQwen2_5_Processor.from_pretrained(colqwen_model)
+        else:
+            from colpali_engine.models import ColQwen2, ColQwen2Processor
+
+            model = ColQwen2.from_pretrained(colqwen_model).eval()
+            processor = ColQwen2Processor.from_pretrained(colqwen_model)
+        with TemporaryDirectory(prefix="ingest-colqwen-") as tmp:
+            tar_path = Path(tmp) / "slides.tar"
+            tar_path.write_bytes(tar_bytes)
+            extract_dir = Path(tmp) / "slides"
+            extract_dir.mkdir()
+            with tarfile.open(tar_path, "r") as tar:
+                tar.extractall(extract_dir, filter="data")
+            manifest_path = extract_dir / "manifest.json"
+            if manifest_path.is_file():
+                items = json.loads(manifest_path.read_text(encoding="utf-8"))
+            else:
+                files = sorted(extract_dir.glob("slide_*.jpg"))
+                items = [
+                    {
+                        "file": path.name,
+                        "t_start_s": float(index),
+                        "t_end_s": float(index) + 1.0,
+                    }
+                    for index, path in enumerate(files)
+                ]
+            for item in items:
+                jpeg_path = extract_dir / item["file"]
+                if not jpeg_path.is_file():
+                    continue
+                image = Image.open(io.BytesIO(jpeg_path.read_bytes())).convert("RGB")
+                batch = processor.process_images([image])
+                with torch.no_grad():
+                    matrix = model(**batch)
+                patches = [
+                    [float(x) for x in token.tolist()] for token in matrix[0]
+                ]
+                slides.append(
+                    {
+                        "t_start_s": float(item["t_start_s"]),
+                        "t_end_s": float(item["t_end_s"]),
+                        "embeddings": patches,
+                    }
+                )
+        httpx.post(
+            callback_url,
+            headers=headers,
+            json={"status": "ready", "slides": slides},
+            timeout=120.0,
+        ).raise_for_status()
+    except Exception:
+        httpx.post(
+            callback_url,
+            headers=headers,
+            json={"status": "error", "error_message": "colqwen failed", "slides": []},
             timeout=30.0,
         )

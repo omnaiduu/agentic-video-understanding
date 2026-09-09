@@ -10,8 +10,10 @@ from sqlmodel import Session
 
 from app.db import get_session
 from app.ingest.chunks import chunks_tar_path
+from app.ingest.dedup import slides_tar_path
 from app.ingest.frames import frames_tar_path
 from app.ingest.speech import full_wav_path, save_segments
+from app.ingest.slides import cleanup_index_slides, save_slide_pages
 from app.ingest.sound import cleanup_index_chunks, save_audio_chunks
 from app.ingest.visual import cleanup_index_jpegs, save_visual_frames
 from app.ingest.whisper import TranscriptSegment
@@ -57,6 +59,18 @@ class SoundIn(BaseModel):
     status: Literal["ready", "error"] = "ready"
     error_message: str | None = None
     chunks: list[SoundChunkIn] = Field(default_factory=list)
+
+
+class SlidePageIn(BaseModel):
+    t_start_s: float
+    t_end_s: float
+    embeddings: list[list[float]]
+
+
+class SlidesIn(BaseModel):
+    status: Literal["ready", "error"] = "ready"
+    error_message: str | None = None
+    slides: list[SlidePageIn] = Field(default_factory=list)
 
 
 def require_ingest_secret(
@@ -220,3 +234,55 @@ def receive_sound(
     )
     cleanup_index_chunks(folder)
     return {"ok": True, "chunks": len(payload.chunks)}
+
+
+@router.get("/internal/videos/{video_id}/slides")
+def get_ingest_slides(
+    video_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    settings: Settings = Depends(get_settings),
+    _: None = Depends(require_ingest_secret),
+) -> FileResponse:
+    video = session.get(Video, video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="video not found")
+    path = slides_tar_path(video_folder(settings.data_dir, video.id))
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="slides not found")
+    return FileResponse(
+        path=path,
+        filename="ingest_slides.tar",
+        media_type="application/x-tar",
+        content_disposition_type="inline",
+    )
+
+
+@router.post("/internal/videos/{video_id}/slide-pages")
+def receive_slides(
+    video_id: uuid.UUID,
+    payload: SlidesIn,
+    session: Session = Depends(get_session),
+    settings: Settings = Depends(get_settings),
+    _: None = Depends(require_ingest_secret),
+) -> dict:
+    video = session.get(Video, video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="video not found")
+    folder = video_folder(settings.data_dir, video.id)
+    if video.slides_status == IndexStatus.ready.value:
+        return {"ok": True, "ignored": True}
+    if payload.status == "error":
+        video.slides_status = IndexStatus.error.value
+        session.add(video)
+        session.commit()
+        cleanup_index_slides(folder)
+        return {"ok": True}
+    save_slide_pages(
+        session,
+        video,
+        [row.t_start_s for row in payload.slides],
+        [row.t_end_s for row in payload.slides],
+        [row.embeddings for row in payload.slides],
+    )
+    cleanup_index_slides(folder)
+    return {"ok": True, "slides": len(payload.slides)}
