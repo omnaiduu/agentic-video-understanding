@@ -40,6 +40,7 @@ Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–
 | [docs/12-build-phases.md](docs/12-build-phases.md) | **Build order — phases 1–13 locked** |
 | [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | Libraries, Modal, size — **locked** |
 | [docs/14-from-idea-to-production.md](docs/14-from-idea-to-production.md) | How to run agents without reading code |
+| [docs/15-gemma-as-indexer.md](docs/15-gemma-as-indexer.md) | Later thread: Gemma as finder (vectors vs four drawers). **Not v1** |
 | [docs/phases/](docs/phases/phase-01.md) | One brief per phase |
 
 ---
