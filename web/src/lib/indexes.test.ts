@@ -19,9 +19,14 @@ describe("indexTone", () => {
 })
 
 describe("bookStatus", () => {
-  it("treats a missing slide book as skipped until Phase 13", () => {
-    const video = sampleVideo()
-    expect(bookStatus(video, "slides_status")).toBe("skipped")
+  it("treats a missing slide book as skipped", () => {
+    expect(
+      bookStatus(
+        sampleVideo({ slides_status: undefined }),
+        "slides_status",
+      ),
+    ).toBe("skipped")
+    expect(bookStatus(sampleVideo(), "slides_status")).toBe("ready")
     expect(
       bookStatus(
         sampleVideo({ slides_status: "processing" }),

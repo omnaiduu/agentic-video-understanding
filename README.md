@@ -2,7 +2,7 @@
 
 An open-source system that copies **Google Gemini’s agentic video understanding** (announced 1 Sep 2026): a model with a remote control on a video timeline, not a model that watches every second.
 
-This repository is the **design, decisions, and conversation record**, plus **Phases 1–12** of the app (`backend/` through memory and export, `web/` library, upload, live indexes, player, chat, in-thread clips, phone stack, and delete). Slide-text search (`search_slides` / ColQwen) is Phase 13.
+This repository is the **design, decisions, and conversation record**, plus **Phases 1–13** of the app (`backend/` through the slide book, `web/` library through clips and delete). Four indexes: speech, pictures, sounds, and unique slides.
 
 **To start code:** [docs/13-implementation-pass.md](docs/13-implementation-pass.md) (how) + the matching [docs/phases/](docs/phases/phase-01.md) brief. One phase only.
 
@@ -54,7 +54,7 @@ Useful env vars in `backend/.env`:
 | `VLLM_BASE_URL` | OpenAI-compatible Gemma endpoint when `BRAIN=vllm` |
 | `VLLM_API_KEY` | Optional; default `EMPTY` |
 | `VLLM_MODEL` | Default `google/gemma-4-E4B-it` |
-| `INGEST` / `EMBEDDER` / `VISUAL_EMBEDDER` / `AUDIO_EMBEDDER` | `fake` unless you wire Modal or local models |
+| `INGEST` / `EMBEDDER` / `VISUAL_EMBEDDER` / `AUDIO_EMBEDDER` / `SLIDE_EMBEDDER` | `fake` unless you wire Modal or local models |
 
 Chat needs a real brain (`BRAIN=vllm` + `VLLM_BASE_URL`) or a test FakeBrain. `BRAIN=fake` with no script returns **503**.
 
@@ -90,7 +90,7 @@ cd web && npm test
 
 ## Read in this order
 
-Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md)) and `web/` ([Phase 9](docs/phases/phase-09.md)–[Phase 12](docs/phases/phase-12.md)).
+Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md) plus [13](docs/phases/phase-13.md) slides) and `web/` ([Phase 9](docs/phases/phase-09.md)–[Phase 12](docs/phases/phase-12.md)).
 
 | Doc | What it is |
 |---|---|

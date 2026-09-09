@@ -15,6 +15,7 @@ DoKind = Literal[
     "search",
     "search_visual",
     "search_audio",
+    "search_slides",
     "export_clip",
     "export_audio",
     "answer",
@@ -42,6 +43,7 @@ BRAIN_JSON_SCHEMA: dict[str, Any] = {
                 "search",
                 "search_visual",
                 "search_audio",
+                "search_slides",
                 "export_clip",
                 "export_audio",
                 "answer",
@@ -75,15 +77,16 @@ Moves:
 - search: we hybrid-search the Whisper transcript (keyword + meaning). Put the phrase in query, or null to use the user question. We return at most 8 {t, text} hits as text, never the whole talk. We ignore answer. If the transcript is not ready, we say so; use look or listen instead.
 - search_visual: we dense-search the SigLIP picture index. Put the phrase in query, or null to use the user question. We return at most 8 {t, score} hits as text, never two hours of photos. Scores are not the answer; look at a hit to see. We ignore answer. If the picture book is not ready, we say so; timed look still works.
 - search_audio: we dense-search the CLAP sound index. Put the phrase in query, or null to use the user question. We return at most 8 {start, end, score} hits plus merged event count as text, never two hours of audio. Count is Python merge+len, not a guess. Scores are not the answer; listen at a hit to hear. We ignore answer. If the sound book is not ready, we say so; timed listen still works.
+- search_slides: we MaxSim-search unique slides (ColQwen2.x patches). Put the phrase in query, or null to use the user question. We return at most 8 {t, score, slide_id} hits as text, never two hours of frames. Scores are not the answer; look at a hit to read the real frame. We ignore answer. If the slide book is not ready, we say so; timed look still works. Do not use this for birds or red lights (that is search_visual) or spoken words (that is search).
 - export_clip: we re-encode an mp4 from start_s to end_s onto disk. Cap: 60 seconds. Oversize is refused; we do not shrink. Audio-only files cannot export_clip. We return a GET URL for the human. You do not get the clip bytes. We ignore answer.
 - export_audio: we re-encode a wav from start_s to end_s onto disk. Cap: 60 seconds. Oversize is refused. We return a GET URL for the human. You do not get the wav bytes. We ignore answer.
 - answer: you are done. Put the user-facing text in answer and citation timestamps (seconds) in times. If we exported, include the URL.
 
 Follow-ups: if last time windows are listed, use them first for "that" / "there" / "the clip" / "that frame". You may look or listen again at those times. Do not search the whole tape from scratch unless the new question needs a new find. Old photos and audio are not re-attached.
 
-After look, listen, search, search_visual, search_audio, export_clip, or export_audio we send the result as a normal user message, not as a tool result.
+After look, listen, search, search_visual, search_audio, search_slides, export_clip, or export_audio we send the result as a normal user message, not as a tool result.
 
-Only look, listen, search, search_visual, search_audio, export_clip, export_audio, and answer exist now. Return only the JSON object."""
+Only look, listen, search, search_visual, search_audio, search_slides, export_clip, export_audio, and answer exist now. Return only the JSON object."""
 
 RETRY_PROMPT = "Return only the JSON object that matches the schema. No markdown, no extra keys."
 
@@ -106,5 +109,5 @@ def parse_action(raw: str) -> BrainAction:
         return BrainAction.model_validate(payload)
     except ValidationError as exc:
         raise BrainParseError(
-            "JSON did not match look/listen/search/search_visual/search_audio/export/answer"
+            "JSON did not match look/listen/search/search_visual/search_audio/search_slides/export/answer"
         ) from exc

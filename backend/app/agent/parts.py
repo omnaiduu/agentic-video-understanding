@@ -157,3 +157,33 @@ def audio_not_ready_message(status: str) -> dict:
             "Do not invent a full sound log."
         ),
     }
+
+
+def slide_search_message(hits: list, query: str) -> dict:
+    if not hits:
+        text = (
+            f"search_slides for {query!r} returned no slide hits. "
+            "Two hours of frames are not attached. Try another query or look."
+        )
+    else:
+        lines = [
+            f"[{hit.t:.1f}s] score={hit.score:.3f} slide_id={hit.slide_id}"
+            for hit in hits
+        ]
+        text = (
+            f"slide hits for {query!r} (at most 8 times, not the whole file; "
+            "scores are not the answer; look at a hit to read the real frame):\n"
+            + "\n".join(lines)
+        )
+    return {"role": "user", "content": text}
+
+
+def slides_not_ready_message(status: str) -> dict:
+    return {
+        "role": "user",
+        "content": (
+            f"slide index is not ready (status={status}). "
+            "No search_slides results. Timed look still works. "
+            "Do not invent a full slide log."
+        ),
+    }

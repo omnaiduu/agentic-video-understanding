@@ -14,6 +14,7 @@ WINDOW_DOS = frozenset(
         "search",
         "search_visual",
         "search_audio",
+        "search_slides",
         "export_clip",
         "export_audio",
     }
