@@ -17,3 +17,10 @@ export function saveSessionId(videoId: string, sessionId: string): void {
   }
   window.localStorage.setItem(sessionStorageKey(videoId), sessionId)
 }
+
+export function clearSessionId(videoId: string): void {
+  if (typeof window === "undefined") {
+    return
+  }
+  window.localStorage.removeItem(sessionStorageKey(videoId))
+}

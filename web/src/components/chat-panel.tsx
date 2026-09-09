@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 
+import { ChatExport } from "@/components/chat-export"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,6 +10,8 @@ import {
   type ChatOut,
   type ChatStep,
 } from "@/lib/api"
+import { humanizeChatError } from "@/lib/chat-errors"
+import { exportFailureNote, exportKindFromSteps } from "@/lib/export"
 import { formatDuration } from "@/lib/format"
 import { loadSessionId, saveSessionId } from "@/lib/session"
 
@@ -19,6 +22,7 @@ type Turn = {
   text: string
   citations?: number[]
   steps?: ChatStep[]
+  exportUrl?: string | null
 }
 
 function formatStep(step: ChatStep): string {
@@ -44,6 +48,7 @@ export function ChatPanel({
   const [turns, setTurns] = useState<Turn[]>([])
   const [error, setError] = useState<string | null>(null)
   const sessionRef = useRef<string | null>(null)
+  const threadRef = useRef<HTMLOListElement>(null)
 
   useEffect(() => {
     sessionRef.current = loadSessionId(videoId)
@@ -67,13 +72,22 @@ export function ChatPanel({
           text: data.answer,
           citations: data.citations,
           steps: data.steps,
+          exportUrl: data.export_url,
         },
       ])
     },
     onError: (caught: Error) => {
-      setError(caught.message || "Chat failed.")
+      setError(humanizeChatError(caught))
     },
   })
+
+  useEffect(() => {
+    const node = threadRef.current
+    if (!node) {
+      return
+    }
+    node.scrollTop = node.scrollHeight
+  }, [turns, mutation.isPending])
 
   function send() {
     const message = draft.trim()
@@ -86,55 +100,71 @@ export function ChatPanel({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="flex max-h-[min(36rem,70vh)] flex-col">
+      <CardHeader className="shrink-0">
         <CardTitle>Chat</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col space-y-4">
         {locked ? (
           <p className="text-sm text-muted-foreground">
             Chat stays off until the indexes are ready.
           </p>
         ) : (
           <>
-            <ol className="space-y-3">
-              {turns.map((turn, index) => (
-                <li key={`${turn.role}-${index}`} className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {turn.role === "user" ? "You" : "Answer"}
-                  </p>
-                  <p className="text-sm whitespace-pre-wrap">{turn.text}</p>
-                  {turn.citations && turn.citations.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {turn.citations.map((time, chip) => (
-                        <Button
-                          key={`${time}-${chip}`}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onSeek(time)}
-                        >
-                          {formatDuration(time)}
-                        </Button>
-                      ))}
-                    </div>
-                  ) : null}
-                  {turn.steps && turn.steps.length > 0 ? (
-                    <details className="text-sm text-muted-foreground">
-                      <summary className="cursor-pointer select-none">
-                        Details
-                      </summary>
-                      <ul className="mt-2 list-disc space-y-1 pl-5">
-                        {turn.steps.map((step, stepIndex) => (
-                          <li key={`${step.do}-${stepIndex}`}>
-                            {formatStep(step)}
-                          </li>
+            <ol
+              ref={threadRef}
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
+              data-slot="chat-thread"
+            >
+              {turns.map((turn, index) => {
+                const kind = exportKindFromSteps(turn.steps)
+                const failedExport = exportFailureNote(turn.steps)
+                return (
+                  <li key={`${turn.role}-${index}`} className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {turn.role === "user" ? "You" : "Answer"}
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap">{turn.text}</p>
+                    {turn.citations && turn.citations.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {turn.citations.map((time, chip) => (
+                          <Button
+                            key={`${time}-${chip}`}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onSeek(time)}
+                          >
+                            {formatDuration(time)}
+                          </Button>
                         ))}
-                      </ul>
-                    </details>
-                  ) : null}
-                </li>
-              ))}
+                      </div>
+                    ) : null}
+                    {turn.role === "assistant" && turn.exportUrl ? (
+                      <ChatExport path={turn.exportUrl} kind={kind} />
+                    ) : null}
+                    {turn.role === "assistant" && failedExport ? (
+                      <p className="text-sm text-destructive" role="alert">
+                        {failedExport}
+                      </p>
+                    ) : null}
+                    {turn.steps && turn.steps.length > 0 ? (
+                      <details className="text-sm text-muted-foreground">
+                        <summary className="cursor-pointer select-none">
+                          Details
+                        </summary>
+                        <ul className="mt-2 list-disc space-y-1 pl-5">
+                          {turn.steps.map((step, stepIndex) => (
+                            <li key={`${step.do}-${stepIndex}`}>
+                              {formatStep(step)}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    ) : null}
+                  </li>
+                )
+              })}
             </ol>
             {mutation.isPending ? (
               <p className="text-sm text-muted-foreground" aria-live="polite">
@@ -147,7 +177,7 @@ export function ChatPanel({
               </p>
             ) : null}
             <form
-              className="space-y-2"
+              className="shrink-0 space-y-2"
               onSubmit={(event) => {
                 event.preventDefault()
                 send()

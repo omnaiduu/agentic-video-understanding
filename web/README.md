@@ -1,12 +1,14 @@
-# Website (Phases 9–11)
+# Website (Phases 9–12)
 
-TanStack Start app for the library, upload, live indexes, **player**, and **chat**. FastAPI is still the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, or Gemma. The browser talks to FastAPI with `VITE_API_URL` (see `.env.example`). No Start server function is a second backend.
+TanStack Start app for the library, upload, live indexes, **player**, **chat**, **in-thread clips**, phone layout, and **delete**. FastAPI is still the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, or Gemma. The browser talks to FastAPI with `VITE_API_URL` (see `.env.example`). No Start server function is a second backend.
 
-Pick a file on `/`. After upload you land on `/videos/$id`. Video.js plays `GET {API}/videos/{id}/file`. Ask a question; the site POSTs chat, keeps `session_id` in localStorage for that video, and turns citations into seek chips. Tool steps sit in a collapsed Details block. Clip download UI is still off (Phase 12).
+Pick a file on `/`. After upload you land on `/videos/$id`. Video.js plays `GET {API}/videos/{id}/file`. Ask a question; the site POSTs chat, keeps `session_id` in localStorage for that video, and turns citations into seek chips. If the answer includes `export_url`, a mini `<video>` or `<audio>` plus **Download** render **inside that assistant turn**. The chat thread scrolls; older text, times, and clips stay above. Tool steps sit in a collapsed Details block. On a phone the source player stacks above chat (`md:` two columns). **Delete** confirms, then `DELETE /videos/{id}`.
 
 If indexes are still building, the four live lines stay and chat stays off.
 
 ## Run with FastAPI
+
+Root runbook: [../README.md](../README.md).
 
 Terminal 1 — API:
 
@@ -45,4 +47,4 @@ Tests mock `fetch` / XHR / Video.js. They do not start Gemma.
 | Path | What it does |
 |---|---|
 | `/` | File picker + `GET {API}/videos` |
-| `/videos/$videoId` | Player, live indexes, `POST {API}/videos/:id/chat` |
+| `/videos/$videoId` | Player, live indexes, chat, in-thread clips, delete |
