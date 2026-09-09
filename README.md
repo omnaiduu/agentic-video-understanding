@@ -2,7 +2,7 @@
 
 An open-source system that copies **Google Gemini’s agentic video understanding** (announced 1 Sep 2026): a model with a remote control on a video timeline, not a model that watches every second.
 
-This repository is the **design, decisions, and conversation record**, plus **Phases 1–9** of the app (`backend/` through memory, `web/` library + watch-and-ask shell). Upload, player, and chat UI are not in this slice.
+This repository is the **design, decisions, and conversation record**, plus **Phases 1–10** of the app (`backend/` through memory, `web/` library, upload, and live index panel). Player and chat UI are not in this slice.
 
 **To start code:** [docs/13-implementation-pass.md](docs/13-implementation-pass.md) (how) + the matching [docs/phases/](docs/phases/phase-01.md) brief. One phase only. API runbook: [backend/README.md](backend/README.md). Website: [web/README.md](web/README.md).
 
@@ -22,7 +22,7 @@ ColQwen2.x and `search_slides` are for questions like “which slide had **Pro $
 
 ## Read in this order
 
-Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md)) and `web/` ([Phase 9](docs/phases/phase-09.md)).
+Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md)) and `web/` ([Phase 9](docs/phases/phase-09.md), [Phase 10](docs/phases/phase-10.md)).
 
 | Doc | What it is |
 |---|---|
