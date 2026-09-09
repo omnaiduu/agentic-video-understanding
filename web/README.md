@@ -1,8 +1,10 @@
-# Website (Phases 9–10)
+# Website (Phases 9–11)
 
-TanStack Start app for the library and the watch+ask **shell**. FastAPI is still the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, or Gemma. The browser talks to FastAPI with `VITE_API_URL` (see `.env.example`). No Start server function is a second backend.
+TanStack Start app for the library, upload, live indexes, **player**, and **chat**. FastAPI is still the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, or Gemma. The browser talks to FastAPI with `VITE_API_URL` (see `.env.example`). No Start server function is a second backend.
 
-Pick a file on `/`. The browser POSTs multipart to FastAPI and shows **byte %**. When the POST returns, the site opens `/videos/$id` even if indexes are still building. That page polls `GET /videos/:id` and shows four live lines (speech, pictures, sounds, slides). Chat and the player are still off.
+Pick a file on `/`. After upload you land on `/videos/$id`. Video.js plays `GET {API}/videos/{id}/file`. Ask a question; the site POSTs chat, keeps `session_id` in localStorage for that video, and turns citations into seek chips. Tool steps sit in a collapsed Details block. Clip download UI is still off (Phase 12).
+
+If indexes are still building, the four live lines stay and chat stays off.
 
 ## Run with FastAPI
 
@@ -17,6 +19,8 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+Chat needs a real brain (`BRAIN=vllm` + `VLLM_BASE_URL`) or a test FakeBrain. `BRAIN=fake` with no script returns 503.
+
 Terminal 2 — website:
 
 ```bash
@@ -26,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Choose an mp4 or audio file (2 GB cap, same as the API). Oversize returns **413** and the page shows an error. If FastAPI is down, the page shows an error instead of crashing.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
 ## Check
 
@@ -34,13 +38,11 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Choose an mp4 or audio file
 npm test
 ```
 
-Tests mock `fetch` / XHR. They do not start Gemma. They do not ship a 2 GB fixture.
+Tests mock `fetch` / XHR / Video.js. They do not start Gemma.
 
 ## Routes
 
 | Path | What it does |
 |---|---|
 | `/` | File picker + `GET {API}/videos` |
-| `/videos/$videoId` | `GET {API}/videos/:id` (poll while indexes run) |
-
-shadcn this phase: Button, Card, Badge, Progress.
+| `/videos/$videoId` | Player, live indexes, `POST {API}/videos/:id/chat` |

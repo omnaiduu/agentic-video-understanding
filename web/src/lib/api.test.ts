@@ -8,7 +8,9 @@ import {
   isOversize,
   listVideos,
   oversizeMessage,
+  postChat,
   uploadVideo,
+  videoFileUrl,
 } from "./api"
 import { sampleVideo } from "@/test/fixtures"
 
@@ -179,5 +181,51 @@ describe("oversize helpers", () => {
     const error = new ApiError(413, "file too large")
     expect(isOversize(error)).toBe(true)
     expect(oversizeMessage(error)).toBe("File is too large (2 GB max).")
+  })
+})
+
+describe("postChat", () => {
+  it("posts a message and omits a missing session", async () => {
+    const body = {
+      answer: "A dark frame at 0.1s.",
+      citations: [0.1],
+      steps: [],
+      session_id: "sess-1",
+      export_url: null,
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, body))
+    vi.stubGlobal("fetch", fetchMock)
+    await expect(postChat("vid-1", "what is at 0.1s?")).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/videos/vid-1/chat",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ message: "what is at 0.1s?" }),
+      }),
+    )
+  })
+
+  it("sends a saved session_id", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(200, {
+        answer: "same thread",
+        citations: [],
+        steps: [],
+        session_id: "sess-1",
+        export_url: null,
+      }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    await postChat("vid-1", "again", "sess-1")
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      message: "again",
+      session_id: "sess-1",
+    })
+  })
+})
+
+describe("videoFileUrl", () => {
+  it("points at the FastAPI file route", () => {
+    expect(videoFileUrl("vid-1")).toBe("http://127.0.0.1:8000/videos/vid-1/file")
   })
 })

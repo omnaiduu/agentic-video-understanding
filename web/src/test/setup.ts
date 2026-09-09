@@ -26,3 +26,14 @@ vi.mock("@tanstack/react-router", () => ({
     return createElement("a", { href, className }, children)
   },
 }))
+
+vi.mock("video.js", () => {
+  const player = {
+    currentTime: vi.fn(),
+    dispose: vi.fn(),
+  }
+  const videojs = vi.fn(() => player)
+  return { default: videojs }
+})
+
+vi.mock("video.js/dist/video-js.css", () => ({}))

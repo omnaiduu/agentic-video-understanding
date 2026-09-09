@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import { ApiError } from "@/lib/api"
 import { sampleVideo } from "@/test/fixtures"
+import { renderWithQuery } from "@/test/render"
 import { VideoScreen } from "./video-screen"
 
 describe("VideoScreen", () => {
@@ -22,7 +23,7 @@ describe("VideoScreen", () => {
       />,
     )
     expect(screen.getByText(/could not load this video/i)).toBeInTheDocument()
-    expect(screen.queryByText(/Player \(Phase 11\)/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/ask a question/i)).not.toBeInTheDocument()
   })
 
   it("shows not found without crashing", () => {
@@ -41,22 +42,20 @@ describe("VideoScreen", () => {
     )
   })
 
-  it("shows the watch-and-ask shell for a listed video", () => {
+  it("shows the player and chat when indexes are ready", () => {
     const video = sampleVideo({
       id: "22222222-2222-2222-2222-222222222222",
       original_filename: "talk.mp4",
       duration_s: 125,
     })
-    render(
+    renderWithQuery(
       <VideoScreen isPending={false} video={video} isError={false} error={null} />,
     )
     expect(screen.getByRole("heading", { name: "talk.mp4" })).toBeInTheDocument()
     expect(screen.getByText("2m 5s")).toBeInTheDocument()
     expect(screen.getByText("Speech index")).toBeInTheDocument()
-    expect(screen.getByText(/Player \(Phase 11\)/)).toBeInTheDocument()
-    expect(
-      screen.getByText(/does not POST chat and never talks to Gemma/i),
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText(/ask a question/i)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument()
   })
 
   it("keeps chat off and shows live index lines while books are building", () => {
@@ -68,7 +67,7 @@ describe("VideoScreen", () => {
       audio_status: "ready",
       slides_status: "skipped",
     })
-    render(
+    renderWithQuery(
       <VideoScreen isPending={false} video={video} isError={false} error={null} />,
     )
     expect(screen.getByText(/building indexes/i)).toBeInTheDocument()
@@ -77,5 +76,6 @@ describe("VideoScreen", () => {
     expect(
       screen.getByText(/chat stays off until the indexes are ready/i),
     ).toBeInTheDocument()
+    expect(screen.queryByLabelText(/ask a question/i)).not.toBeInTheDocument()
   })
 })

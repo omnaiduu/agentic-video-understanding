@@ -1,4 +1,5 @@
 const FETCH_TIMEOUT_MS = 10_000
+const CHAT_TIMEOUT_MS = 180_000
 
 export class ApiError extends Error {
   readonly status: number
@@ -88,12 +89,93 @@ async function getJson<T>(path: string): Promise<T> {
   return (await response.json()) as T
 }
 
+async function postJson<T>(
+  path: string,
+  body: unknown,
+  timeoutMs: number,
+): Promise<T> {
+  const url = `${getApiBaseUrl()}${path}`
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new ApiError(0, "The API timed out")
+    }
+    throw new ApiError(0, "The API is unreachable")
+  }
+  if (!response.ok) {
+    throw new ApiError(response.status, await readError(response))
+  }
+  return (await response.json()) as T
+}
+
 export function listVideos(): Promise<Video[]> {
   return getJson<Video[]>("/videos")
 }
 
 export function getVideo(id: string): Promise<Video> {
   return getJson<Video>(`/videos/${id}`)
+}
+
+export function videoFileUrl(id: string): string {
+  return `${getApiBaseUrl()}/videos/${id}/file`
+}
+
+export function mediaType(video: Pick<Video, "has_video" | "kind" | "original_filename">): string {
+  if (video.has_video || video.kind === "video") {
+    return "video/mp4"
+  }
+  const name = video.original_filename.toLowerCase()
+  if (name.endsWith(".wav")) {
+    return "audio/wav"
+  }
+  if (name.endsWith(".mp3")) {
+    return "audio/mpeg"
+  }
+  if (name.endsWith(".m4a") || name.endsWith(".aac")) {
+    return "audio/mp4"
+  }
+  if (name.endsWith(".ogg") || name.endsWith(".opus")) {
+    return "audio/ogg"
+  }
+  if (name.endsWith(".flac")) {
+    return "audio/flac"
+  }
+  return "audio/mpeg"
+}
+
+export type ChatStep = {
+  do: string
+  start_s: number | null
+  end_s: number | null
+  ok: boolean
+  detail: string
+}
+
+export type ChatOut = {
+  answer: string
+  citations: number[]
+  steps: ChatStep[]
+  session_id: string
+  export_url: string | null
+}
+
+export function postChat(
+  videoId: string,
+  message: string,
+  sessionId?: string | null,
+): Promise<ChatOut> {
+  const body: { message: string; session_id?: string } = { message }
+  if (sessionId) {
+    body.session_id = sessionId
+  }
+  return postJson<ChatOut>(`/videos/${videoId}/chat`, body, CHAT_TIMEOUT_MS)
 }
 
 export function isNotFound(error: unknown): boolean {
