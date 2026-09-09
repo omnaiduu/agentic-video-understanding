@@ -4,6 +4,8 @@ Compressed record of the **early** design thread. Not a transcript.
 
 **Later lock:** the 13 phases won (ColQwen2.x + `search_slides` is Phase 13). Default brain is **E4B + our JSON loop**, store is **Postgres**, UI is **TanStack Start**. Treat this file as history if it fights [03](03-key-decisions.md) or [12](12-build-phases.md).
 
+**Later thread (not v1):** using Gemma itself as a finder (notes vs vectors, one map vs four drawers) is recorded in [15](15-gemma-as-indexer.md). Does not unlock E2B-as-CLIP.
+
 ## Start
 
 User asked how **Google agentic video understanding** works, in simple words, then technically, then how to build an open-source version.

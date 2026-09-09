@@ -27,4 +27,5 @@
 | **Modal** | GPU host for Gemma (chat worker) and ingest (other worker). Laptop keeps the API and files. |
 | **E4B / 12B** | Gemma 4 sizes. **E4B = default.** 12B = later env switch. |
 | **ColQwen / ColPali** | Patch-level slide retriever (MaxSim). **This app** (Phase 13). `search_slides`. Gemma still reads the real frame; ColQwen only finds the time. |
+| **Gemma as indexer** | Same E4B used to **find** times (captions or vectors), not only to answer. Discussion in [15](15-gemma-as-indexer.md). **Not v1.** |
 | **search_slides** | JSON action: find a unique slide by on-screen text (“Pro $99”). |
