@@ -26,6 +26,27 @@ from app.settings import Settings, get_settings
 from app.storage import video_folder
 
 
+_TERMINAL = {
+    IndexStatus.ready.value,
+    IndexStatus.skipped.value,
+    IndexStatus.error.value,
+}
+
+
+def skip_stale_pending_slides(video: Video) -> bool:
+    """0008 left finished videos at slides_status=pending. Skip those leftovers."""
+    if video.slides_status != IndexStatus.pending.value:
+        return False
+    if video.transcript_status not in _TERMINAL:
+        return False
+    if video.visual_status not in _TERMINAL:
+        return False
+    if video.audio_status not in _TERMINAL:
+        return False
+    video.slides_status = IndexStatus.skipped.value
+    return True
+
+
 def _folder(settings: Settings, video_id: uuid.UUID) -> Path:
     return video_folder(settings.data_dir, video_id)
 

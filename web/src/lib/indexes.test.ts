@@ -34,6 +34,24 @@ describe("bookStatus", () => {
       ),
     ).toBe("processing")
   })
+
+  it("treats leftover pending slides as skipped once the other books finished", () => {
+    expect(
+      bookStatus(
+        sampleVideo({ slides_status: "pending" }),
+        "slides_status",
+      ),
+    ).toBe("skipped")
+    expect(
+      bookStatus(
+        sampleVideo({
+          transcript_status: "processing",
+          slides_status: "pending",
+        }),
+        "slides_status",
+      ),
+    ).toBe("pending")
+  })
 })
 
 describe("ingestInProgress", () => {
@@ -52,6 +70,9 @@ describe("ingestInProgress", () => {
 
   it("stops when every known book is terminal", () => {
     expect(ingestInProgress(sampleVideo())).toBe(false)
+    expect(
+      ingestInProgress(sampleVideo({ slides_status: "pending" })),
+    ).toBe(false)
   })
 
   it("stops polling after an overall error", () => {
@@ -85,5 +106,13 @@ describe("chatLocked", () => {
       ),
     ).toBe(true)
     expect(chatLocked(sampleVideo({ status: "ready" }))).toBe(false)
+    expect(
+      chatLocked(
+        sampleVideo({
+          status: "ready",
+          slides_status: "pending",
+        }),
+      ),
+    ).toBe(false)
   })
 })

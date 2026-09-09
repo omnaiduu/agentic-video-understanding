@@ -559,6 +559,49 @@ def test_search_slides_missing_query_uses_user_question(tiny_mp4: Path) -> None:
     assert result.citations == [12.04]
 
 
+def test_legacy_pending_slides_skipped_on_get(client, tiny_mp4: Path) -> None:
+    from app.db import get_engine
+
+    created = _upload(client, tiny_mp4).json()
+    video_id = created["id"]
+    engine = get_engine()
+    with Session(engine) as session:
+        video = session.get(Video, video_id)
+        assert video is not None
+        video.slides_status = IndexStatus.pending.value
+        session.add(video)
+        session.commit()
+
+    detail = client.get(f"/videos/{video_id}").json()
+    assert detail["slides_status"] == IndexStatus.skipped.value
+    listed = client.get("/videos").json()
+    match = next(row for row in listed if row["id"] == video_id)
+    assert match["slides_status"] == IndexStatus.skipped.value
+
+    with Session(engine) as session:
+        video = session.get(Video, video_id)
+        assert video is not None
+        assert video.slides_status == IndexStatus.skipped.value
+        video.transcript_status = IndexStatus.processing.value
+        video.slides_status = IndexStatus.pending.value
+        session.add(video)
+        session.commit()
+
+    waiting = client.get(f"/videos/{video_id}").json()
+    assert waiting["slides_status"] == IndexStatus.pending.value
+
+    with Session(engine) as session:
+        video = session.get(Video, video_id)
+        assert video is not None
+        video.transcript_status = IndexStatus.ready.value
+        video.slides_status = IndexStatus.processing.value
+        session.add(video)
+        session.commit()
+
+    still = client.get(f"/videos/{video_id}").json()
+    assert still["slides_status"] == IndexStatus.processing.value
+
+
 def test_search_visual_still_exists(client, tiny_mp4: Path) -> None:
     created = _upload(client, tiny_mp4).json()
     detail = client.get(f"/videos/{created['id']}").json()

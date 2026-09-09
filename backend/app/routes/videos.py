@@ -12,7 +12,7 @@ from starlette.datastructures import UploadFile
 
 from app.db import get_session
 from app.ingest.speech import schedule_transcript
-from app.ingest.slides import schedule_slides
+from app.ingest.slides import schedule_slides, skip_stale_pending_slides
 from app.ingest.sound import schedule_sound
 from app.ingest.visual import schedule_visual
 from app.media.probe import ProbeError, probe
@@ -37,6 +37,14 @@ class PathIn(BaseModel):
 
 def _to_out(video: Video) -> VideoOut:
     return VideoOut.model_validate(video, from_attributes=True)
+
+
+def _read_out(session: Session, video: Video) -> VideoOut:
+    if skip_stale_pending_slides(video):
+        session.add(video)
+        session.commit()
+        session.refresh(video)
+    return _to_out(video)
 
 
 def _guess_kind(filename: str) -> str:
@@ -173,6 +181,13 @@ async def create_video(
 @router.get("/videos", response_model=list[VideoOut])
 def list_videos(session: Session = Depends(get_session)) -> list[VideoOut]:
     rows = session.exec(select(Video).order_by(Video.created_at.desc())).all()
+    changed = False
+    for row in rows:
+        if skip_stale_pending_slides(row):
+            session.add(row)
+            changed = True
+    if changed:
+        session.commit()
     return [_to_out(row) for row in rows]
 
 
@@ -181,7 +196,7 @@ def get_video(video_id: uuid.UUID, session: Session = Depends(get_session)) -> V
     video = session.get(Video, video_id)
     if video is None:
         raise HTTPException(status_code=404, detail="video not found")
-    return _to_out(video)
+    return _read_out(session, video)
 
 
 @router.get("/videos/{video_id}/file")
