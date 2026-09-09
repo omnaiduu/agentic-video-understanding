@@ -38,8 +38,7 @@ export function LibraryScreen({
   if (!videos || videos.length === 0) {
     return (
       <p className="text-muted-foreground">
-        No videos yet. Upload with curl against FastAPI for now — this page only
-        lists what is already stored.
+        No videos yet. Choose a file above to upload it through FastAPI.
       </p>
     )
   }

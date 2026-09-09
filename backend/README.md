@@ -1,6 +1,6 @@
 # Backend (Phases 1–8)
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / search_visual / search_audio / export_clip / export_audio / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once; CLAP writes a sound index once. Export re-encodes a ≤60s mp4 or wav onto disk and returns a GET URL. A follow-up reuses the same `session_id` and the last 3 time windows as **text**. The website lives in `web/` (Phase 9) and only GETs this API.
+Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / search_visual / search_audio / export_clip / export_audio / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once; CLAP writes a sound index once. Export re-encodes a ≤60s mp4 or wav onto disk and returns a GET URL. A follow-up reuses the same `session_id` and the last 3 time windows as **text**. The website lives in `web/` (Phases 9–10) and POSTs uploads + GETs this API.
 
 ## What you need on the machine
 

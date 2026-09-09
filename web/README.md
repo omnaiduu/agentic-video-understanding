@@ -1,8 +1,8 @@
-# Website (Phase 9 — UI shell)
+# Website (Phases 9–10)
 
 TanStack Start app for the library and the watch+ask **shell**. FastAPI is still the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, or Gemma. The browser talks to FastAPI with `VITE_API_URL` (see `.env.example`). No Start server function is a second backend.
 
-This phase has **no upload form, no player, and no chat**. Curl a file into FastAPI, then open `/`.
+Pick a file on `/`. The browser POSTs multipart to FastAPI and shows **byte %**. When the POST returns, the site opens `/videos/$id` even if indexes are still building. That page polls `GET /videos/:id` and shows four live lines (speech, pictures, sounds, slides). Chat and the player are still off.
 
 ## Run with FastAPI
 
@@ -26,13 +26,7 @@ npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Empty library is expected until you upload:
-
-```bash
-curl -F "file=@/path/to/clip.mp4" http://127.0.0.1:8000/videos
-```
-
-Then refresh. Click a row for `/videos/$videoId` (title, duration, status, Phase 11 placeholders). If FastAPI is down, the page shows an error instead of crashing.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Choose an mp4 or audio file (2 GB cap, same as the API). Oversize returns **413** and the page shows an error. If FastAPI is down, the page shows an error instead of crashing.
 
 ## Check
 
@@ -40,13 +34,13 @@ Then refresh. Click a row for `/videos/$videoId` (title, duration, status, Phase
 npm test
 ```
 
-Tests mock `fetch`. They do not start Gemma.
+Tests mock `fetch` / XHR. They do not start Gemma. They do not ship a 2 GB fixture.
 
 ## Routes
 
-| Path | Query |
+| Path | What it does |
 |---|---|
-| `/` | `GET {API}/videos` |
-| `/videos/$videoId` | `GET {API}/videos/:id` |
+| `/` | File picker + `GET {API}/videos` |
+| `/videos/$videoId` | `GET {API}/videos/:id` (poll while indexes run) |
 
-shadcn this phase: Button, Card, Badge only.
+shadcn this phase: Button, Card, Badge, Progress.

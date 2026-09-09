@@ -52,7 +52,30 @@ describe("VideoScreen", () => {
     )
     expect(screen.getByRole("heading", { name: "talk.mp4" })).toBeInTheDocument()
     expect(screen.getByText("2m 5s")).toBeInTheDocument()
+    expect(screen.getByText("Speech index")).toBeInTheDocument()
     expect(screen.getByText(/Player \(Phase 11\)/)).toBeInTheDocument()
-    expect(screen.getByText(/Chat \(Phase 11\)/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/does not POST chat and never talks to Gemma/i),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps chat off and shows live index lines while books are building", () => {
+    const video = sampleVideo({
+      original_filename: "talk.mp4",
+      status: "ready",
+      transcript_status: "processing",
+      visual_status: "pending",
+      audio_status: "ready",
+      slides_status: "skipped",
+    })
+    render(
+      <VideoScreen isPending={false} video={video} isError={false} error={null} />,
+    )
+    expect(screen.getByText(/building indexes/i)).toBeInTheDocument()
+    expect(screen.getByText("building")).toBeInTheDocument()
+    expect(screen.getByText("waiting")).toBeInTheDocument()
+    expect(
+      screen.getByText(/chat stays off until the indexes are ready/i),
+    ).toBeInTheDocument()
   })
 })

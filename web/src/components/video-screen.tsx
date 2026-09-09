@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router"
 
+import { IndexPanel } from "@/components/index-panel"
 import { StatusBadge } from "@/components/status-badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { isNotFound, type Video } from "@/lib/api"
 import { formatDuration } from "@/lib/format"
+import { chatLocked } from "@/lib/indexes"
 
 export function VideoScreen({
   isPending,
@@ -41,6 +43,7 @@ export function VideoScreen({
   if (!video) {
     return null
   }
+  const locked = chatLocked(video)
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -53,6 +56,7 @@ export function VideoScreen({
           <p className="text-sm text-destructive">{video.error_message}</p>
         ) : null}
       </div>
+      <IndexPanel video={video} />
       <Card>
         <CardHeader>
           <CardTitle>Player (Phase 11)</CardTitle>
@@ -66,8 +70,9 @@ export function VideoScreen({
           <CardTitle>Chat (Phase 11)</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Ask questions here later. This shell does not POST chat and never
-          talks to Gemma from the browser.
+          {locked
+            ? "Chat stays off until the indexes are ready."
+            : "Ask questions here later. This shell does not POST chat and never talks to Gemma from the browser."}
         </CardContent>
       </Card>
     </div>
