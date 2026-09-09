@@ -8,6 +8,8 @@ import {
   isOversize,
   listVideos,
   oversizeMessage,
+  absoluteApiUrl,
+  deleteVideo,
   postChat,
   uploadVideo,
   videoFileUrl,
@@ -227,5 +229,33 @@ describe("postChat", () => {
 describe("videoFileUrl", () => {
   it("points at the FastAPI file route", () => {
     expect(videoFileUrl("vid-1")).toBe("http://127.0.0.1:8000/videos/vid-1/file")
+  })
+})
+
+describe("absoluteApiUrl", () => {
+  it("prefixes a relative export path", () => {
+    expect(absoluteApiUrl("/videos/vid/exports/exp-1")).toBe(
+      "http://127.0.0.1:8000/videos/vid/exports/exp-1",
+    )
+  })
+})
+
+describe("deleteVideo", () => {
+  it("sends DELETE and accepts 204", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+      statusText: "No Content",
+      json: async () => {
+        throw new Error("204 has no body")
+      },
+      text: async () => "",
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    await expect(deleteVideo("vid-1")).resolves.toBeUndefined()
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/videos/vid-1",
+      expect.objectContaining({ method: "DELETE" }),
+    )
   })
 })

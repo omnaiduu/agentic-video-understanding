@@ -56,6 +56,23 @@ describe("VideoScreen", () => {
     expect(screen.getByText("Speech index")).toBeInTheDocument()
     expect(screen.getByLabelText(/ask a question/i)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
+    const layout = document.querySelector("[data-slot='watch-layout']")
+    expect(layout).toHaveClass("grid-cols-1")
+    expect(layout).toHaveClass("md:grid-cols-2")
+  })
+
+  it("explains an ingest failure", () => {
+    const video = sampleVideo({
+      original_filename: "bad.mp4",
+      status: "error",
+      error_message: "ffprobe failed",
+    })
+    renderWithQuery(
+      <VideoScreen isPending={false} video={video} isError={false} error={null} />,
+    )
+    expect(screen.getByText(/could not be processed/i)).toBeInTheDocument()
+    expect(screen.getByText(/ffprobe failed/i)).toBeInTheDocument()
   })
 
   it("keeps chat off and shows live index lines while books are building", () => {

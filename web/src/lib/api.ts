@@ -178,6 +178,37 @@ export function postChat(
   return postJson<ChatOut>(`/videos/${videoId}/chat`, body, CHAT_TIMEOUT_MS)
 }
 
+export function absoluteApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+  const prefix = path.startsWith("/") ? path : `/${path}`
+  return `${getApiBaseUrl()}${prefix}`
+}
+
+export function deleteVideo(id: string): Promise<void> {
+  return sendNoContent("DELETE", `/videos/${id}`)
+}
+
+async function sendNoContent(method: string, path: string): Promise<void> {
+  const url = `${getApiBaseUrl()}${path}`
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method,
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new ApiError(0, "The API timed out")
+    }
+    throw new ApiError(0, "The API is unreachable")
+  }
+  if (!response.ok) {
+    throw new ApiError(response.status, await readError(response))
+  }
+}
+
 export function isNotFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404
 }

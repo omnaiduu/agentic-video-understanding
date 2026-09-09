@@ -2,13 +2,13 @@
 
 An open-source system that copies **Google Gemini’s agentic video understanding** (announced 1 Sep 2026): a model with a remote control on a video timeline, not a model that watches every second.
 
-This repository is the **design, decisions, and conversation record**, plus **Phases 1–11** of the app (`backend/` through memory, `web/` library, upload, live indexes, player, and chat). Clip-download UI is not in this slice.
+This repository is the **design, decisions, and conversation record**, plus **Phases 1–12** of the app (`backend/` through memory and export, `web/` library, upload, live indexes, player, chat, in-thread clips, phone stack, and delete). Slide-text search (`search_slides` / ColQwen) is Phase 13.
 
-**To start code:** [docs/13-implementation-pass.md](docs/13-implementation-pass.md) (how) + the matching [docs/phases/](docs/phases/phase-01.md) brief. One phase only. API runbook: [backend/README.md](backend/README.md). Website: [web/README.md](web/README.md).
+**To start code:** [docs/13-implementation-pass.md](docs/13-implementation-pass.md) (how) + the matching [docs/phases/](docs/phases/phase-01.md) brief. One phase only.
 
 **Source of truth:** the **13 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, or Node backend — ignore it. Those were earlier drafts. They are not this app.
 
-**Goal:** Ask questions about long videos (talks, slides, sports, CCTV, sounds) without dumping the whole file into a large model. Find the moment, look or listen to a short slice, then answer — optionally export a clip with a link.
+**Goal:** Ask questions about long videos (talks, slides, sports, CCTV, sounds) without dumping the whole file into a large model. Find the moment, look or listen to a short slice, then answer — optionally export a clip that plays **in the chat**.
 
 ---
 
@@ -20,9 +20,77 @@ ColQwen2.x and `search_slides` are for questions like “which slide had **Pro $
 
 ---
 
+## How to run (Postgres + FastAPI + website)
+
+You need **three processes**: Postgres (Docker), FastAPI, and the TanStack Start app. ffmpeg / ffprobe stay on the **host**, not in the Postgres container. The browser talks only to FastAPI (`VITE_API_URL`). It never talks to Gemma.
+
+### 1. Postgres with pgvector
+
+```bash
+cd backend
+docker compose up -d
+```
+
+Compose image: `pgvector/pgvector:pg16`. Default login is `video` / `video` on `127.0.0.1:5432`, database `video`. It also creates `video_test` for pytest.
+
+### 2. FastAPI
+
+```bash
+cd backend
+cp .env.example .env
+uv sync --group dev
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Useful env vars in `backend/.env`:
+
+| Variable | What it does |
+|---|---|
+| `DATABASE_URL` | Postgres URL (default `postgresql+psycopg://video:video@localhost:5432/video`) |
+| `DATA_DIR` | Where original files and exports live (`../data` from `backend/`) |
+| `MAX_UPLOAD_BYTES` | Upload cap (2 GB) |
+| `BRAIN` | `fake` (tests / 503 unless injected) or `vllm` |
+| `VLLM_BASE_URL` | OpenAI-compatible Gemma endpoint when `BRAIN=vllm` |
+| `VLLM_API_KEY` | Optional; default `EMPTY` |
+| `VLLM_MODEL` | Default `google/gemma-4-E4B-it` |
+| `INGEST` / `EMBEDDER` / `VISUAL_EMBEDDER` / `AUDIO_EMBEDDER` | `fake` unless you wire Modal or local models |
+
+Chat needs a real brain (`BRAIN=vllm` + `VLLM_BASE_URL`) or a test FakeBrain. `BRAIN=fake` with no script returns **503**.
+
+More API detail: [backend/README.md](backend/README.md).
+
+### 3. Website
+
+```bash
+cd web
+cp .env.example .env
+npm install
+npm run dev
+```
+
+`web/.env`:
+
+| Variable | What it does |
+|---|---|
+| `VITE_API_URL` | FastAPI origin the **browser** calls. Default `http://127.0.0.1:8000` |
+
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Pick a file on `/`. After upload you land on `/videos/:id`. Chat stays off until Speech / Picture / Sound / Slide lines finish. Ask a question; citations seek the source player. If the answer includes an `export_url`, a mini player and **Download** appear **in that chat turn**. On a phone (~768px) the source player stacks above chat. **Delete** on the watch page confirms, then `DELETE /videos/{id}`, then back to the library.
+
+Website notes: [web/README.md](web/README.md).
+
+### Check
+
+```bash
+cd backend && uv run pytest
+cd web && npm test
+```
+
+---
+
 ## Read in this order
 
-Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md)) and `web/` ([Phase 9](docs/phases/phase-09.md)–[Phase 11](docs/phases/phase-11.md)).
+Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md)) and `web/` ([Phase 9](docs/phases/phase-09.md)–[Phase 12](docs/phases/phase-12.md)).
 
 | Doc | What it is |
 |---|---|
