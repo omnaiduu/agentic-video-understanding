@@ -14,6 +14,14 @@ from app.settings import Settings, get_settings
 AUDIO_DIM = 512
 
 
+def _feature_tensor(value):
+    """Transformers 5 get_*_features often returns BaseModelOutputWithPooling."""
+    pooled = getattr(value, "pooler_output", None)
+    if pooled is not None:
+        return pooled
+    return value
+
+
 class AudioEmbedder(Protocol):
     def embed_query(self, text: str) -> list[float]:
         """Dense vector for a search phrase (text tower)."""
@@ -63,7 +71,7 @@ class ClapEmbedder:
 
         inputs = self._processor(text=[text], return_tensors="pt", padding=True)
         with torch.no_grad():
-            vector = self._model.get_text_features(**inputs)
+            vector = _feature_tensor(self._model.get_text_features(**inputs))
             vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
         return [float(x) for x in vector[0].tolist()]
 
@@ -90,11 +98,16 @@ class ClapEmbedder:
             arrays.append(samples)
             rates.append(rate)
         sampling_rate = rates[0] if rates else 48000
-        inputs = self._processor(
-            audios=arrays, sampling_rate=sampling_rate, return_tensors="pt", padding=True
-        )
+        try:
+            inputs = self._processor(
+                audio=arrays, sampling_rate=sampling_rate, return_tensors="pt", padding=True
+            )
+        except (TypeError, ValueError):
+            inputs = self._processor(
+                audios=arrays, sampling_rate=sampling_rate, return_tensors="pt", padding=True
+            )
         with torch.no_grad():
-            matrix = self._model.get_audio_features(**inputs)
+            matrix = _feature_tensor(self._model.get_audio_features(**inputs))
             matrix = matrix / matrix.norm(p=2, dim=-1, keepdim=True)
         return [[float(x) for x in row.tolist()] for row in matrix]
 

@@ -12,6 +12,9 @@ Deploy from backend/:
 
 Set INGEST=modal, PUBLIC_BASE_URL to a URL Modal can reach, INGEST_SECRET,
 and EMBED_MODEL (default intfloat/e5-small-v2).
+
+Idle workers shut down after 15 minutes (min_containers=0). Callers behind
+free ngrok must send ngrok-skip-browser-warning (this file already does).
 """
 
 from __future__ import annotations
@@ -22,17 +25,71 @@ from tempfile import TemporaryDirectory
 import modal
 
 MINUTES = 60
+IDLE_WINDOW = 15 * MINUTES
 WHISPER_NAME = "turbo"
 EMBED_NAME = "intfloat/e5-small-v2"
+hf_secret = modal.Secret.from_name("huggingface")
+
+
+def _headers(secret: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {secret}",
+        "ngrok-skip-browser-warning": "1",
+    }
+
+
+def _feature_tensor(value):
+    """Transformers 5 get_*_features often returns BaseModelOutputWithPooling."""
+    pooled = getattr(value, "pooler_output", None)
+    if pooled is not None:
+        return pooled
+    return value
+
+
+def _to_device(model, batch):
+    import torch
+
+    if not torch.cuda.is_available():
+        return model, batch
+    model = model.to("cuda")
+    if hasattr(batch, "to"):
+        return model, batch.to("cuda")
+    if isinstance(batch, dict):
+        moved = {
+            key: tensor.to("cuda") if hasattr(tensor, "to") else tensor
+            for key, tensor in batch.items()
+        }
+        return model, moved
+    return model, batch
+
+
+def _clap_inputs(processor, samples, rate):
+    try:
+        return processor(
+            audio=[samples],
+            sampling_rate=rate,
+            return_tensors="pt",
+            padding=True,
+        )
+    except (TypeError, ValueError):
+        return processor(
+            audios=[samples],
+            sampling_rate=rate,
+            return_tensors="pt",
+            padding=True,
+        )
+
 
 ingest_image = (
-    modal.Image.debian_slim(python_version="3.12")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.8.0-runtime-ubuntu22.04", add_python="3.12"
+    )
     .pip_install(
         "faster-whisper>=1.1.0",
         "sentence-transformers>=3.3.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
@@ -45,7 +102,7 @@ siglip_image = (
         "pillow>=10.0.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 app = modal.App("agentic-video-ingest")
@@ -55,7 +112,10 @@ app = modal.App("agentic-video-ingest")
     image=ingest_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def transcribe_video(
@@ -70,45 +130,49 @@ def transcribe_video(
     from faster_whisper import WhisperModel
     from sentence_transformers import SentenceTransformer
 
-    headers = {"Authorization": f"Bearer {secret}"}
-    wav_bytes = httpx.get(audio_url, headers=headers, timeout=120.0).content
-    with TemporaryDirectory(prefix="ingest-whisper-") as tmp:
-        wav_path = Path(tmp) / "full.wav"
-        wav_path.write_bytes(wav_bytes)
-        model = WhisperModel(whisper_model, device="cuda", compute_type="float16")
-        segments_iter, _info = model.transcribe(str(wav_path))
-        segments = []
-        for segment in segments_iter:
-            text = (segment.text or "").strip()
-            if not text:
-                continue
-            segments.append(
-                {
-                    "start_s": float(segment.start),
-                    "end_s": float(segment.end),
-                    "text": text,
-                }
-            )
-
-    if segments:
-        embedder = SentenceTransformer(embed_model)
-        passages = ["passage: " + row["text"] for row in segments]
-        matrix = embedder.encode(passages, normalize_embeddings=True)
-        for row, vector in zip(segments, matrix):
-            row["embedding"] = [float(x) for x in vector.tolist()]
-
+    headers = _headers(secret)
     try:
+        wav_bytes = httpx.get(audio_url, headers=headers, timeout=120.0).content
+        with TemporaryDirectory(prefix="ingest-whisper-") as tmp:
+            wav_path = Path(tmp) / "full.wav"
+            wav_path.write_bytes(wav_bytes)
+            model = WhisperModel(whisper_model, device="cuda", compute_type="float16")
+            segments_iter, _info = model.transcribe(str(wav_path))
+            segments = []
+            for segment in segments_iter:
+                text = (segment.text or "").strip()
+                if not text:
+                    continue
+                segments.append(
+                    {
+                        "start_s": float(segment.start),
+                        "end_s": float(segment.end),
+                        "text": text,
+                    }
+                )
+
+        if segments:
+            embedder = SentenceTransformer(embed_model)
+            passages = ["passage: " + row["text"] for row in segments]
+            matrix = embedder.encode(passages, normalize_embeddings=True)
+            for row, vector in zip(segments, matrix):
+                row["embedding"] = [float(x) for x in vector.tolist()]
+
         httpx.post(
             callback_url,
             headers=headers,
             json={"status": "ready", "segments": segments},
             timeout=120.0,
         ).raise_for_status()
-    except Exception:
+    except Exception as exc:
         httpx.post(
             callback_url,
             headers=headers,
-            json={"status": "error", "error_message": "callback failed", "segments": []},
+            json={
+                "status": "error",
+                "error_message": f"whisper failed: {exc}"[:300],
+                "segments": [],
+            },
             timeout=30.0,
         )
 
@@ -120,7 +184,10 @@ SIGLIP_NAME = "google/siglip2-so400m-patch16-384"
     image=siglip_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def embed_visual(
@@ -142,7 +209,7 @@ def embed_visual(
     from transformers import AutoModel, AutoProcessor
 
     del video_id
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     tar_bytes = httpx.get(frames_url, headers=headers, timeout=300.0).content
     frames: list[dict] = []
     try:
@@ -164,14 +231,16 @@ def embed_visual(
                 ]
             model = AutoModel.from_pretrained(siglip_model).eval()
             processor = AutoProcessor.from_pretrained(siglip_model)
+            model, _ = _to_device(model, {})
             for item in items:
                 jpeg_path = extract_dir / item["file"]
                 if not jpeg_path.is_file():
                     continue
                 image = Image.open(io.BytesIO(jpeg_path.read_bytes())).convert("RGB")
                 inputs = processor(images=[image], return_tensors="pt")
+                model, inputs = _to_device(model, inputs)
                 with torch.no_grad():
-                    vector = model.get_image_features(**inputs)
+                    vector = _feature_tensor(model.get_image_features(**inputs))
                     vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
                 frames.append(
                     {
@@ -185,11 +254,15 @@ def embed_visual(
             json={"status": "ready", "frames": frames},
             timeout=120.0,
         ).raise_for_status()
-    except Exception:
+    except Exception as exc:
         httpx.post(
             callback_url,
             headers=headers,
-            json={"status": "error", "error_message": "siglip failed", "frames": []},
+            json={
+                "status": "error",
+                "error_message": f"siglip failed: {exc}"[:300],
+                "frames": [],
+            },
             timeout=30.0,
         )
 
@@ -204,7 +277,7 @@ clap_image = (
         "numpy>=1.26.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 
@@ -212,7 +285,10 @@ clap_image = (
     image=clap_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def embed_audio(
@@ -235,7 +311,7 @@ def embed_audio(
     from transformers import ClapModel, ClapProcessor
 
     del video_id
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     tar_bytes = httpx.get(chunks_url, headers=headers, timeout=300.0).content
     chunks: list[dict] = []
     try:
@@ -261,6 +337,7 @@ def embed_audio(
                 ]
             model = ClapModel.from_pretrained(clap_model).eval()
             processor = ClapProcessor.from_pretrained(clap_model)
+            model, _ = _to_device(model, {})
             for item in items:
                 wav_path = extract_dir / item["file"]
                 if not wav_path.is_file():
@@ -273,14 +350,10 @@ def embed_audio(
                 if width != 2:
                     continue
                 samples = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
-                inputs = processor(
-                    audios=[samples],
-                    sampling_rate=rate,
-                    return_tensors="pt",
-                    padding=True,
-                )
+                inputs = _clap_inputs(processor, samples, rate)
+                model, inputs = _to_device(model, inputs)
                 with torch.no_grad():
-                    vector = model.get_audio_features(**inputs)
+                    vector = _feature_tensor(model.get_audio_features(**inputs))
                     vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
                 chunks.append(
                     {
@@ -295,11 +368,15 @@ def embed_audio(
             json={"status": "ready", "chunks": chunks},
             timeout=120.0,
         ).raise_for_status()
-    except Exception:
+    except Exception as exc:
         httpx.post(
             callback_url,
             headers=headers,
-            json={"status": "error", "error_message": "clap failed", "chunks": []},
+            json={
+                "status": "error",
+                "error_message": f"clap failed: {exc}"[:300],
+                "chunks": [],
+            },
             timeout=30.0,
         )
 
@@ -315,7 +392,7 @@ colqwen_image = (
         "colpali-engine>=0.3.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 
@@ -323,7 +400,10 @@ colqwen_image = (
     image=colqwen_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def embed_slides(
@@ -344,7 +424,7 @@ def embed_slides(
     from PIL import Image
 
     del video_id
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     tar_bytes = httpx.get(slides_url, headers=headers, timeout=300.0).content
     slides: list[dict] = []
     try:
@@ -359,6 +439,7 @@ def embed_slides(
 
             model = ColQwen2.from_pretrained(colqwen_model).eval()
             processor = ColQwen2Processor.from_pretrained(colqwen_model)
+        model, _ = _to_device(model, {})
         with TemporaryDirectory(prefix="ingest-colqwen-") as tmp:
             tar_path = Path(tmp) / "slides.tar"
             tar_path.write_bytes(tar_bytes)
@@ -385,6 +466,7 @@ def embed_slides(
                     continue
                 image = Image.open(io.BytesIO(jpeg_path.read_bytes())).convert("RGB")
                 batch = processor.process_images([image])
+                model, batch = _to_device(model, batch)
                 with torch.no_grad():
                     matrix = model(**batch)
                 patches = [
@@ -403,10 +485,14 @@ def embed_slides(
             json={"status": "ready", "slides": slides},
             timeout=120.0,
         ).raise_for_status()
-    except Exception:
+    except Exception as exc:
         httpx.post(
             callback_url,
             headers=headers,
-            json={"status": "error", "error_message": "colqwen failed", "slides": []},
+            json={
+                "status": "error",
+                "error_message": f"colqwen failed: {exc}"[:300],
+                "slides": [],
+            },
             timeout=30.0,
         )
