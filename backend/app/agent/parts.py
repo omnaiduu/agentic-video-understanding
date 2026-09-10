@@ -70,12 +70,19 @@ def search_message(hits: list, query: str) -> dict:
     return {"role": "user", "content": text}
 
 
+LOOK_THEN_ANSWER = (
+    "Look at a short window under 2 seconds (fps 1 or omit fps), then answer. "
+    "Do not only apologize. Do not invent a full index."
+)
+
+
 def transcript_not_ready_message(status: str) -> dict:
     return {
         "role": "user",
         "content": (
             f"transcript is not ready (status={status}). "
             "No search results. Timed look and listen still work. "
+            f"{LOOK_THEN_ANSWER} "
             "Do not invent a full transcript."
         ),
     }
@@ -102,6 +109,7 @@ def visual_not_ready_message(status: str) -> dict:
         "content": (
             f"picture index is not ready (status={status}). "
             "No search_visual results. Timed look still works. "
+            f"{LOOK_THEN_ANSWER} "
             "Do not invent a full photo log."
         ),
     }
@@ -154,6 +162,7 @@ def audio_not_ready_message(status: str) -> dict:
         "content": (
             f"sound index is not ready (status={status}). "
             "No search_audio results. Timed listen still works. "
+            "Listen at a short window, then answer. Do not only apologize. "
             "Do not invent a full sound log."
         ),
     }
@@ -172,7 +181,8 @@ def slide_search_message(hits: list, query: str) -> dict:
         ]
         text = (
             f"slide hits for {query!r} (at most 8 times, not the whole file; "
-            "scores are not the answer; look at a hit to read the real frame):\n"
+            "scores are not the answer; look at the top hit under 2 seconds, then answer; "
+            "describe the pixels — do not copy text from the question onto the wrong slide):\n"
             + "\n".join(lines)
         )
     return {"role": "user", "content": text}
@@ -184,6 +194,7 @@ def slides_not_ready_message(status: str) -> dict:
         "content": (
             f"slide index is not ready (status={status}). "
             "No search_slides results. Timed look still works. "
+            f"{LOOK_THEN_ANSWER} "
             "Do not invent a full slide log."
         ),
     }

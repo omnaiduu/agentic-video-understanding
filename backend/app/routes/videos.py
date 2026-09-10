@@ -14,6 +14,7 @@ from app.db import get_session
 from app.ingest.speech import schedule_transcript
 from app.ingest.slides import schedule_slides, skip_stale_pending_slides
 from app.ingest.sound import schedule_sound
+from app.ingest.stale import fail_stale_processing_indexes
 from app.ingest.visual import schedule_visual
 from app.media.probe import ProbeError, probe
 from app.models import Export, IndexStatus, Video, VideoOut, VideoStatus
@@ -39,9 +40,17 @@ def _to_out(video: Video) -> VideoOut:
     return VideoOut.model_validate(video, from_attributes=True)
 
 
-def _read_out(session: Session, video: Video) -> VideoOut:
-    if skip_stale_pending_slides(video):
+def _refresh_index_flags(session: Session, video: Video) -> bool:
+    # Fail timed-out processing first so leftover pending slides can skip.
+    changed = fail_stale_processing_indexes(video)
+    changed = skip_stale_pending_slides(video) or changed
+    if changed:
         session.add(video)
+    return changed
+
+
+def _read_out(session: Session, video: Video) -> VideoOut:
+    if _refresh_index_flags(session, video):
         session.commit()
         session.refresh(video)
     return _to_out(video)
@@ -183,11 +192,12 @@ def list_videos(session: Session = Depends(get_session)) -> list[VideoOut]:
     rows = session.exec(select(Video).order_by(Video.created_at.desc())).all()
     changed = False
     for row in rows:
-        if skip_stale_pending_slides(row):
-            session.add(row)
+        if _refresh_index_flags(session, row):
             changed = True
     if changed:
         session.commit()
+        for row in rows:
+            session.refresh(row)
     return [_to_out(row) for row in rows]
 
 

@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 
 import app.tools.ffmpeg_cli as ffmpeg_cli
 from app.tools.caps import (
+    LOOK_MAX_WIDTH,
     ScissorsError,
     planned_frame_count,
     require_frame_count,
@@ -54,11 +55,14 @@ def get_frames(
                 ffmpeg_cli.format_seconds(span_s),
                 "-an",
                 "-vf",
-                f"fps={rate}",
+                (
+                    f"fps={rate},"
+                    f"scale='if(gt(iw,{LOOK_MAX_WIDTH}),{LOOK_MAX_WIDTH},iw)':-2"
+                ),
                 "-frames:v",
                 str(count),
                 "-q:v",
-                "2",
+                "5",
                 pattern,
             ]
         )

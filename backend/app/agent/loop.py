@@ -24,6 +24,7 @@ from app.agent.parts import (
 )
 from app.agent.memory import memory_text
 from app.agent.schema import (
+    FORCE_ANSWER_PROMPT,
     MAX_ROUNDS,
     RETRY_PROMPT,
     SYSTEM_PROMPT,
@@ -73,6 +74,53 @@ def _window(action: BrainAction) -> tuple[float, float]:
     if action.start_s is None or action.end_s is None:
         raise ScissorsError("look/listen/export need start_s and end_s")
     return action.start_s, action.end_s
+
+
+def _citations_from_steps(steps: list[Step]) -> list[float]:
+    for step in reversed(steps):
+        if not step.ok:
+            continue
+        if step.start_s is None:
+            continue
+        times = [step.start_s]
+        if step.end_s is not None and step.end_s != step.start_s:
+            times.append(step.end_s)
+        return times
+    return []
+
+
+def _forced_answer(
+    question: str,
+    steps: list[Step],
+    export_url: str | None,
+) -> LoopResult:
+    bits: list[str] = []
+    for step in steps:
+        if not step.ok:
+            bits.append(f"{step.do} failed: {step.detail}")
+            continue
+        window = ""
+        if step.start_s is not None and step.end_s is not None:
+            window = f" {step.start_s:.2f}s–{step.end_s:.2f}s"
+        detail = f" — {step.detail}" if step.detail else ""
+        bits.append(f"{step.do}{window}{detail}")
+    if bits:
+        text = (
+            "I used my last look/listen/search moves. Here is what I already found:\n"
+            + "\n".join(bits)
+        )
+    else:
+        text = (
+            f"I could not finish answering {question!r}. "
+            "Try a shorter look window or a simpler question."
+        )
+    steps.append(Step(do="answer", detail=text, ok=True))
+    return LoopResult(
+        answer=text,
+        citations=_citations_from_steps(steps),
+        steps=steps,
+        export_url=export_url,
+    )
 
 
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
@@ -131,9 +179,22 @@ def run_loop(
 
     while True:
         if rounds >= MAX_ROUNDS:
-            raise LoopError(
-                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio/search_slides/export rounds"
-            )
+            messages.append({"role": "user", "content": FORCE_ANSWER_PROMPT})
+            try:
+                action = _ask(brain, messages)
+            except (BrainParseError, RuntimeError):
+                return _forced_answer(question, steps, last_export_url)
+            if action.do == "answer":
+                text = (action.answer or "").strip()
+                if text:
+                    steps.append(Step(do="answer", detail=text, ok=True))
+                    return LoopResult(
+                        answer=text,
+                        citations=list(action.times),
+                        steps=steps,
+                        export_url=last_export_url,
+                    )
+            return _forced_answer(question, steps, last_export_url)
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:

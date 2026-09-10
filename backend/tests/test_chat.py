@@ -251,6 +251,26 @@ def test_loop_invalid_json_retries_then_fails(tiny_mp4: Path) -> None:
         assert "JSON" in str(exc)
 
 
+def test_loop_answers_after_max_rounds_instead_of_422(tiny_mp4: Path) -> None:
+    looks = [
+        {
+            "do": "look",
+            "start_s": 0.1,
+            "end_s": 0.3,
+            "fps": 1,
+            "query": None,
+            "answer": None,
+            "times": [],
+        }
+        for _ in range(8)
+    ]
+    result = run_loop(tiny_mp4, "what is on screen?", FakeBrain(looks))
+    assert result.answer
+    assert "look" in result.answer.lower() or "found" in result.answer.lower()
+    assert result.steps[-1].do == "answer"
+    assert any(step.do == "look" and step.ok for step in result.steps)
+
+
 def test_vllm_brain_uses_json_schema_not_tools(monkeypatch) -> None:
     captured: dict = {}
 

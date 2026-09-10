@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { VideoPlayer, type SeekFn } from "@/components/video-player"
 import { isNotFound, type Video } from "@/lib/api"
 import { formatDuration } from "@/lib/format"
-import { chatLocked } from "@/lib/indexes"
+import { chatLocked, ingestInProgress } from "@/lib/indexes"
 import { clearSessionId } from "@/lib/session"
 
 export function VideoScreen({
@@ -55,6 +55,7 @@ export function VideoScreen({
     return null
   }
   const locked = chatLocked(video)
+  const indexesBuilding = ingestInProgress(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
   return (
     <div className="space-y-4">
@@ -90,6 +91,7 @@ export function VideoScreen({
         <ChatPanel
           videoId={video.id}
           locked={locked}
+          indexesBuilding={indexesBuilding}
           onSeek={(seconds) => seekRef.current(seconds)}
         />
       </div>

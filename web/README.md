@@ -4,7 +4,7 @@ TanStack Start app for the library, upload, live indexes (speech, pictures, soun
 
 Pick a file on `/`. After upload you land on `/videos/$id`. Video.js plays `GET {API}/videos/{id}/file`. Ask a question; the site POSTs chat, keeps `session_id` in localStorage for that video, and turns citations into seek chips. If the answer includes `export_url`, a mini `<video>` or `<audio>` plus **Download** render **inside that assistant turn**. The chat thread scrolls; older text, times, and clips stay above. Tool steps sit in a collapsed Details block. On a phone the source player stacks above chat (`md:` two columns). **Delete** confirms, then `DELETE /videos/{id}`.
 
-If indexes are still building, the four live lines stay and chat stays off.
+If indexes are still building, the four live lines stay. Chat stays on once the file is playable; look and listen work while search books catch up.
 
 ## Run with FastAPI
 

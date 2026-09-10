@@ -38,10 +38,12 @@ function formatStep(step: ChatStep): string {
 export function ChatPanel({
   videoId,
   locked,
+  indexesBuilding = false,
   onSeek,
 }: {
   videoId: string
   locked: boolean
+  indexesBuilding?: boolean
   onSeek: SeekFn
 }) {
   const [draft, setDraft] = useState("")
@@ -107,10 +109,16 @@ export function ChatPanel({
       <CardContent className="flex min-h-0 flex-1 flex-col space-y-4">
         {locked ? (
           <p className="text-sm text-muted-foreground">
-            Chat stays off until the indexes are ready.
+            Chat stays off until the video is ready.
           </p>
         ) : (
           <>
+            {indexesBuilding ? (
+              <p className="text-sm text-muted-foreground">
+                Indexes are still building. Look and listen work; search may be
+                incomplete.
+              </p>
+            ) : null}
             <ol
               ref={threadRef}
               className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"

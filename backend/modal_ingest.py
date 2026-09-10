@@ -396,6 +396,22 @@ colqwen_image = (
 )
 
 
+def _load_colqwen(colqwen_model: str):
+    name = (colqwen_model or "").lower()
+    if "2.5" in name or "2_5" in name:
+        from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
+
+        model = ColQwen2_5.from_pretrained(colqwen_model).eval()
+        processor = ColQwen2_5_Processor.from_pretrained(colqwen_model)
+    else:
+        from colpali_engine.models import ColQwen2, ColQwen2Processor
+
+        model = ColQwen2.from_pretrained(colqwen_model).eval()
+        processor = ColQwen2Processor.from_pretrained(colqwen_model)
+    model, _ = _to_device(model, {})
+    return model, processor
+
+
 @app.function(
     image=colqwen_image,
     gpu="L4",
@@ -428,18 +444,7 @@ def embed_slides(
     tar_bytes = httpx.get(slides_url, headers=headers, timeout=300.0).content
     slides: list[dict] = []
     try:
-        name = (colqwen_model or "").lower()
-        if "2.5" in name or "2_5" in name:
-            from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
-
-            model = ColQwen2_5.from_pretrained(colqwen_model).eval()
-            processor = ColQwen2_5_Processor.from_pretrained(colqwen_model)
-        else:
-            from colpali_engine.models import ColQwen2, ColQwen2Processor
-
-            model = ColQwen2.from_pretrained(colqwen_model).eval()
-            processor = ColQwen2Processor.from_pretrained(colqwen_model)
-        model, _ = _to_device(model, {})
+        model, processor = _load_colqwen(colqwen_model)
         with TemporaryDirectory(prefix="ingest-colqwen-") as tmp:
             tar_path = Path(tmp) / "slides.tar"
             tar_path.write_bytes(tar_bytes)
@@ -496,3 +501,31 @@ def embed_slides(
             },
             timeout=30.0,
         )
+
+
+@app.function(
+    image=colqwen_image,
+    gpu="L4",
+    timeout=10 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+def embed_slide_query(
+    query: str,
+    colqwen_model: str = COLQWEN_NAME,
+) -> list[list[float]]:
+    """Text-side ColQwen tokens for MaxSim. Laptop search must not load ColQwen."""
+    import torch
+
+    phrase = (query or "").strip()
+    if not phrase:
+        return []
+    model, processor = _load_colqwen(colqwen_model)
+    batch = processor.process_queries([phrase])
+    model, batch = _to_device(model, batch)
+    with torch.no_grad():
+        matrix = model(**batch)
+    return [[float(x) for x in token.tolist()] for token in matrix[0]]

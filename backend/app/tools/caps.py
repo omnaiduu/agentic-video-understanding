@@ -9,8 +9,10 @@ MAX_FRAMES = 64
 MAX_AUDIO_SECONDS = 30.0
 MAX_EXPORT_SECONDS = 60.0
 SHORT_SPAN_S = 8.0
-DEFAULT_SHORT_FPS = 4.0
+# 4 fps × a few HD seconds blew Gemma's 8k context. Default looks stay 1 fps.
+DEFAULT_SHORT_FPS = 1.0
 DEFAULT_LONG_FPS = 1.0
+LOOK_MAX_WIDTH = 512
 DURATION_SLOP_S = 1e-3
 
 
