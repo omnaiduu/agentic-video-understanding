@@ -197,7 +197,7 @@ The UI showed Details (`search` / `search_slides` / `look`) under each bubble. N
 ## Limits we know now
 
 1. **Spoken wording used to mean “search speech and stop.”** After the loop notes, M3 / H2 leave speech and read the printed slide. Gemma can still refuse before any search, or 422 if it returns no JSON.
-2. **“Beep” / “clap” in English ≠ the sound book.** H7 searched talk for “beep”. H5 treated CLAP windows as a clap *count* (there are zero claps).
+2. **“Beep” / “clap” in English ≠ the sound book.** After the notes, H7 *does* open sounds (clip still 9–12s). H5 no longer invents “4 claps,” but it still will not say zero.
 3. **A 3s sound hit is not the event time.** M4’s beep is at 11s; looking at 9s (start of the window) still shows red.
 4. **ColQwen ranking is only as good as the query.** “Number printed on the slide” ranked Q3 first. Hit #2 was the $99 slide and Gemma skipped it.
 5. **One wav per prompt.** Two listens used to 500. The loop now drops the old clip. Color+speech questions can finish; they can still look at the wrong slides (M1).
