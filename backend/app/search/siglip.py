@@ -14,6 +14,14 @@ from app.settings import Settings, get_settings
 VISUAL_DIM = 1152
 
 
+def _feature_tensor(value):
+    """Transformers 5 get_*_features often returns BaseModelOutputWithPooling."""
+    pooled = getattr(value, "pooler_output", None)
+    if pooled is not None:
+        return pooled
+    return value
+
+
 class VisualEmbedder(Protocol):
     def embed_query(self, text: str) -> list[float]:
         """Dense vector for a search phrase (text tower)."""
@@ -65,7 +73,7 @@ class SiglipEmbedder:
 
         inputs = self._processor(text=[text], return_tensors="pt")
         with torch.no_grad():
-            vector = self._model.get_text_features(**inputs)
+            vector = _feature_tensor(self._model.get_text_features(**inputs))
             vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
         return [float(x) for x in vector[0].tolist()]
 
@@ -80,7 +88,7 @@ class SiglipEmbedder:
         images = [Image.open(io.BytesIO(blob)).convert("RGB") for blob in jpegs]
         inputs = self._processor(images=images, return_tensors="pt")
         with torch.no_grad():
-            matrix = self._model.get_image_features(**inputs)
+            matrix = _feature_tensor(self._model.get_image_features(**inputs))
             matrix = matrix / matrix.norm(p=2, dim=-1, keepdim=True)
         return [[float(x) for x in row.tolist()] for row in matrix]
 
