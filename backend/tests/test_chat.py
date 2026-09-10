@@ -251,6 +251,26 @@ def test_loop_invalid_json_retries_then_fails(tiny_mp4: Path) -> None:
         assert "JSON" in str(exc)
 
 
+def test_loop_stitches_if_parse_fails_after_a_look(tiny_mp4: Path) -> None:
+    class Flaky:
+        def __init__(self) -> None:
+            self.n = 0
+
+        def complete(self, messages: list) -> str:
+            self.n += 1
+            if self.n == 1:
+                return (
+                    '{"do":"look","start_s":0.1,"end_s":0.3,"fps":1,'
+                    '"query":null,"answer":null,"times":[]}'
+                )
+            return "not-json"
+
+    result = run_loop(tiny_mp4, "what is on screen?", Flaky())
+    assert result.answer
+    assert any(step.do == "look" and step.ok for step in result.steps)
+    assert result.steps[-1].do == "answer"
+
+
 def test_loop_answers_after_max_rounds_instead_of_422(tiny_mp4: Path) -> None:
     looks = [
         {

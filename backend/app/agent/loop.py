@@ -198,6 +198,8 @@ def run_loop(
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
+            if steps:
+                return _forced_answer(question, steps, last_export_url)
             raise LoopError(
                 "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
             ) from exc
@@ -208,6 +210,8 @@ def run_loop(
         if action.do == "answer":
             text = (action.answer or "").strip()
             if not text:
+                if steps:
+                    return _forced_answer(question, steps, last_export_url)
                 raise LoopError("answer JSON had an empty answer")
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
