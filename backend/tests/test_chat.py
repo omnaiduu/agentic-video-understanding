@@ -158,6 +158,62 @@ def test_listen_attaches_audio_part(client, tiny_mp4: Path) -> None:
     assert any(part.get("type") == "input_audio" for part in parts)
 
 
+def test_second_listen_keeps_only_one_audio_part(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = FakeBrain(
+        [
+            {
+                "do": "listen",
+                "start_s": 0.0,
+                "end_s": 0.4,
+                "fps": None,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "listen",
+                "start_s": 0.1,
+                "end_s": 0.5,
+                "fps": None,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": None,
+                "answer": "Two listens.",
+                "times": [0.1],
+            },
+        ]
+    )
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "listen twice then answer"},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    third = brain.calls[2]
+    audios = 0
+    for msg in third:
+        content = msg.get("content")
+        if not isinstance(content, list):
+            continue
+        audios += sum(
+            1
+            for part in content
+            if isinstance(part, dict) and part.get("type") == "input_audio"
+        )
+    assert audios == 1
+
+
 def test_chat_stores_text_not_jpegs(client, tiny_mp4: Path) -> None:
     from app.db import get_engine
 
@@ -289,6 +345,54 @@ def test_loop_answers_after_max_rounds_instead_of_422(tiny_mp4: Path) -> None:
     assert "look" in result.answer.lower() or "found" in result.answer.lower()
     assert result.steps[-1].do == "answer"
     assert any(step.do == "look" and step.ok for step in result.steps)
+
+
+def test_vllm_brain_retries_503_then_returns(monkeypatch) -> None:
+    calls = {"n": 0}
+
+    class Boom(Exception):
+        status_code = 503
+
+    class FakeResponse:
+        class Choice:
+            class Message:
+                content = (
+                    '{"do":"answer","start_s":null,"end_s":null,'
+                    '"fps":null,"answer":"ok","times":[]}'
+                )
+
+            message = Message()
+
+        choices = [Choice()]
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls["n"] += 1
+            if calls["n"] < 3:
+                raise Boom("cold")
+            return FakeResponse()
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeOpenAI:
+        def __init__(self, **_kwargs) -> None:
+            self.chat = FakeChat()
+
+    monkeypatch.setattr("openai.OpenAI", FakeOpenAI)
+    monkeypatch.setattr("app.agent.client.time.sleep", lambda _s: None)
+    from app.settings import Settings
+
+    brain = VllmBrain(
+        Settings(
+            database_url="postgresql+psycopg://video:video@127.0.0.1:5432/video_test",
+            vllm_base_url="http://vllm.example/v1",
+            vllm_model="google/gemma-4-E4B-it",
+        )
+    )
+    text = brain.complete([{"role": "user", "content": "hi"}])
+    assert "ok" in text
+    assert calls["n"] == 3
 
 
 def test_vllm_brain_uses_json_schema_not_tools(monkeypatch) -> None:

@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import base64
+from typing import Any
 
 from app.tools.frames import Frame
+
+AUDIO_DROPPED_NOTE = (
+    "Previous audio bytes were dropped (at most one audio per prompt). "
+    "You already heard that window; do not require it again."
+)
 
 
 def jpeg_part(jpeg: bytes) -> dict:
@@ -29,6 +35,33 @@ def look_message(frames: list[Frame]) -> dict:
     content: list[dict] = [{"type": "text", "text": text}]
     content.extend(jpeg_part(frame.jpeg) for frame in frames)
     return {"role": "user", "content": content}
+
+
+def strip_input_audio(messages: list[dict[str, Any]]) -> int:
+    """Gemma/vLLM allows at most one input_audio per prompt."""
+    removed = 0
+    for msg in messages:
+        content = msg.get("content")
+        if not isinstance(content, list):
+            continue
+        kept: list[Any] = []
+        dropped = False
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "input_audio":
+                dropped = True
+                removed += 1
+                continue
+            kept.append(part)
+        if dropped:
+            texts = [
+                part.get("text")
+                for part in kept
+                if isinstance(part, dict) and part.get("type") == "text"
+            ]
+            if not any(AUDIO_DROPPED_NOTE in (text or "") for text in texts):
+                kept.append({"type": "text", "text": AUDIO_DROPPED_NOTE})
+            msg["content"] = kept
+    return removed
 
 
 def listen_message(start_s: float, end_s: float, wav: bytes) -> dict:

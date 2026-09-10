@@ -18,6 +18,7 @@ from app.agent.parts import (
     search_message,
     slide_search_message,
     slides_not_ready_message,
+    strip_input_audio,
     transcript_not_ready_message,
     visual_not_ready_message,
     visual_search_message,
@@ -437,6 +438,7 @@ def run_loop(
                 )
             else:
                 wav = get_audio(path, start_s, end_s)
+                strip_input_audio(messages)
                 messages.append(listen_message(start_s, end_s, wav))
                 steps.append(
                     Step(
