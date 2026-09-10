@@ -31,3 +31,4 @@ Then:
 25. [Phase 11](phases/phase-11.md) — watch and ask (**locked**; Video.js)
 26. [Phase 12](phases/phase-12.md) — clips and polish (**locked**)
 27. [Phase 13](phases/phase-13.md) — slide phone book (**locked**; ColQwen2.x + `search_slides`)
+28. [Live query retest](live-query-retest.md) — should / did / proved on the 16s clip
