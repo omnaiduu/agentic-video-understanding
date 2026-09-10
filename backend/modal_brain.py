@@ -34,7 +34,7 @@ STARTUP_WAIT = 15 * MINUTES
 vllm_image = (
     modal.Image.from_registry("nvidia/cuda:12.8.0-devel-ubuntu22.04", add_python="3.12")
     .entrypoint([])
-    .uv_pip_install("vllm[audio]==0.21.0", "requests")
+    .uv_pip_install("vllm[audio]==0.29.0", "transformers>=5.5.0", "requests")
     .env(
         {
             "HF_HUB_CACHE": "/root/.cache/huggingface",
