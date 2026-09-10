@@ -55,7 +55,7 @@ export function ingestInProgress(video: Video): boolean {
 }
 
 export function chatLocked(video: Video): boolean {
-  return video.status !== "ready" || ingestInProgress(video)
+  return video.status !== "ready"
 }
 
 export function shouldPollVideo(video: Video | undefined): boolean {

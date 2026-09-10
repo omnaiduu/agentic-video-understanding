@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Protocol
 
 from app.agent.schema import RESPONSE_FORMAT
 from app.settings import Settings, get_settings
+
+_BRAIN_RETRIES = 4
+_RETRY_STATUSES = frozenset({429, 503})
 
 
 class Brain(Protocol):
@@ -49,16 +53,29 @@ class VllmBrain:
         self._model = self.settings.vllm_model
 
     def complete(self, messages: list[dict[str, Any]]) -> str:
-        response = self._client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-            response_format=RESPONSE_FORMAT,
-            max_tokens=512,
-        )
-        content = response.choices[0].message.content
-        if not content:
-            raise RuntimeError("vLLM returned an empty completion")
-        return content
+        last: BaseException | None = None
+        for attempt in range(_BRAIN_RETRIES):
+            try:
+                response = self._client.chat.completions.create(
+                    model=self._model,
+                    messages=messages,
+                    response_format=RESPONSE_FORMAT,
+                    max_tokens=512,
+                )
+                content = response.choices[0].message.content
+                if not content:
+                    raise RuntimeError("vLLM returned an empty completion")
+                return content
+            except Exception as exc:
+                last = exc
+                code = getattr(exc, "status_code", None)
+                if code in _RETRY_STATUSES and attempt < _BRAIN_RETRIES - 1:
+                    time.sleep(2 * (2**attempt))
+                    continue
+                if isinstance(code, int) and code >= 500:
+                    raise RuntimeError(f"brain GPU returned HTTP {code}") from exc
+                raise
+        raise RuntimeError("brain GPU unavailable") from last
 
 
 def build_brain(settings: Settings | None = None) -> Brain:

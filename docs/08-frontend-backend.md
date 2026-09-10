@@ -29,7 +29,7 @@ Locked with the 13 phases.
 
 Overall: `uploaded` → `processing` (ingest) → `ready` | `error`.  
 Books: `transcript_status` / `visual_status` / `audio_status` / `slides_status` = pending | processing | ready | error | skipped.  
-Website polls overall + per-book status; **spinner + four live lines** while ingesting; **chat stays off until `ready`.**
+Website polls overall + per-book status; **spinner + four live lines** while ingesting; **chat is on once the file is `ready`** (look/listen work while books build).
 
 ### Session
 

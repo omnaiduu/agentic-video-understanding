@@ -75,7 +75,7 @@ describe("VideoScreen", () => {
     expect(screen.getByText(/ffprobe failed/i)).toBeInTheDocument()
   })
 
-  it("keeps chat off and shows live index lines while books are building", () => {
+  it("keeps chat on while books are building", () => {
     const video = sampleVideo({
       original_filename: "talk.mp4",
       status: "ready",
@@ -91,8 +91,8 @@ describe("VideoScreen", () => {
     expect(screen.getByText("building")).toBeInTheDocument()
     expect(screen.getByText("waiting")).toBeInTheDocument()
     expect(
-      screen.getByText(/chat stays off until the indexes are ready/i),
+      screen.getByText(/indexes are still building/i),
     ).toBeInTheDocument()
-    expect(screen.queryByLabelText(/ask a question/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/ask a question/i)).toBeInTheDocument()
   })
 })

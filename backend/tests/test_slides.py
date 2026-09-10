@@ -273,6 +273,61 @@ def test_look_works_while_slides_processing(
     assert response.json()["steps"][0]["ok"] is True
 
 
+def test_search_slides_while_processing_tells_model_to_look(
+    client, tiny_mp4: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr("app.ingest.slides.ingest_slides", lambda *_a, **_k: None)
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = FakeBrain(
+        [
+            {
+                "do": "search_slides",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": "Pro $99",
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.5,
+                "fps": 1,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": None,
+                "answer": "A dark frame while slides build.",
+                "times": [0.1],
+            },
+        ]
+    )
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "which slide had Pro $99?"},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    observe = brain.calls[1][-1]["content"]
+    assert "not ready" in observe
+    assert "Do not only apologize" in observe
+    assert [step["do"] for step in response.json()["steps"]] == [
+        "search_slides",
+        "look",
+        "answer",
+    ]
+
+
 def test_search_slides_then_look_reads_the_frame(client, tiny_mp4: Path) -> None:
     from app.db import get_engine
 
@@ -328,7 +383,7 @@ def test_search_slides_then_look_reads_the_frame(client, tiny_mp4: Path) -> None
     assert body["answer"] == "The slide shows Pro $99."
     observe = brain.calls[1][-1]["content"]
     assert "12.0" in observe
-    assert "look at a hit to read the real frame" in observe
+    assert "look at the top hit under 2 seconds" in observe
 
 
 def test_search_slides_does_not_dump_all_times(client, tiny_mp4: Path) -> None:

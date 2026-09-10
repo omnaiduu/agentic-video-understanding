@@ -16,14 +16,17 @@ from app.agent.parts import (
     look_message,
     refuse_message,
     search_message,
+    speech_already_searched_message,
     slide_search_message,
     slides_not_ready_message,
+    strip_input_audio,
     transcript_not_ready_message,
     visual_not_ready_message,
     visual_search_message,
 )
 from app.agent.memory import memory_text
 from app.agent.schema import (
+    FORCE_ANSWER_PROMPT,
     MAX_ROUNDS,
     RETRY_PROMPT,
     SYSTEM_PROMPT,
@@ -73,6 +76,53 @@ def _window(action: BrainAction) -> tuple[float, float]:
     if action.start_s is None or action.end_s is None:
         raise ScissorsError("look/listen/export need start_s and end_s")
     return action.start_s, action.end_s
+
+
+def _citations_from_steps(steps: list[Step]) -> list[float]:
+    for step in reversed(steps):
+        if not step.ok:
+            continue
+        if step.start_s is None:
+            continue
+        times = [step.start_s]
+        if step.end_s is not None and step.end_s != step.start_s:
+            times.append(step.end_s)
+        return times
+    return []
+
+
+def _forced_answer(
+    question: str,
+    steps: list[Step],
+    export_url: str | None,
+) -> LoopResult:
+    bits: list[str] = []
+    for step in steps:
+        if not step.ok:
+            bits.append(f"{step.do} failed: {step.detail}")
+            continue
+        window = ""
+        if step.start_s is not None and step.end_s is not None:
+            window = f" {step.start_s:.2f}s–{step.end_s:.2f}s"
+        detail = f" — {step.detail}" if step.detail else ""
+        bits.append(f"{step.do}{window}{detail}")
+    if bits:
+        text = (
+            "I used my last look/listen/search moves. Here is what I already found:\n"
+            + "\n".join(bits)
+        )
+    else:
+        text = (
+            f"I could not finish answering {question!r}. "
+            "Try a shorter look window or a simpler question."
+        )
+    steps.append(Step(do="answer", detail=text, ok=True))
+    return LoopResult(
+        answer=text,
+        citations=_citations_from_steps(steps),
+        steps=steps,
+        export_url=export_url,
+    )
 
 
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
@@ -128,15 +178,31 @@ def run_loop(
     steps: list[Step] = []
     last_export_url: str | None = None
     rounds = 0
+    searched_speech = False
 
     while True:
         if rounds >= MAX_ROUNDS:
-            raise LoopError(
-                f"stopped after {MAX_ROUNDS} look/listen/search/search_visual/search_audio/search_slides/export rounds"
-            )
+            messages.append({"role": "user", "content": FORCE_ANSWER_PROMPT})
+            try:
+                action = _ask(brain, messages)
+            except (BrainParseError, RuntimeError):
+                return _forced_answer(question, steps, last_export_url)
+            if action.do == "answer":
+                text = (action.answer or "").strip()
+                if text:
+                    steps.append(Step(do="answer", detail=text, ok=True))
+                    return LoopResult(
+                        answer=text,
+                        citations=list(action.times),
+                        steps=steps,
+                        export_url=last_export_url,
+                    )
+            return _forced_answer(question, steps, last_export_url)
         try:
             action = _ask(brain, messages)
         except BrainParseError as exc:
+            if steps:
+                return _forced_answer(question, steps, last_export_url)
             raise LoopError(
                 "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
             ) from exc
@@ -147,6 +213,8 @@ def run_loop(
         if action.do == "answer":
             text = (action.answer or "").strip()
             if not text:
+                if steps:
+                    return _forced_answer(question, steps, last_export_url)
                 raise LoopError("answer JSON had an empty answer")
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
@@ -158,6 +226,12 @@ def run_loop(
 
         rounds += 1
         if action.do == "search":
+            if searched_speech:
+                messages.append(speech_already_searched_message())
+                steps.append(
+                    Step(do="search", ok=False, detail="already searched spoken words")
+                )
+                continue
             query = (action.query or question).strip()
             if speech_status != IndexStatus.ready.value:
                 messages.append(transcript_not_ready_message(speech_status))
@@ -175,6 +249,7 @@ def run_loop(
                 steps.append(Step(do="search", ok=False, detail="search not wired"))
                 continue
             hits = search(query)[:8]
+            searched_speech = True
             messages.append(search_message(hits, query))
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
@@ -372,6 +447,7 @@ def run_loop(
                 )
             else:
                 wav = get_audio(path, start_s, end_s)
+                strip_input_audio(messages)
                 messages.append(listen_message(start_s, end_s, wav))
                 steps.append(
                     Step(

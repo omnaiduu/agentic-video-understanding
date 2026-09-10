@@ -96,7 +96,7 @@ describe("ingestInProgress", () => {
 })
 
 describe("chatLocked", () => {
-  it("keeps chat off until the file is ready and indexes finish", () => {
+  it("keeps chat off only until the file is playable", () => {
     expect(
       chatLocked(
         sampleVideo({
@@ -104,8 +104,9 @@ describe("chatLocked", () => {
           transcript_status: "processing",
         }),
       ),
-    ).toBe(true)
+    ).toBe(false)
     expect(chatLocked(sampleVideo({ status: "ready" }))).toBe(false)
+    expect(chatLocked(sampleVideo({ status: "error" }))).toBe(true)
     expect(
       chatLocked(
         sampleVideo({

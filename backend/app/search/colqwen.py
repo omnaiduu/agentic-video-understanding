@@ -77,6 +77,35 @@ class FakeSlideEmbedder:
         return pages
 
 
+class ModalSlideEmbedder:
+    """Query tokens via Modal embed_slide_query. Images stay on ingest."""
+
+    def __init__(self, app_name: str, model_name: str) -> None:
+        self._app = app_name
+        self._model = model_name
+
+    def embed_query(self, text: str) -> list[list[float]]:
+        import modal
+
+        phrase = (text or "").strip()
+        if not phrase:
+            return []
+        fn = modal.Function.from_name(self._app, "embed_slide_query")
+        tokens = fn.remote(phrase, self._model)
+        if not tokens:
+            return []
+        rows: list[list[float]] = []
+        for token in tokens:
+            values = [float(x) for x in token]
+            if len(values) != SLIDE_DIM:
+                raise ValueError(f"slide token must have {SLIDE_DIM} dimensions")
+            rows.append(values)
+        return rows
+
+    def embed_images(self, jpegs: list[bytes]) -> list[list[list[float]]]:
+        raise RuntimeError("slide images are embedded on Modal ingest, not the laptop")
+
+
 class ColQwenEmbedder:
     """vidore ColQwen2 / 2.5 via colpali-engine. Optional extra; not used in CI."""
 
@@ -127,10 +156,12 @@ def _colqwen(model_name: str) -> ColQwenEmbedder:
 
 def build_slide_embedder(settings: Settings | None = None) -> SlideEmbedder:
     cfg = settings or get_settings()
-    if cfg.slide_embedder == "colqwen":
-        return _colqwen(cfg.colqwen_model)
     if cfg.slide_embedder == "fake":
         return FakeSlideEmbedder()
+    if cfg.slide_embedder in ("colqwen", "modal"):
+        if cfg.ingest == "modal" or cfg.slide_embedder == "modal":
+            return ModalSlideEmbedder(cfg.modal_ingest_app, cfg.colqwen_model)
+        return _colqwen(cfg.colqwen_model)
     raise RuntimeError(f"unknown SLIDE_EMBEDDER={cfg.slide_embedder}")
 
 

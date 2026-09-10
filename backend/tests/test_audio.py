@@ -287,7 +287,8 @@ def test_search_audio_does_not_dump_all_times(client, tiny_mp4: Path) -> None:
     assert response.status_code == 200, response.text
     observe = brain.calls[1][-1]["content"]
     assert "not the whole file" in observe
-    assert "count=" in observe
+    assert "times to listen" in observe
+    assert "count=" not in observe
     assert len(re.findall(r"\[\d+\.\d+s–", observe)) <= TOP_HITS
 
 
@@ -458,5 +459,6 @@ def test_search_audio_missing_query_uses_user_question(tiny_mp4: Path) -> None:
     assert seen == ["when did the bird chirp?"]
     observe = brain.calls[1][-1]["content"]
     assert "8.0" in observe
-    assert "count=" in observe
+    assert "times to listen" in observe
+    assert "count=" not in observe
     assert result.citations == [8.0]

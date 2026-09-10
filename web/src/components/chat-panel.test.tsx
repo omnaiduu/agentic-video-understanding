@@ -99,14 +99,29 @@ describe("ChatPanel", () => {
     expect(await screen.findByText("A dark frame at 0.1s.")).toBeInTheDocument()
   })
 
-  it("does not show the form while indexes are still building", () => {
+  it("does not show the form while the video is not ready", () => {
     renderWithQuery(
       <ChatPanel videoId="vid-1" locked onSeek={vi.fn()} />,
     )
     expect(
-      screen.getByText(/chat stays off until the indexes are ready/i),
+      screen.getByText(/chat stays off until the video is ready/i),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText(/ask a question/i)).not.toBeInTheDocument()
+  })
+
+  it("keeps the form on while indexes are still building", () => {
+    renderWithQuery(
+      <ChatPanel
+        videoId="vid-1"
+        locked={false}
+        indexesBuilding
+        onSeek={vi.fn()}
+      />,
+    )
+    expect(
+      screen.getByText(/indexes are still building/i),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText(/ask a question/i)).toBeInTheDocument()
   })
 
   it("plays an exported clip inside the assistant turn", async () => {

@@ -38,11 +38,32 @@ def test_get_frames_short_jpegs_and_timestamps(tiny_mp4: Path) -> None:
         assert 0 <= frame.t <= end + 0.05
 
 
-def test_get_frames_default_fps_several_per_short_span(tiny_mp4: Path) -> None:
-    end = _safe_end(tiny_mp4, 0.8)
-    frames = get_frames(tiny_mp4, 0, end)
-    assert 1 <= len(frames) <= MAX_FRAMES
-    assert all(frame.jpeg.startswith(JPEG_MAGIC) for frame in frames)
+def test_get_frames_default_fps_is_one(tiny_mp4: Path) -> None:
+    from app.tools.caps import DEFAULT_SHORT_FPS, resolve_fps
+
+    assert DEFAULT_SHORT_FPS == 1.0
+    assert resolve_fps(4.0, None) == 1.0
+
+
+def test_get_frames_scales_wide_frames(tiny_mp4: Path, monkeypatch) -> None:
+    from app.tools import ffmpeg_cli
+    from app.tools.caps import LOOK_MAX_WIDTH
+
+    seen: list[list[str]] = []
+    real = ffmpeg_cli.run_ffmpeg
+
+    def wrap(args: list[str]) -> None:
+        seen.append(list(args))
+        real(args)
+
+    monkeypatch.setattr(ffmpeg_cli, "run_ffmpeg", wrap)
+    end = _safe_end(tiny_mp4, 0.5)
+    frames = get_frames(tiny_mp4, 0, end, fps=1)
+    assert frames
+    joined = " ".join(seen[0])
+    assert f"scale='if(gt(iw,{LOOK_MAX_WIDTH}),{LOOK_MAX_WIDTH},iw)':-2" in joined
+    assert "-q:v" in seen[0]
+    assert "5" in seen[0]
 
 
 def test_get_audio_16khz_mono_wav(tiny_mp4: Path) -> None:
