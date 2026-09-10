@@ -12,6 +12,9 @@ Deploy from backend/:
 
 Set INGEST=modal, PUBLIC_BASE_URL to a URL Modal can reach, INGEST_SECRET,
 and EMBED_MODEL (default intfloat/e5-small-v2).
+
+Idle workers shut down after 15 minutes (min_containers=0). Callers behind
+free ngrok must send ngrok-skip-browser-warning (this file already does).
 """
 
 from __future__ import annotations
@@ -22,8 +25,17 @@ from tempfile import TemporaryDirectory
 import modal
 
 MINUTES = 60
+IDLE_WINDOW = 15 * MINUTES
 WHISPER_NAME = "turbo"
 EMBED_NAME = "intfloat/e5-small-v2"
+hf_secret = modal.Secret.from_name("huggingface")
+
+
+def _headers(secret: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {secret}",
+        "ngrok-skip-browser-warning": "1",
+    }
 
 ingest_image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -32,7 +44,7 @@ ingest_image = (
         "sentence-transformers>=3.3.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
@@ -45,7 +57,7 @@ siglip_image = (
         "pillow>=10.0.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 app = modal.App("agentic-video-ingest")
@@ -55,7 +67,10 @@ app = modal.App("agentic-video-ingest")
     image=ingest_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def transcribe_video(
@@ -70,7 +85,7 @@ def transcribe_video(
     from faster_whisper import WhisperModel
     from sentence_transformers import SentenceTransformer
 
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     wav_bytes = httpx.get(audio_url, headers=headers, timeout=120.0).content
     with TemporaryDirectory(prefix="ingest-whisper-") as tmp:
         wav_path = Path(tmp) / "full.wav"
@@ -120,7 +135,10 @@ SIGLIP_NAME = "google/siglip2-so400m-patch16-384"
     image=siglip_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def embed_visual(
@@ -142,7 +160,7 @@ def embed_visual(
     from transformers import AutoModel, AutoProcessor
 
     del video_id
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     tar_bytes = httpx.get(frames_url, headers=headers, timeout=300.0).content
     frames: list[dict] = []
     try:
@@ -204,7 +222,7 @@ clap_image = (
         "numpy>=1.26.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 
@@ -212,7 +230,10 @@ clap_image = (
     image=clap_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def embed_audio(
@@ -235,7 +256,7 @@ def embed_audio(
     from transformers import ClapModel, ClapProcessor
 
     del video_id
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     tar_bytes = httpx.get(chunks_url, headers=headers, timeout=300.0).content
     chunks: list[dict] = []
     try:
@@ -315,7 +336,7 @@ colqwen_image = (
         "colpali-engine>=0.3.0",
         "httpx>=0.27.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})
+    .env({"HF_HUB_CACHE": "/root/.cache/huggingface", "HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
 
@@ -323,7 +344,10 @@ colqwen_image = (
     image=colqwen_image,
     gpu="L4",
     timeout=60 * MINUTES,
-    scaledown_window=2 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
     volumes={"/root/.cache/huggingface": hf_cache_vol},
 )
 def embed_slides(
@@ -344,7 +368,7 @@ def embed_slides(
     from PIL import Image
 
     del video_id
-    headers = {"Authorization": f"Bearer {secret}"}
+    headers = _headers(secret)
     tar_bytes = httpx.get(slides_url, headers=headers, timeout=300.0).content
     slides: list[dict] = []
     try:
