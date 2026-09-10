@@ -88,17 +88,27 @@ def refuse_message(detail: str) -> dict:
     }
 
 
+SPEECH_ONLY_NUDGE = (
+    "These lines are only what was said out loud. "
+    "If they do not answer the question, do a different move: "
+    "look, listen, search_visual, search_audio, or search_slides. "
+    "Do not search spoken words again. Do not only apologize."
+)
+
+
 def search_message(hits: list, query: str) -> dict:
     if not hits:
         text = (
             f"search for {query!r} returned no transcript hits. "
-            "The whole talk is not attached. Try another query, look, or listen."
+            "The whole talk is not attached. "
+            f"{SPEECH_ONLY_NUDGE}"
         )
     else:
         lines = [f"[{hit.t:.1f}s] {hit.text}" for hit in hits]
         text = (
             f"transcript hits for {query!r} (at most 8, not the whole file):\n"
             + "\n".join(lines)
+            + f"\n{SPEECH_ONLY_NUDGE}"
         )
     return {"role": "user", "content": text}
 
@@ -107,6 +117,17 @@ LOOK_THEN_ANSWER = (
     "Look at a short window under 2 seconds (fps 1 or omit fps), then answer. "
     "Do not only apologize. Do not invent a full index."
 )
+
+
+def speech_already_searched_message() -> dict:
+    return {
+        "role": "user",
+        "content": (
+            "You already searched what was said. Do not search spoken words again. "
+            "If those lines do not answer, look, listen, search_visual, "
+            "search_audio, or search_slides, then answer."
+        ),
+    }
 
 
 def transcript_not_ready_message(status: str) -> dict:
@@ -150,8 +171,6 @@ def visual_not_ready_message(status: str) -> dict:
 
 def audio_search_message(result, query: str) -> dict:
     hits = getattr(result, "hits", result)
-    clusters = getattr(result, "clusters", [])
-    count = getattr(result, "count", len(clusters))
     if not hits:
         text = (
             f"search_audio for {query!r} returned no sound hits. "
@@ -162,16 +181,11 @@ def audio_search_message(result, query: str) -> dict:
             f"[{hit.start_s:.1f}s–{hit.end_s:.1f}s] score={hit.score:.3f}"
             for hit in hits
         ]
-        cluster_lines = [
-            f"{cluster.start_s:.1f}s–{cluster.end_s:.1f}s (n={cluster.n_hits})"
-            for cluster in clusters
-        ]
-        merged = ", ".join(cluster_lines) if cluster_lines else "none"
         text = (
-            f"sound hits for {query!r} (at most 8 windows, not the whole file; "
-            "scores are not the answer; listen to hear):\n"
+            f"sound hits for {query!r} (at most 8 windows, not the whole file). "
+            "These are times to listen, not a count of how many times a sound happened. "
+            "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
-            + f"\nmerged events: count={count} via Python merge+len: {merged}"
         )
     return {"role": "user", "content": text}
 

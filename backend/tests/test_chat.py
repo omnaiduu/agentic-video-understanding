@@ -444,3 +444,106 @@ def test_parse_action_accepts_look() -> None:
     )
     assert action.do == "look"
     assert action.start_s == 10
+
+
+def test_speech_hits_say_try_another_move(tiny_mp4: Path) -> None:
+    from app.models import IndexStatus
+    from app.search.transcript import TranscriptHit
+
+    calls = {"n": 0}
+
+    def search(_query: str) -> list[TranscriptHit]:
+        calls["n"] += 1
+        return [TranscriptHit(t=0.0, text="The pro plan is $99 a month.")]
+
+    brain = FakeBrain(
+        [
+            {
+                "do": "search",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": None,
+                "answer": "They said $99 a month.",
+                "times": [0.0],
+            },
+        ]
+    )
+    run_loop(
+        tiny_mp4,
+        "what are we supposed to ship this quarter?",
+        brain,
+        search=search,
+        transcript_status=IndexStatus.ready.value,
+    )
+    observe = brain.calls[1][-1]["content"]
+    assert "only what was said" in observe
+    assert "Do not search spoken words again" in observe
+    assert calls["n"] == 1
+
+
+def test_second_speech_search_is_blocked(tiny_mp4: Path) -> None:
+    from app.models import IndexStatus
+    from app.search.transcript import TranscriptHit
+
+    calls = {"n": 0}
+
+    def search(_query: str) -> list[TranscriptHit]:
+        calls["n"] += 1
+        return [TranscriptHit(t=0.0, text="The pro plan is $99 a month.")]
+
+    brain = FakeBrain(
+        [
+            {
+                "do": "search",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "search",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": "ship",
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "query": None,
+                "answer": "Not in what they said.",
+                "times": [],
+            },
+        ]
+    )
+    result = run_loop(
+        tiny_mp4,
+        "what are we supposed to ship this quarter?",
+        brain,
+        search=search,
+        transcript_status=IndexStatus.ready.value,
+    )
+    assert calls["n"] == 1
+    assert any(
+        step.do == "search" and step.ok is False and "already" in step.detail
+        for step in result.steps
+    )
+    blocked = brain.calls[2][-1]["content"]
+    assert "already searched what was said" in blocked
+    assert "Do not search spoken words again" in blocked

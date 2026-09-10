@@ -16,6 +16,7 @@ from app.agent.parts import (
     look_message,
     refuse_message,
     search_message,
+    speech_already_searched_message,
     slide_search_message,
     slides_not_ready_message,
     strip_input_audio,
@@ -177,6 +178,7 @@ def run_loop(
     steps: list[Step] = []
     last_export_url: str | None = None
     rounds = 0
+    searched_speech = False
 
     while True:
         if rounds >= MAX_ROUNDS:
@@ -224,6 +226,12 @@ def run_loop(
 
         rounds += 1
         if action.do == "search":
+            if searched_speech:
+                messages.append(speech_already_searched_message())
+                steps.append(
+                    Step(do="search", ok=False, detail="already searched spoken words")
+                )
+                continue
             query = (action.query or question).strip()
             if speech_status != IndexStatus.ready.value:
                 messages.append(transcript_not_ready_message(speech_status))
@@ -241,6 +249,7 @@ def run_loop(
                 steps.append(Step(do="search", ok=False, detail="search not wired"))
                 continue
             hits = search(query)[:8]
+            searched_speech = True
             messages.append(search_message(hits, query))
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
