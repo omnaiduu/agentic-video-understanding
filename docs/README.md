@@ -33,3 +33,4 @@ Then:
 27. [Phase 13](phases/phase-13.md) — slide phone book (**locked**; ColQwen2.x + `search_slides`)
 28. [Live query retest](live-query-retest.md) — should / did / proved, plus how each query runs
 29. [Hidden-intent live test](live-intent-questions.md) — easy / medium / hard questions that never name the tool
+30. [Spoken words, then stop](live-spoken-words.md) — the quit-after-speech bug, the two notes we added, live rerun

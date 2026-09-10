@@ -4,6 +4,8 @@ Same 16s tape as [live-query-retest](live-query-retest.md). This time **nobody n
 
 **12 passed, 1 partial, 6 failed** (19 questions). Browser re-ran 3 of them.
 
+After the [spoken-words-then-stop](live-spoken-words.md) notes, we **reran the failures**. **M3 and H2 now pass** (they leave speech and read the printed “Ship the slide index”). **H7 is partial** (opens the sound book, still exports 9–12s which mixes red + Q3). H5 / H8 / M1 still fail; M4 is still partial. Easy checks E1, E2, H1 still pass.
+
 Video: `af12a3ad-c22d-4359-8de9-ec7baff9eb6a` (`live-test-talk.mp4`)
 
 ## What is actually on the tape
@@ -88,6 +90,7 @@ Sounds like a **speech** question. The answer is **only printed**: “Ship the s
 - **Did (API):** Searched the transcript three times. “The transcript does not contain information…”
 - **Did (browser):** Same miss. Details: `search 3.1s` only. Never `search_slides`, never a look at 10s.
 - **Verdict: fail.** This is the main limit: if the sentence sounds spoken, it will not open the slide book.
+- **After the spoken-words note:** Speech → printed slides → look 10–12s. “Ship the slide index this quarter (Q3 Roadmap).” **Pass.** See [spoken words, then stop](live-spoken-words.md).
 
 ### M4. “When does the notification tone play, and what is on screen at that moment?”
 
@@ -126,6 +129,7 @@ False premise on purpose.
 
 - **Did:** Transcript search three times (~67s). Apologized. Quoted only the $99 lines.
 - **Verdict: fail.** Same limit as M3. It will not switch books when the first book is empty.
+- **After the spoken-words note:** Speech → printed slides → look 10–12s. Answer includes “Ship the slide index.” **Pass.**
 
 ### H3. “The last slide raised the price to $199, didn't it?”
 
@@ -147,6 +151,7 @@ Second trap.
 - **Did first:** HTTP **422** (Gemma returned invalid JSON, no successful step to stitch).
 - **Did retry:** Sound search. Treated overlapping 3s windows as “4 merged sound events” and **called them claps**.
 - **Verdict: fail.** The sound book returns *similar windows*, not a clap count. The model trusted that list as a count.
+- **After dropping `count=`:** Did not invent 4 claps. Also did not listen. Said it cannot count. Still **fail** (no “zero”).
 
 ### H6a / H6b. “What's the monthly price?” then “During the alarm, is that price still visible?”
 
@@ -159,6 +164,7 @@ Second trap.
 - **Expected:** Find the beep (~11s), export ~3s of **Q3**.
 - **Did:** Searched **speech** for “beep”. Hit the line at 3.12s (“The number is also printed on the slide”). Exported **3.1–6.1s Pricing**.
 - **Verdict: fail.** “Beep” went to Whisper, not the sound book. The clip is the wrong beat.
+- **After the spoken-words note:** Speech → sound search → look 9–12s → export **9–12s**. **Partial.** It left speech (that is the fix). The clip covers the beep at 11s but still includes red at 9s.
 
 ### H8. “Walk through the whole tape in order… including things nobody said out loud.”
 
@@ -190,7 +196,7 @@ The UI showed Details (`search` / `search_slides` / `look`) under each bubble. N
 
 ## Limits we know now
 
-1. **Spoken wording → speech book, and it stays there.** “Ship this quarter” / “what did they tell us” never opens slides, even when Whisper is empty. Printed-only answers are missed.
+1. **Spoken wording used to mean “search speech and stop.”** After the loop notes, M3 / H2 leave speech and read the printed slide. Gemma can still refuse before any search, or 422 if it returns no JSON.
 2. **“Beep” / “clap” in English ≠ the sound book.** H7 searched talk for “beep”. H5 treated CLAP windows as a clap *count* (there are zero claps).
 3. **A 3s sound hit is not the event time.** M4’s beep is at 11s; looking at 9s (start of the window) still shows red.
 4. **ColQwen ranking is only as good as the query.** “Number printed on the slide” ranked Q3 first. Hit #2 was the $99 slide and Gemma skipped it.
@@ -205,3 +211,5 @@ The UI showed Details (`search` / `search_slides` / `look`) under each bubble. N
 - Keep **at most one** listen wav in the prompt so a second listen does not 400.
 
 Those stop crashes. They do not teach the model to open the slide book when the question *sounds* like speech.
+
+A later pass added two loop notes (no keyword list): spoken-word hits are only speech — try another move, and do not search speech again; sound hits are times to listen, not a clap count. **M3 and H2 then passed.** Details: [spoken words, then stop](live-spoken-words.md).
