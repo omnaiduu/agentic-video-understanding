@@ -82,22 +82,52 @@ Video: `af12a3ad-c22d-4359-8de9-ec7baff9eb6a`
 
 Direct ColQwen: “Pro $99” scores **9.78 at 0s** vs **6.90 on red**.
 
-## How each query runs
+## What happens when you ask
 
-Gemma never calls tools. The website posts `{ message }` to `POST /videos/{id}/chat`. FastAPI loads the file path, index statuses, last 3 time windows, and the last Q&A. It asks Gemma (Modal vLLM) for one JSON object: `{ do, start_s, end_s, fps, query, answer, times }`. The **laptop** then does the move. The result comes back as a normal user message (not a tool result). Repeat until `do: answer` (max 8 moves).
+Three pieces:
 
-Ingest already wrote the books (Whisper / SigLIP / CLAP / ColQwen) into Postgres. Search only reads those rows. Look and listen always cut **now** with ffmpeg.
+1. **You** type in the website chat.
+2. **The laptop** (FastAPI) owns the video file, ffmpeg, and Postgres. It is the only thing that can cut frames or search.
+3. **The model** (Gemma on a GPU) cannot open the file. It can only pick a next move: look, listen, search, export, or answer.
 
-| You ask | Gemma usually fills | Laptop does | Gemma sees next | Then |
-|---|---|---|---|---|
-| Look at 0–2s / 0–4s | `look` + window | ffmpeg JPEGs, max width 512, default 1 fps | The actual photos | `answer` from pixels |
-| Listen 0–6s | `listen` + window | ffmpeg 16 kHz mono wav (≤30s) | The audio clip | `answer` from sound |
-| What do they say about pricing? | `search` + query | Hybrid FTS + E5 vectors on `transcript_lines`, top 8 `{t, text}` | Hit list as text, not the whole talk | Often `answer` from those lines |
-| Find the red alert | `search_visual` + query | SigLIP vector KNN on `visual_frames`, top 8 times | Scores + times only | `look` at a hit, then `answer` |
-| Find the beep | `search_audio` + query | CLAP KNN on `audio_chunks`, merge nearby hits | Windows + count | `listen` at a hit, then `answer` |
-| Which slide had Pro $99? | `search_slides` + query | Modal ColQwen embed of the phrase; MaxSim vs unique slide patches | `{t, score}` list | `look` at top hit (~1s), then `answer` from that JPEG |
-| Export a 4s clip | `export_clip` + window | ffmpeg mp4 onto disk (≤60s) | A GET URL, not the bytes | `answer` including the URL |
-| What was on that clip? | often `answer` (or look/listen at last times) | Nothing new if memory is enough | Last 3 windows as text | Reuses 0–4s; does not search the whole tape |
-| Slide book still building | `search_slides` anyway | Loop refuses: status ≠ ready | “not ready; look then answer” | `look` a short window, then `answer` |
+When you hit Send, the website sends your sentence to the laptop. The laptop asks the model: “what should I do?” The model answers with a move, not with the user-facing sentence yet. The laptop does that move, shows the model the result, and asks again. That repeats until the model says **answer**. Then the website shows that sentence in the bubble.
 
-If Gemma returns invalid JSON after a successful move, or hits 8 rounds, the loop stitches an answer from the steps instead of 422. Chat is allowed as soon as the **file** is `ready`; a `processing` book only blocks that search, not look/listen.
+The model never watches the whole 16s tape at once. Look/listen cut a short slice **right now**. Search does not cut anything — it only looks up lists that ingest already stored (transcript lines, picture times, sound windows, unique slides).
+
+### One full example: “Look at 0 to 2 seconds”
+
+1. You type that and Send.
+2. Laptop → model: here is the question; the file is 16s; indexes are ready.
+3. Model → laptop: **look** from 0s to 2s.
+4. Laptop runs ffmpeg on `original.mp4`, takes about two photos, sends those JPEGs to the model.
+5. Model → laptop: **answer** “Pricing, Pro $99 per month.”
+6. You see that sentence. Details shows `look 0s–2s` then `answer`.
+
+### The other questions (same loop, different move)
+
+**Look 0–4s**  
+Same as above, four photos instead of two (one per second). Those photos are small (512px) so the GPU can hold them.
+
+**Listen 0–6s**  
+Model says **listen** 0–6s. Laptop cuts a short wav from the file and plays that clip to the model. Model answers what it heard (“Pro $99 a month”). It did not get the whole soundtrack.
+
+**“What do they say about pricing?”**  
+Model says **search** (speech book). Laptop finds matching Whisper lines in Postgres (here: 0.00s and 3.12s) and sends those short texts. Model answers from the lines. It still has not been shown the video.
+
+**“Find the red alert screen”**  
+Model says **search** the picture book. Laptop returns times that look similar (6s first). Times are not a photo, so the model then says **look** at 6–7s. Laptop takes that JPEG. Model reads “RED ALERT.”
+
+**“Find the beep”**  
+Same idea with the sound book: laptop returns time windows, model says **listen** at one of them, laptop cuts that wav, model answers “I heard a beep.”
+
+**“Which slide had Pro $99?”**  
+Model says **search slides**. Laptop asks the slide GPU to score “Pro $99” against the three unique slides, and gets a ranked list: 0s, 10s, 6s. That list is not the slide. Model says **look** at 0–1s. Laptop takes the JPEG. Model reads “Pro $99 per month” off that frame. If that frame had been red, it must say so — it is not allowed to copy $99 from your question onto the wrong photo.
+
+**“Export a 4 second clip from 0s”**  
+Model says **export**. Laptop writes a small mp4 to disk and tells the model a download URL. The model never gets the clip bytes. Your bubble shows the URL / player.
+
+**“What was on that clip?”**  
+Laptop reminds the model: last window was 0–4s. Model can **answer** from that memory. It does not search the whole tape again. Old photos are not sent a second time.
+
+**Slide index still building**  
+If the model tries slide search anyway, the laptop says “that book isn’t ready; look instead.” Model then **look**s at a short time (0–1s) and answers from the photo. Chat still works because the **file** is playable; only that search is blocked.
