@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, ValidationError
 
 
-MAX_ROUNDS = 8
+MAX_ROUNDS = 12
 DoKind = Literal[
     "look",
     "listen",
@@ -72,7 +72,7 @@ RESPONSE_FORMAT: dict[str, Any] = {
 SYSTEM_PROMPT = """You fill a JSON form about one video. You do not call tools.
 
 Moves:
-- look: we cut JPEG frames from start_s to end_s (optional fps). Cap: seconds × fps ≤ 64 photos. Default fps is 1. Prefer windows under 2 seconds. Oversize is refused; pick a smaller window. We ignore answer.
+- look: we cut JPEG frames from start_s to end_s (optional fps). Cap: seconds × fps ≤ 12 photos. Default fps is 1. Prefer windows under 2 seconds. Oversize is refused; pick a smaller window. We ignore answer.
 - listen: we cut 16 kHz mono wav from start_s to end_s. Cap: 30 seconds. Oversize is refused. We ignore answer.
 - search: we hybrid-search the Whisper transcript (keyword + meaning). Put the phrase in query, or null to use the user question. We return at most 8 {t, text} hits as text, never the whole talk. We ignore answer. Those hits are only spoken words. If they do not answer, look, listen, search_visual, search_audio, or search_slides — do not search spoken words again. Do not only apologize. If the transcript is not ready, we say so; look or listen, then answer.
 - search_visual: we dense-search the SigLIP picture index. Put the phrase in query, or null to use the user question. We return at most 8 {t, score} hits as text, never two hours of photos. Scores are not the answer; look at a hit to see. We ignore answer. If the picture book is not ready, we say so; timed look still works — look, then answer.
@@ -86,7 +86,7 @@ Follow-ups: if last time windows are listed, use them first for "that" / "there"
 
 After look, listen, search, search_visual, search_audio, search_slides, export_clip, or export_audio we send the result as a normal user message, not as a tool result.
 
-Do not refuse to describe what is on screen and what can be heard. Look at a few short windows in order, then answer. Include things not said out loud. Do not only apologize.
+Do not refuse to describe what is on screen and what can be heard. If you need the whole tape, look at a few short windows spread across the duration, then answer. Include things not said out loud. Do not spend every move on back-to-back look+listen pairs. Do not only apologize.
 
 When we say you have no more moves, you must answer from what you already saw or heard.
 

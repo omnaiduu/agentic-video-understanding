@@ -97,9 +97,9 @@ def test_oversize_frames_never_calls_extract(tiny_mp4: Path, monkeypatch) -> Non
         raise AssertionError("extract ffmpeg must not run for an oversize request")
 
     monkeypatch.setattr(ffmpeg_cli, "run_ffmpeg", boom)
-    with pytest.raises(ScissorsError, match="64"):
+    with pytest.raises(ScissorsError, match="12"):
         get_frames(tiny_mp4, 0, 7200, fps=1)
-    with pytest.raises(ScissorsError, match="64"):
+    with pytest.raises(ScissorsError, match="12"):
         get_frames(tiny_mp4, 0, 70)
 
 

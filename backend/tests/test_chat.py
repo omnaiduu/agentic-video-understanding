@@ -117,7 +117,7 @@ def test_oversize_look_never_extracts(client, tiny_mp4: Path, monkeypatch) -> No
     body = response.json()
     assert body["steps"][0]["do"] == "look"
     assert body["steps"][0]["ok"] is False
-    assert "64" in body["steps"][0]["detail"]
+    assert "12" in body["steps"][0]["detail"]
     refuse = brain.calls[1][-1]["content"]
     assert "refused" in refuse
     assert body["answer"] == "Need a smaller window."
@@ -338,7 +338,7 @@ def test_loop_answers_after_max_rounds_instead_of_422(tiny_mp4: Path) -> None:
             "answer": None,
             "times": [],
         }
-        for _ in range(8)
+        for _ in range(12)
     ]
     result = run_loop(tiny_mp4, "what is on screen?", FakeBrain(looks))
     assert result.answer

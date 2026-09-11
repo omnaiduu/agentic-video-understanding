@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 
-MAX_FRAMES = 64
+MAX_FRAMES = 12
 MAX_AUDIO_SECONDS = 30.0
 MAX_EXPORT_SECONDS = 60.0
 SHORT_SPAN_S = 8.0
