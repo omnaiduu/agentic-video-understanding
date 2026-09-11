@@ -110,12 +110,30 @@ def test_second_question_does_not_run_clap(
     brain = FakeBrain(
         [
             {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.3,
+                "fps": 1,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
                 "do": "answer",
                 "start_s": None,
                 "end_s": None,
                 "fps": None,
                 "query": None,
                 "answer": "First.",
+                "times": [],
+            },
+            {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.3,
+                "fps": 1,
+                "query": None,
+                "answer": None,
                 "times": [],
             },
             {
@@ -289,6 +307,8 @@ def test_search_audio_does_not_dump_all_times(client, tiny_mp4: Path) -> None:
     assert "not the whole file" in observe
     assert "times to listen" in observe
     assert "count=" not in observe
+    assert "middle=" in observe
+    assert "count is zero" in observe
     assert len(re.findall(r"\[\d+\.\d+s–", observe)) <= TOP_HITS
 
 
@@ -460,5 +480,6 @@ def test_search_audio_missing_query_uses_user_question(tiny_mp4: Path) -> None:
     observe = brain.calls[1][-1]["content"]
     assert "8.0" in observe
     assert "times to listen" in observe
+    assert "middle=" in observe
     assert "count=" not in observe
     assert result.citations == [8.0]

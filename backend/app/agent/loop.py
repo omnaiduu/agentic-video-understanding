@@ -9,15 +9,20 @@ from typing import Any
 
 from app.agent.client import Brain
 from app.agent.parts import (
+    after_look_slide_nudge,
+    already_looked_message,
     audio_not_ready_message,
     audio_search_message,
+    empty_move_nudge_message,
     export_message,
     listen_message,
     look_message,
+    parse_again_message,
     refuse_message,
     search_message,
     speech_already_searched_message,
     slide_search_message,
+    slides_already_searched_message,
     slides_not_ready_message,
     strip_input_audio,
     transcript_not_ready_message,
@@ -125,6 +130,59 @@ def _forced_answer(
     )
 
 
+_OBSERVE_DOS = frozenset(
+    {
+        "look",
+        "listen",
+        "search",
+        "search_visual",
+        "search_audio",
+        "search_slides",
+        "export_clip",
+        "export_audio",
+    }
+)
+
+
+def _has_move(steps: list[Step]) -> bool:
+    return any(step.do in _OBSERVE_DOS for step in steps)
+
+
+def _looked_near(looked: list[tuple[float, float]], t: float) -> bool:
+    for start_s, end_s in looked:
+        lo, hi = (start_s, end_s) if start_s <= end_s else (end_s, start_s)
+        if lo <= t <= hi:
+            return True
+        if abs(start_s - t) < 0.25:
+            return True
+    return False
+
+
+def _unused_slide_times(
+    slide_times: list[float],
+    looked: list[tuple[float, float]],
+) -> list[float]:
+    unused: list[float] = []
+    for t in slide_times:
+        if _looked_near(looked, t):
+            continue
+        if any(abs(t - other) < 0.25 for other in unused):
+            continue
+        unused.append(t)
+    return unused
+
+
+def _same_look(
+    start_s: float,
+    end_s: float,
+    looked: list[tuple[float, float]],
+) -> bool:
+    for prev_start, _prev_end in looked:
+        if abs(prev_start - start_s) < 0.25:
+            return True
+    return False
+
+
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
     raw = brain.complete(messages)
     try:
@@ -179,6 +237,11 @@ def run_loop(
     last_export_url: str | None = None
     rounds = 0
     searched_speech = False
+    searched_slides = False
+    slide_hit_times: list[float] = []
+    looked_windows: list[tuple[float, float]] = []
+    bounced_empty = False
+    retried_empty_parse = False
 
     while True:
         if rounds >= MAX_ROUNDS:
@@ -203,9 +266,17 @@ def run_loop(
         except BrainParseError as exc:
             if steps:
                 return _forced_answer(question, steps, last_export_url)
+            if not retried_empty_parse:
+                retried_empty_parse = True
+                messages.append(parse_again_message())
+                continue
             raise LoopError(
                 "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
             ) from exc
+        except RuntimeError as exc:
+            if steps:
+                return _forced_answer(question, steps, last_export_url)
+            raise
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
         )
@@ -216,6 +287,14 @@ def run_loop(
                 if steps:
                     return _forced_answer(question, steps, last_export_url)
                 raise LoopError("answer JSON had an empty answer")
+            if (
+                not bounced_empty
+                and not _has_move(steps)
+                and not last_times
+            ):
+                bounced_empty = True
+                messages.append(empty_move_nudge_message())
+                continue
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
                 answer=text,
@@ -347,6 +426,13 @@ def run_loop(
 
         if action.do == "search_slides":
             query = (action.query or question).strip()
+            if searched_slides:
+                unused = _unused_slide_times(slide_hit_times, looked_windows)
+                messages.append(slides_already_searched_message(unused))
+                steps.append(
+                    Step(do="search_slides", ok=False, detail="already searched slides")
+                )
+                continue
             if slide_status != IndexStatus.ready.value:
                 messages.append(slides_not_ready_message(slide_status))
                 steps.append(
@@ -371,6 +457,8 @@ def run_loop(
                 )
                 continue
             hits = search_slides(query)[:8]
+            searched_slides = True
+            slide_hit_times = [hit.t for hit in hits]
             messages.append(slide_search_message(hits, query))
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
@@ -433,9 +521,23 @@ def run_loop(
         try:
             start_s, end_s = _window(action)
             if action.do == "look":
+                if slide_hit_times and _same_look(start_s, end_s, looked_windows):
+                    unused = _unused_slide_times(slide_hit_times, looked_windows)
+                    messages.append(already_looked_message(start_s, unused))
+                    steps.append(
+                        Step(
+                            do="look",
+                            start_s=start_s,
+                            end_s=end_s,
+                            ok=False,
+                            detail="already looked",
+                        )
+                    )
+                    continue
                 frames = get_frames(path, start_s, end_s, fps=action.fps)
                 shown = [frame.t for frame in frames]
                 messages.append(look_message(frames))
+                looked_windows.append((start_s, end_s))
                 steps.append(
                     Step(
                         do="look",
@@ -445,6 +547,9 @@ def run_loop(
                         detail=",".join(f"{t:.2f}" for t in shown),
                     )
                 )
+                if slide_hit_times:
+                    unused = _unused_slide_times(slide_hit_times, looked_windows)
+                    messages.append(after_look_slide_nudge(unused))
             else:
                 wav = get_audio(path, start_s, end_s)
                 strip_input_audio(messages)

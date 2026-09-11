@@ -31,7 +31,11 @@ def wav_part(wav: bytes) -> dict:
 
 def look_message(frames: list[Frame]) -> dict:
     labels = ", ".join(f"{frame.t:.2f}s" for frame in frames)
-    text = f"frames at {labels}. Image parts on this user turn, not a tool result."
+    text = (
+        f"frames at {labels}. Image parts on this user turn, not a tool result. "
+        "Read the pixels: headings, prices, digits, and colors. "
+        "A printed price is a printed number."
+    )
     content: list[dict] = [{"type": "text", "text": text}]
     content.extend(jpeg_part(frame.jpeg) for frame in frames)
     return {"role": "user", "content": content}
@@ -181,9 +185,22 @@ def audio_search_message(result, query: str) -> dict:
             f"[{hit.start_s:.1f}s–{hit.end_s:.1f}s] score={hit.score:.3f}"
             for hit in hits
         ]
+        lines = [
+            (
+                f"[{hit.start_s:.1f}s–{hit.end_s:.1f}s] "
+                f"middle={((hit.start_s + hit.end_s) / 2):.1f}s "
+                f"score={hit.score:.3f}"
+            )
+            for hit in hits
+        ]
         text = (
             f"sound hits for {query!r} (at most 8 windows, not the whole file). "
             "These are times to listen, not a count of how many times a sound happened. "
+            "Look, listen, or export near the middle of a window (under 2 seconds), "
+            "not the start. The start of a window can be a different moment. "
+            "If you are asked how many times a sound happened, listen at a hit first. "
+            "If you do not clearly hear that sound, the count is zero. "
+            "Do not treat silence or speech as a match. Do not guess. Do not only apologize. "
             "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
         )
@@ -228,11 +245,76 @@ def slide_search_message(hits: list, query: str) -> dict:
         ]
         text = (
             f"slide hits for {query!r} (at most 8 times, not the whole file; "
-            "scores are not the answer; look at the top hit under 2 seconds, then answer; "
-            "describe the pixels — do not copy text from the question onto the wrong slide):\n"
+            "scores are not the answer; look at the top hit under 2 seconds; "
+            "describe the pixels — do not copy text from the question onto the wrong slide. "
+            "If that frame does not answer, look at the next unused time on this list. "
+            "Do not look at a time you already looked at. Do not search printed slides again.):\n"
             + "\n".join(lines)
         )
     return {"role": "user", "content": text}
+
+
+def slides_already_searched_message(unused_times: list[float]) -> dict:
+    unused = ", ".join(f"{t:.1f}s" for t in unused_times) or "none"
+    return {
+        "role": "user",
+        "content": (
+            "You already searched printed slides. Do not search slides again. "
+            f"Unused times from that list: {unused}. "
+            "If the last frame did not answer, look at the next unused time "
+            "(under 2 seconds), then answer. Do not only apologize."
+        ),
+    }
+
+
+def after_look_slide_nudge(unused_times: list[float]) -> dict:
+    unused = ", ".join(f"{t:.1f}s" for t in unused_times) or "none"
+    return {
+        "role": "user",
+        "content": (
+            "If those pixels do not answer, look at the next unused slide time "
+            f"(under 2 seconds). Unused times: {unused}. "
+            "Do not look at a time you already looked at. Do not only apologize."
+        ),
+    }
+
+
+def already_looked_message(near_s: float, unused_times: list[float]) -> dict:
+    unused = ", ".join(f"{t:.1f}s" for t in unused_times) or "none"
+    extra = (
+        "Look at the next unused time (under 2 seconds), then answer. "
+        if unused_times
+        else "Answer from the pixels you already have. "
+    )
+    return {
+        "role": "user",
+        "content": (
+            f"You already looked near {near_s:.1f}s. Do not look there again. "
+            f"Unused slide times: {unused}. {extra}"
+            "Do not only apologize."
+        ),
+    }
+
+
+EMPTY_MOVE_NUDGE = (
+    "Do not answer yet. You have not looked, listened, or searched. "
+    "Look, listen, search_visual, search_audio, or search_slides first. "
+    "Do not only apologize."
+)
+
+
+def empty_move_nudge_message() -> dict:
+    return {"role": "user", "content": EMPTY_MOVE_NUDGE}
+
+
+PARSE_AGAIN_NUDGE = (
+    "Return only look/listen/search/search_visual/search_audio/"
+    "search_slides/export/answer JSON. No prose."
+)
+
+
+def parse_again_message() -> dict:
+    return {"role": "user", "content": PARSE_AGAIN_NUDGE}
 
 
 def slides_not_ready_message(status: str) -> dict:
