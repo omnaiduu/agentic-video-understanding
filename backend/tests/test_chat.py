@@ -547,3 +547,173 @@ def test_second_speech_search_is_blocked(tiny_mp4: Path) -> None:
     blocked = brain.calls[2][-1]["content"]
     assert "already searched what was said" in blocked
     assert "Do not search spoken words again" in blocked
+
+
+def _act(do: str, **kwargs) -> dict:
+    payload = {
+        "do": do,
+        "start_s": None,
+        "end_s": None,
+        "fps": None,
+        "query": None,
+        "answer": None,
+        "times": [],
+    }
+    payload.update(kwargs)
+    return payload
+
+
+def test_empty_refusal_is_bounced_once(tiny_mp4: Path) -> None:
+    brain = FakeBrain(
+        [
+            _act("answer", answer="I am sorry, but I cannot walk through the tape."),
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="A dark frame at the start."),
+        ]
+    )
+    result = run_loop(tiny_mp4, "walk through the whole tape", brain)
+    assert any(step.do == "look" and step.ok for step in result.steps)
+    assert result.answer == "A dark frame at the start."
+    nudge = brain.calls[1][-1]["content"]
+    assert "Do not answer yet" in nudge
+    assert "Do not only apologize" in nudge
+
+
+def test_plain_answer_without_look_is_not_bounced(tiny_mp4: Path) -> None:
+    brain = FakeBrain([_act("answer", answer="First.")])
+    result = run_loop(tiny_mp4, "which slide had Pro $99?", brain)
+    assert result.answer == "First."
+    assert len(brain.calls) == 1
+
+
+def test_empty_parse_retries_once_then_looks(tiny_mp4: Path) -> None:
+    class EventuallyJson:
+        def __init__(self) -> None:
+            self.n = 0
+
+        def complete(self, messages: list) -> str:
+            self.n += 1
+            if self.n <= 2:
+                return "nope"
+            if self.n == 3:
+                return (
+                    '{"do":"look","start_s":0.1,"end_s":0.3,"fps":1,'
+                    '"query":null,"answer":null,"times":[]}'
+                )
+            return (
+                '{"do":"answer","start_s":null,"end_s":null,"fps":null,'
+                '"query":null,"answer":"A dark frame.","times":[0.1]}'
+            )
+
+    result = run_loop(tiny_mp4, "what is on screen?", EventuallyJson())
+    assert result.answer == "A dark frame."
+    assert any(step.do == "look" and step.ok for step in result.steps)
+
+
+def test_second_slide_search_is_blocked(tiny_mp4: Path) -> None:
+    import uuid
+
+    from app.models import IndexStatus
+    from app.search.slides import SlideHit
+
+    calls = {"n": 0}
+
+    def search(_query: str) -> list[SlideHit]:
+        calls["n"] += 1
+        return [
+            SlideHit(
+                t=0.1,
+                t_end=0.4,
+                score=0.9,
+                slide_id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+            ),
+            SlideHit(
+                t=0.5,
+                t_end=0.9,
+                score=0.8,
+                slide_id=uuid.UUID("22222222-2222-2222-2222-222222222222"),
+            ),
+        ]
+
+    brain = FakeBrain(
+        [
+            _act("search_slides"),
+            _act("search_slides", query="again"),
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="Dark frame."),
+        ]
+    )
+    result = run_loop(
+        tiny_mp4,
+        "what color is the printed number?",
+        brain,
+        search_slides=search,
+        slides_status=IndexStatus.ready.value,
+    )
+    assert calls["n"] == 1
+    assert any(
+        step.do == "search_slides" and step.ok is False and "already" in step.detail
+        for step in result.steps
+    )
+    blocked = brain.calls[2][-1]["content"]
+    assert "already searched printed slides" in blocked
+    assert "0.5s" in blocked
+
+
+def test_repeat_look_is_blocked_and_names_unused_slide(tiny_mp4: Path) -> None:
+    import uuid
+
+    from app.models import IndexStatus
+    from app.search.slides import SlideHit
+
+    def search(_query: str) -> list[SlideHit]:
+        return [
+            SlideHit(
+                t=0.1,
+                t_end=0.4,
+                score=0.9,
+                slide_id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+            ),
+            SlideHit(
+                t=0.5,
+                t_end=0.9,
+                score=0.8,
+                slide_id=uuid.UUID("22222222-2222-2222-2222-222222222222"),
+            ),
+        ]
+
+    brain = FakeBrain(
+        [
+            _act("search_slides"),
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("look", start_s=0.5, end_s=0.7, fps=1),
+            _act("answer", answer="I looked at both listed times."),
+        ]
+    )
+    result = run_loop(
+        tiny_mp4,
+        "what color is the printed number?",
+        brain,
+        search_slides=search,
+        slides_status=IndexStatus.ready.value,
+    )
+    assert any(
+        step.do == "look" and step.ok is False and "already" in step.detail
+        for step in result.steps
+    )
+    assert sum(1 for step in result.steps if step.do == "look" and step.ok) == 2
+    blocked = next(
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+        and "already looked near" in call[-1]["content"]
+    )
+    assert "0.5s" in blocked
+    after = next(
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+        and "next unused slide time" in call[-1]["content"]
+    )
+    assert "0.5s" in after
