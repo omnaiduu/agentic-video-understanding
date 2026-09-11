@@ -142,24 +142,10 @@ _OBSERVE_DOS = frozenset(
         "export_audio",
     }
 )
-_REFUSAL_MARKERS = (
-    "sorry",
-    "cannot",
-    "can't",
-    "unable",
-    "beyond my",
-    "do not have",
-    "don't have",
-)
 
 
-def _has_observation(steps: list[Step]) -> bool:
-    return any(step.ok and step.do in _OBSERVE_DOS for step in steps)
-
-
-def _looks_like_refusal(text: str) -> bool:
-    lower = text.lower()
-    return any(marker in lower for marker in _REFUSAL_MARKERS)
+def _has_move(steps: list[Step]) -> bool:
+    return any(step.do in _OBSERVE_DOS for step in steps)
 
 
 def _looked_near(looked: list[tuple[float, float]], t: float) -> bool:
@@ -287,6 +273,10 @@ def run_loop(
             raise LoopError(
                 "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
             ) from exc
+        except RuntimeError as exc:
+            if steps:
+                return _forced_answer(question, steps, last_export_url)
+            raise
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
         )
@@ -299,8 +289,8 @@ def run_loop(
                 raise LoopError("answer JSON had an empty answer")
             if (
                 not bounced_empty
-                and not _has_observation(steps)
-                and _looks_like_refusal(text)
+                and not _has_move(steps)
+                and not last_times
             ):
                 bounced_empty = True
                 messages.append(empty_move_nudge_message())

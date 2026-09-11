@@ -195,12 +195,30 @@ def test_second_question_does_not_run_colqwen(
     brain = FakeBrain(
         [
             {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.3,
+                "fps": 1,
+                "query": None,
+                "answer": None,
+                "times": [],
+            },
+            {
                 "do": "answer",
                 "start_s": None,
                 "end_s": None,
                 "fps": None,
                 "query": None,
                 "answer": "First.",
+                "times": [],
+            },
+            {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.3,
+                "fps": 1,
+                "query": None,
+                "answer": None,
                 "times": [],
             },
             {

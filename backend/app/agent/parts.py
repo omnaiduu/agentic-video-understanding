@@ -31,7 +31,11 @@ def wav_part(wav: bytes) -> dict:
 
 def look_message(frames: list[Frame]) -> dict:
     labels = ", ".join(f"{frame.t:.2f}s" for frame in frames)
-    text = f"frames at {labels}. Image parts on this user turn, not a tool result."
+    text = (
+        f"frames at {labels}. Image parts on this user turn, not a tool result. "
+        "Read the pixels: headings, prices, digits, and colors. "
+        "A printed price is a printed number."
+    )
     content: list[dict] = [{"type": "text", "text": text}]
     content.extend(jpeg_part(frame.jpeg) for frame in frames)
     return {"role": "user", "content": content}
@@ -195,7 +199,8 @@ def audio_search_message(result, query: str) -> dict:
             "Look, listen, or export near the middle of a window (under 2 seconds), "
             "not the start. The start of a window can be a different moment. "
             "If you are asked how many times a sound happened, listen at a hit first. "
-            "If you do not hear that sound, the count is zero. Do not only apologize. "
+            "If you do not clearly hear that sound, the count is zero. "
+            "Do not treat silence or speech as a match. Do not guess. Do not only apologize. "
             "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
         )

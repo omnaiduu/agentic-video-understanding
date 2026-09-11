@@ -579,11 +579,19 @@ def test_empty_refusal_is_bounced_once(tiny_mp4: Path) -> None:
     assert "Do not only apologize" in nudge
 
 
-def test_plain_answer_without_look_is_not_bounced(tiny_mp4: Path) -> None:
-    brain = FakeBrain([_act("answer", answer="First.")])
-    result = run_loop(tiny_mp4, "which slide had Pro $99?", brain)
-    assert result.answer == "First."
-    assert len(brain.calls) == 1
+def test_empty_promise_is_bounced_once(tiny_mp4: Path) -> None:
+    brain = FakeBrain(
+        [
+            _act("answer", answer="I will provide a sequential walkthrough of the video."),
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="A dark frame at the start."),
+        ]
+    )
+    result = run_loop(tiny_mp4, "walk through the whole tape", brain)
+    assert any(step.do == "look" and step.ok for step in result.steps)
+    assert result.answer == "A dark frame at the start."
+    nudge = brain.calls[1][-1]["content"]
+    assert "Do not answer yet" in nudge
 
 
 def test_empty_parse_retries_once_then_looks(tiny_mp4: Path) -> None:
