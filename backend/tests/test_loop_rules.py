@@ -71,8 +71,8 @@ def test_skip_rule_needs_a_matching_look_and_listen() -> None:
     listen = (0.0, 2.0)
     # 16s file, next 2s step after a paired look+listen.
     assert _is_next_step_after_listen(2.0, looked, listen, 16.0)
-    # No listen yet.
-    assert not _is_next_step_after_listen(2.0, looked, None, 16.0)
+    # Look-only 2s crawl is also skipped.
+    assert _is_next_step_after_listen(2.0, looked, None, 16.0)
     # Listen was a different window.
     assert not _is_next_step_after_listen(2.0, looked, (4.0, 6.0), 16.0)
     # They already jumped several seconds.
@@ -105,21 +105,24 @@ def test_hit_middle_only_when_export_is_the_whole_window() -> None:
     assert _hit_middle(9.0, 12.0, []) is None
 
 
-def test_look_only_crawl_is_not_skipped(twelve_s_mp4: Path) -> None:
-    """Known gap: without a matching listen, 2s looks are allowed."""
+def test_look_only_crawl_is_skipped(twelve_s_mp4: Path) -> None:
     brain = FakeBrain(
         [
             _act("look", start_s=0.0, end_s=2.0, fps=1),
             _act("look", start_s=2.0, end_s=4.0, fps=1),
-            _act("answer", answer="Look-only crawl stayed."),
+            _act("look", start_s=8.0, end_s=10.0, fps=1),
+            _act("answer", answer="Jumped after a blocked look-only crawl."),
         ]
     )
     result = run_loop(twelve_s_mp4, "walk through the whole tape", brain)
-    assert all(
-        not (step.ok is False and "skip" in (step.detail or ""))
+    assert any(
+        step.do == "look" and step.ok is False and "skip" in (step.detail or "")
         for step in result.steps
     )
-    assert sum(1 for step in result.steps if step.do == "look" and step.ok) == 2
+    assert any(
+        step.do == "look" and step.ok and step.start_s == 8.0 for step in result.steps
+    )
+    assert result.answer == "Jumped after a blocked look-only crawl."
 
 
 def test_skip_ahead_blocks_the_next_listen_too(twelve_s_mp4: Path) -> None:
@@ -393,3 +396,36 @@ def test_recut_nudge_starts_at_the_middle(twelve_s_mp4: Path) -> None:
     # 12s file caps the +2s window.
     assert "12.0s" in nudge
     assert "9.5s" not in nudge
+
+
+def test_second_short_export_is_blocked(twelve_s_mp4: Path) -> None:
+    def search(_query: str) -> AudioSearchResult:
+        return AudioSearchResult(
+            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
+            clusters=[],
+            count=0,
+        )
+
+    brain = FakeBrain(
+        [
+            _act("search_audio", query="tone"),
+            _act("export_clip", start_s=10.5, end_s=12.0),
+            _act("export_clip", start_s=11.0, end_s=12.0),
+            _act("answer", answer="Here is the first short clip."),
+        ]
+    )
+    result = run_loop(
+        twelve_s_mp4,
+        "clip when that sound happens",
+        brain,
+        search_audio=search,
+        audio_status=IndexStatus.ready.value,
+        export_clip=_export,
+    )
+    assert result.answer == "Here is the first short clip."
+    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
+    assert [(step.start_s, step.end_s) for step in exports] == [(10.5, 12.0)]
+    assert any(
+        step.do == "export_clip" and step.ok is False and "already" in step.detail
+        for step in result.steps
+    )

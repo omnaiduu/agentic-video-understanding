@@ -308,7 +308,7 @@ def skip_ahead_message(from_s: float, duration_s: float) -> dict:
     return {
         "role": "user",
         "content": (
-            "You already looked and listened at that beat. "
+            "You already looked at that beat. "
             "Do not take the next 2-second step. "
             f"Look several seconds later (under 2 seconds). "
             f"Video continues until {duration_s:.1f}s "
@@ -333,6 +333,17 @@ def export_whole_window_nudge(middle_s: float, duration_s: float | None = None) 
             "not the full search window. Do not only apologize."
         ),
     }
+
+
+ALREADY_EXPORTED = (
+    "You already exported a clip that is not the whole search window. "
+    "Do not export again. Answer now and include the URL. "
+    "Do not only apologize."
+)
+
+
+def already_exported_message() -> dict:
+    return {"role": "user", "content": ALREADY_EXPORTED}
 
 
 EMPTY_MOVE_NUDGE = (

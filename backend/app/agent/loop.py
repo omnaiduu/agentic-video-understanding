@@ -11,6 +11,7 @@ from app.agent.client import Brain
 from app.agent.parts import (
     after_look_slide_nudge,
     already_looked_message,
+    already_exported_message,
     audio_not_ready_message,
     audio_search_message,
     count_default_zero_message,
@@ -208,12 +209,12 @@ def _is_next_step_after_listen(
     last_listen: tuple[float, float] | None,
     duration_s: float,
 ) -> bool:
-    if not looked or last_listen is None:
+    if not looked:
         return False
     prev = looked[-1]
     if duration_s - prev[1] <= _SKIP_REMAINING_S:
         return False
-    if not _windows_match(prev, last_listen):
+    if last_listen is not None and not _windows_match(prev, last_listen):
         return False
     return abs(start_s - prev[1]) < 0.75
 
@@ -577,6 +578,18 @@ def run_loop(
             continue
 
         if action.do in ("export_clip", "export_audio"):
+            if last_export_url and not nudged_full_hit_export:
+                messages.append(already_exported_message())
+                steps.append(
+                    Step(
+                        do=action.do,
+                        start_s=action.start_s,
+                        end_s=action.end_s,
+                        ok=False,
+                        detail="already exported",
+                    )
+                )
+                continue
             fn = export_clip if action.do == "export_clip" else export_audio
             if fn is None:
                 messages.append(

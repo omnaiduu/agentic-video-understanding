@@ -118,7 +118,7 @@ Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9
 
 **Where tests still show a hole**
 
-- Look-only 2s crawls are allowed. H8 only gets skip-ahead if Gemma also **listens** on the same window (it did, this run).
+- Look-only crawls are skipped the same way as look+listen crawls (remaining > 6s). Skip is still off in the last 6 seconds of a file.
 - Skip-ahead does not fire in the last 6 seconds of a file.
 - M1 / H5 now bounce (speech search required; listen + default-zero). Live proof is the next Modal rerun.
 
