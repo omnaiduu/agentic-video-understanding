@@ -94,10 +94,10 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 | Issue | In one line | Laptop rule | Proven? |
 |---|---|---|---|
-| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Live pass.** Skip 2–4, then 6s / 10s / 14s |
-| **H7 beep clip** | Exports the whole 9–12s sound window | If the cut equals a hit window, recut ~2s around the middle | **Live pass** this run (exported 11.5–14.5 Q3, not 9–12). Recut nudge did not need to fire |
-| **M1 gold $99** | Saw the pixels; would not name color + match | After look: name the color; say if speech matches. No OCR | **Live partial.** Yellow $99; did not match speech |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Query sound only; unsure → 0. No clap detector | **Live fail.** Still would not say zero |
+| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Live pass** (two Gemma runs). Skip 2–4 both times |
+| **H7 beep clip** | Exports the whole 9–12s sound window | If the cut equals a hit window, recut ~2s around the middle | **Live pass.** First run: Gemma chose 11.5–14.5 (nudge idle). Second run: export 9–12 then recut **9.5–11.5** |
+| **M1 gold $99** | Saw the pixels; would not name color + match | After look: name the color; say if speech matches. No OCR | **Live partial.** Yellow $99 both runs; never searched speech |
+| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Query sound only; unsure → 0. No clap detector | **Live fail.** Both runs: would not say zero |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
@@ -120,4 +120,19 @@ Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9
 
 - Look-only 2s crawls are allowed. H8 only gets skip-ahead if Gemma also **listens** on the same window (it did, this run).
 - Skip-ahead does not fire in the last 6 seconds of a file.
-- M1 / H5 are notes only. Live: M1 named yellow but skipped the speech match; H5 still would not say zero.
+- M1 / H5 are notes only. Live (two runs): M1 named yellow but skipped the speech match; H5 still would not say zero.
+
+## Second live rerun (same tape, same Modal Gemma)
+
+Independent chat sessions after the first scoreboard. Same upload `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. All eight questions HTTP **200**.
+
+| Q | This run | Verdict |
+|---|---|---|
+| **E1** Pro cost | Speech + looks. “$99 a month” on the 0s slide. | **Pass.** |
+| **H1** $99 on red? | Looks red, Pricing, Q3. Price is yellow on dark blue, not on red. | **Pass.** |
+| **M3** ship this quarter | Speech → slides → look 10s. “Ship the slide index.” | **Pass.** |
+| **M4** tone + on screen | Sound 9–12 → look+listen **10.5–12**. Q3 / Ship the slide index. | **Pass.** |
+| **H8** walk the tape | look+listen 0–2, **skip 2–4**, then 8–10 (RED ALERT) and 14–16 (Q3). Names Pricing $99, RED ALERT, Q3. | **Pass.** Skip-ahead fired. No beep in the sentence. |
+| **H7** clip on the beep | Sound 9–12 → export **9–12** → recut **9.5–11.5**. | **Pass** on the leftover (nudge fired). Clip still includes ~0.5s of red before Q3; beep onset is in the cut, tail after 11.5s is not. |
+| **M1** printed number color | Looks 10, **0**, and 6. **Yellow $99.** Then: no spoken number heard, cannot confirm match. | **Partial.** Same hole as run 1. |
+| **H5** how many claps | Sound search, listen 7.5–9 (silence / red). Answers **one** clap. | **Fail.** |
