@@ -35,3 +35,4 @@ Then:
 29. [Hidden-intent live test](live-intent-questions.md) — easy / medium / hard questions that never name the tool
 30. [Spoken words, then stop](live-spoken-words.md) — the quit-after-speech bug, the two notes we added, live rerun
 31. [Four leftover live issues](live-leftover-issues.md) — walk / beep clip / gold $99 / clap count, and whether there is a laptop fix
+32. [Leftover issues report](live-leftover-report.md) — what broke, what we changed, what is still open

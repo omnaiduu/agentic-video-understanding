@@ -13,11 +13,14 @@ from app.agent.parts import (
     already_looked_message,
     audio_not_ready_message,
     audio_search_message,
+    count_default_zero_message,
     empty_move_nudge_message,
     export_message,
     export_whole_window_nudge,
     listen_message,
     look_message,
+    need_listen_for_count_message,
+    need_speech_for_match_message,
     parse_again_message,
     refuse_message,
     search_message,
@@ -226,6 +229,30 @@ def _hit_middle(
     return None
 
 
+def _asks_print_vs_speech(question: str) -> bool:
+    q = question.lower()
+    about_print = any(
+        token in q for token in ("printed", "on the slide", "on a slide")
+    )
+    about_said = any(
+        token in q
+        for token in ("they said", "what they said", "what was said", "spoken")
+    )
+    return about_print and about_said
+
+
+def _asks_how_many(question: str) -> bool:
+    return "how many" in question.lower()
+
+
+def _has_ok_listen(steps: list[Step]) -> bool:
+    return any(step.do == "listen" and step.ok for step in steps)
+
+
+def _has_ok_sound_search(steps: list[Step]) -> bool:
+    return any(step.do == "search_audio" and step.ok for step in steps)
+
+
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
     raw = brain.complete(messages)
     try:
@@ -288,6 +315,7 @@ def run_loop(
     last_hit_middle: float | None = None
     nudged_full_hit_export = False
     bounced_empty = False
+    bounced_count_zero = False
     retried_empty_parse = False
 
     while True:
@@ -348,8 +376,24 @@ def run_loop(
             ):
                 # Keep asking for a recut. Count it as a round so we cannot loop forever.
                 rounds += 1
-                messages.append(export_whole_window_nudge(last_hit_middle))
+                messages.append(
+                    export_whole_window_nudge(last_hit_middle, meta.duration_s)
+                )
                 continue
+            if _asks_print_vs_speech(question) and not searched_speech:
+                rounds += 1
+                messages.append(need_speech_for_match_message())
+                continue
+            if _asks_how_many(question) and _has_ok_sound_search(steps):
+                if not _has_ok_listen(steps):
+                    rounds += 1
+                    messages.append(need_listen_for_count_message())
+                    continue
+                if not bounced_count_zero:
+                    bounced_count_zero = True
+                    rounds += 1
+                    messages.append(count_default_zero_message())
+                    continue
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
                 answer=text,
@@ -576,7 +620,7 @@ def run_loop(
             if middle is not None:
                 nudged_full_hit_export = True
                 last_hit_middle = middle
-                messages.append(export_whole_window_nudge(middle))
+                messages.append(export_whole_window_nudge(middle, meta.duration_s))
             else:
                 nudged_full_hit_export = False
             continue
@@ -665,6 +709,8 @@ def run_loop(
                         detail="audio",
                     )
                 )
+                if _asks_how_many(question):
+                    messages.append(count_default_zero_message())
         except ScissorsError as exc:
             messages.append(refuse_message(str(exc)))
             steps.append(

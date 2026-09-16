@@ -11,12 +11,15 @@ from pathlib import Path
 
 from app.agent.client import FakeBrain
 from app.agent.loop import (
+    _asks_how_many,
+    _asks_print_vs_speech,
     _hit_middle,
     _is_next_step_after_listen,
     run_loop,
 )
 from app.models import IndexStatus
 from app.search.audio import AudioHit, AudioSearchResult
+from app.search.transcript import TranscriptHit
 from app.tools.export import ExportResult
 
 
@@ -235,7 +238,9 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
     brain = FakeBrain(
         [
             _act("search_audio", query="knock"),
+            _act("listen", start_s=0.0, end_s=0.5),
             _act("answer", answer="I need to listen first."),
+            _act("answer", answer="Zero times."),
         ]
     )
     run_loop(
@@ -252,3 +257,134 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
     lowered = observe.lower()
     for key in EXAM_KEYS:
         assert key not in lowered
+
+
+def test_print_vs_speech_detector_needs_both_books() -> None:
+    assert _asks_print_vs_speech(
+        "They said a number is also printed on the slide. "
+        "What color is that number, and does it match what they said?"
+    )
+    assert not _asks_print_vs_speech("what color is the printed number?")
+    assert not _asks_print_vs_speech("How much does Pro cost?")
+    assert _asks_how_many("how many times does that sound happen?")
+    assert not _asks_how_many("How much does Pro cost?")
+
+
+def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> None:
+    def speech(_query: str) -> list[TranscriptHit]:
+        return [TranscriptHit(t=0.0, text="they named a number")]
+
+    def slides(_query: str):
+        from app.search.slides import SlideHit
+
+        return [
+            SlideHit(
+                t=0.1,
+                t_end=0.4,
+                score=0.9,
+                slide_id=uuid.uuid4(),
+            )
+        ]
+
+    brain = FakeBrain(
+        [
+            _act("search_slides"),
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="Yellow digits; cannot confirm speech."),
+            _act("search", query="the number they named"),
+            _act("answer", answer="Yellow digits, and they match the spoken number."),
+        ]
+    )
+    result = run_loop(
+        tiny_mp4,
+        "They said a number is also printed on the slide. Does it match what they said?",
+        brain,
+        search=speech,
+        search_slides=slides,
+        transcript_status=IndexStatus.ready.value,
+        slides_status=IndexStatus.ready.value,
+    )
+    assert result.answer == "Yellow digits, and they match the spoken number."
+    assert any(
+        step.do == "search" and step.ok for step in result.steps
+    )
+    texts = [
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+    ]
+    assert any("not searched what was said" in text for text in texts)
+
+
+def test_how_many_answer_without_listen_is_bounced(tiny_mp4: Path) -> None:
+    def search(_query: str) -> AudioSearchResult:
+        return AudioSearchResult(
+            hits=[AudioHit(start_s=0.0, end_s=0.4, score=0.4)],
+            clusters=[],
+            count=0,
+        )
+
+    brain = FakeBrain(
+        [
+            _act("search_audio", query="knock"),
+            _act("answer", answer="There is one hit so there is one."),
+            _act("listen", start_s=0.0, end_s=0.4),
+            _act("answer", answer="Still counting hits."),
+            _act("answer", answer="Zero. That clip was not the queried sound."),
+        ]
+    )
+    result = run_loop(
+        tiny_mp4,
+        "how many times does that sound happen?",
+        brain,
+        search_audio=search,
+        audio_status=IndexStatus.ready.value,
+    )
+    assert result.answer == "Zero. That clip was not the queried sound."
+    assert result.answer != "There is one hit so there is one."
+    assert any(step.do == "listen" and step.ok for step in result.steps)
+    texts = [
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+    ]
+    assert any("times to listen, not a count" in text for text in texts)
+    assert any("answer is zero" in text for text in texts)
+
+
+def test_recut_nudge_starts_at_the_middle(twelve_s_mp4: Path) -> None:
+    def search(_query: str) -> AudioSearchResult:
+        return AudioSearchResult(
+            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
+            clusters=[],
+            count=0,
+        )
+
+    brain = FakeBrain(
+        [
+            _act("search_audio", query="tone"),
+            _act("export_clip", start_s=9.0, end_s=12.0),
+            _act("export_clip", start_s=10.5, end_s=12.0),
+            _act("answer", answer="Shorter clip from the middle."),
+        ]
+    )
+    result = run_loop(
+        twelve_s_mp4,
+        "clip when that sound happens",
+        brain,
+        search_audio=search,
+        audio_status=IndexStatus.ready.value,
+        export_clip=_export,
+    )
+    assert result.answer == "Shorter clip from the middle."
+    nudge = next(
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+        and "whole search window" in call[-1]["content"]
+    )
+    assert "not before the middle" in nudge
+    assert "10.5s" in nudge
+    # 12s file caps the +2s window.
+    assert "12.0s" in nudge
+    assert "9.5s" not in nudge

@@ -825,8 +825,8 @@ def test_full_hit_export_is_nudged_then_bounced(twelve_s_mp4: Path) -> None:
         if isinstance(call[-1].get("content"), str)
         and "whole search window" in call[-1]["content"]
     )
-    assert "9.5s" in nudge
-    assert "11.5s" in nudge
+    assert "10.5s" in nudge
+    assert "12.0s" in nudge
     bounce = [
         call[-1]["content"]
         for call in brain.calls

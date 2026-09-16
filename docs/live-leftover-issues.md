@@ -52,9 +52,9 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **Simple fix:** if they export the **whole** search window, make them cut again around the **middle** (~2s), not the full 3s.
 
-**A bit more technical:** remember sound-hit `[start, end]`. If `export_clip` matches that window (± a fraction of a second), append “recut ~1s either side of the middle.” If they **answer** while that full-window export is still the clip, bounce once and ask for the recut. When they export a shorter window that no longer matches the hit bounds, let the answer through.
+**A bit more technical:** remember sound-hit `[start, end]`. If `export_clip` matches that window (± a fraction of a second), append “recut from the middle for about 2 seconds, not before the middle.” If they **answer** while that full-window export is still the clip, bounce until they recut. When they export a shorter window that no longer matches the hit bounds, let the answer through.
 
-**In code now.** Unit tests: sound hit 9–12 → export 9–12 is nudged; two answers on that clip are both bounced; export 10.5–12 is accepted; an unrelated 0–2 cut is not nudged. **Not live-proven** on Gemma + this tape.
+**In code now.** Unit tests: sound hit 9–12 → export 9–12 is nudged; two answers on that clip are both bounced; export 10.5–12 is accepted; an unrelated 0–2 cut is not nudged. Recut window is **from the middle forward** (~2s), not ±1s, so a 9–12 hit asks for ~10.5–12.5 (capped at file end). **Live:** leftover pass on two Gemma runs; tightness of the recut is this pass’s change.
 
 ---
 
@@ -70,7 +70,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** this is a stronger **observation note** after `look`, plus the existing “next unused slide time” rule so Pricing is not skipped. We **cannot** guarantee the words “gold” without hardcoding this tape. The laptop does not OCR the JPEG or reject answers that lack a color word (that would be a new checker). Hedging may still happen; the note makes the expected shape of the answer explicit.
 
-**In code now** (the note after a slide look). No unit test can prove Gemma will say “gold.” **Not live-proven.**
+**In code now.** After a slide look: name the color. If the question is print **and** “what they said,” **block the answer** until spoken-word search has run. Unit tests: look-then-answer without search is bounced; after search the second answer is kept; “what color is the printed number?” does not require speech. **Not live-proven** until a Modal rerun after this bounce.
 
 ---
 
@@ -86,7 +86,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** still prompt-only. There is no clap classifier on the laptop. A real fix would be a detector (out of scope). Bouncing a count with **no** listen is cheap; bouncing a wrong count **after** a listen is guessing what the WAV contained. Expect this to stay **unstable** until a listen-then-zero note sticks more often.
 
-**In code now** (sound-search + listen notes). No clap detector. **Not live-proven.**
+**In code now.** After `search_audio` on a “how many” question: no answer until a listen. After listen: bounce the first answer (hit rows are not the count; unsure → 0). No clap detector. Unit tests on a tiny black file, not this tape. **Not live-proven** until a Modal rerun after this bounce.
 
 ---
 
@@ -95,9 +95,9 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 | Issue | In one line | Laptop rule | Proven? |
 |---|---|---|---|
 | **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Live pass** (two Gemma runs). Skip 2–4 both times |
-| **H7 beep clip** | Exports the whole 9–12s sound window | If the cut equals a hit window, recut ~2s around the middle | **Live pass.** First run: Gemma chose 11.5–14.5 (nudge idle). Second run: export 9–12 then recut **9.5–11.5** |
-| **M1 gold $99** | Saw the pixels; would not name color + match | After look: name the color; say if speech matches. No OCR | **Live partial.** Yellow $99 both runs; never searched speech |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Query sound only; unsure → 0. No clap detector | **Live fail.** Both runs: would not say zero |
+| **H7 beep clip** | Exports the whole 9–12s sound window | Recut from the middle **forward** ~2s (not ±1s) | **Live leftover pass.** Tightness (10.5–12.5 vs 9.5–11.5) not live-proven this pass yet |
+| **M1 gold $99** | Saw the pixels; would not name color + match | Name the color; **block answer** until spoken-word search | **Live partial** before this bounce. New bounce not live-proven yet |
+| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Listen first; bounce first count; unsure → 0. No clap detector | **Live fail** before this bounce. New bounce not live-proven yet |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
@@ -120,7 +120,7 @@ Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9
 
 - Look-only 2s crawls are allowed. H8 only gets skip-ahead if Gemma also **listens** on the same window (it did, this run).
 - Skip-ahead does not fire in the last 6 seconds of a file.
-- M1 / H5 are notes only. Live (two runs): M1 named yellow but skipped the speech match; H5 still would not say zero.
+- M1 / H5 now bounce (speech search required; listen + default-zero). Live proof is the next Modal rerun.
 
 ## Second live rerun (same tape, same Modal Gemma)
 

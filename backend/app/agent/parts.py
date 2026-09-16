@@ -74,6 +74,8 @@ def listen_message(start_s: float, end_s: float, wav: bytes) -> dict:
         "Audio part on this user turn, not a tool result. "
         "Only count the sound you were asked about. "
         "Speech, silence, or a different tone is not a match. "
+        "This window is zero unless you clearly heard that exact sound. "
+        "Do not use the number of search rows as the count. "
         "If you are not sure, the count is zero."
     )
     return {
@@ -197,11 +199,12 @@ def audio_search_message(result, query: str) -> dict:
             "These are times to listen, not a count of how many times a sound happened. "
             "Look, listen, or export near the middle of a window (under 2 seconds), "
             "not the start. The start of a window can be a different moment. "
-            "If the user wants a short clip of the event, cut about 2 seconds around "
-            "the middle, not the full search window. "
+            "If the user wants a short clip of the event, cut about 2 seconds starting "
+            "at the middle, not before the middle, not the full search window. "
             "If you are asked how many times a sound happened, listen at a hit first. "
             "Only count the exact sound in the query. Speech, silence, or a different "
-            "tone is not a match. If you are not sure, the count is zero. "
+            "tone is not a match. Hit rows are not a count. This window is zero unless "
+            "you clearly heard that exact sound. If you are not sure, the count is zero. "
             "Do not guess. Do not only apologize. "
             "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
@@ -277,7 +280,8 @@ def after_look_slide_nudge(unused_times: list[float]) -> dict:
             "If those pixels do not answer, look at the next unused slide time "
             f"(under 2 seconds). Unused times: {unused}. "
             "If a frame showed a price or digits, that is a printed number — name the color. "
-            "If they spoke a number, say whether it matches. "
+            "If the question asks whether print matches what was said, search spoken "
+            "words before answering, then say whether those lines match the pixels. "
             "Do not look at a time you already looked at. Do not only apologize."
         ),
     }
@@ -314,15 +318,18 @@ def skip_ahead_message(from_s: float, duration_s: float) -> dict:
     }
 
 
-def export_whole_window_nudge(middle_s: float) -> dict:
-    lo = max(0.0, middle_s - 1.0)
-    hi = middle_s + 1.0
+def export_whole_window_nudge(middle_s: float, duration_s: float | None = None) -> dict:
+    lo = middle_s
+    hi = middle_s + 2.0
+    if duration_s is not None:
+        hi = min(hi, duration_s)
     return {
         "role": "user",
         "content": (
             "That cut is the whole search window, including the start, "
             "which can be a different slide. "
-            f"Export again around the middle (~{lo:.1f}s–{hi:.1f}s), "
+            "Export again from the middle for about 2 seconds "
+            f"(~{lo:.1f}s–{hi:.1f}s), not before the middle, "
             "not the full search window. Do not only apologize."
         ),
     }
@@ -337,6 +344,42 @@ EMPTY_MOVE_NUDGE = (
 
 def empty_move_nudge_message() -> dict:
     return {"role": "user", "content": EMPTY_MOVE_NUDGE}
+
+
+NEED_SPEECH_FOR_MATCH = (
+    "Do not answer yet. You have not searched what was said. "
+    "If the question asks whether print matches speech, search spoken words first. "
+    "Then say whether the printed number matches those lines. "
+    "Do not only apologize."
+)
+
+
+def need_speech_for_match_message() -> dict:
+    return {"role": "user", "content": NEED_SPEECH_FOR_MATCH}
+
+
+NEED_LISTEN_FOR_COUNT = (
+    "Do not answer yet. Sound hits are times to listen, not a count. "
+    "Listen at a hit (under 2 seconds, near the middle), then answer. "
+    "Do not only apologize."
+)
+
+
+def need_listen_for_count_message() -> dict:
+    return {"role": "user", "content": NEED_LISTEN_FOR_COUNT}
+
+
+COUNT_DEFAULT_ZERO = (
+    "Do not treat the number of search rows as the count. "
+    "If the clip you heard was not clearly the sound in the question "
+    "(speech, silence, or a different tone is not a match), that window is zero. "
+    "If you are not sure you heard that exact sound, the answer is zero. "
+    "Answer now with the count."
+)
+
+
+def count_default_zero_message() -> dict:
+    return {"role": "user", "content": COUNT_DEFAULT_ZERO}
 
 
 PARSE_AGAIN_NUDGE = (
