@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import subprocess
+import uuid
 from pathlib import Path
 
+import pytest
 from app.agent.client import FakeBrain, VllmBrain
 from app.agent.loop import LoopError, run_loop
 from app.agent.schema import RESPONSE_FORMAT, parse_action
@@ -725,3 +728,144 @@ def test_repeat_look_is_blocked_and_names_unused_slide(tiny_mp4: Path) -> None:
         and "next unused slide time" in call[-1]["content"]
     )
     assert "0.5s" in after
+    assert "name the color" in after
+
+
+@pytest.fixture(scope="module")
+def twelve_s_mp4(media_dir: Path) -> Path:
+    path = media_dir / "twelve.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=black:s=64x64:d=12",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=f=440:d=12",
+            "-shortest",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:a",
+            "aac",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return path
+
+
+def test_skip_ahead_blocks_next_two_second_look(twelve_s_mp4: Path) -> None:
+    brain = FakeBrain(
+        [
+            _act("look", start_s=0.0, end_s=2.0, fps=1),
+            _act("listen", start_s=0.0, end_s=2.0),
+            _act("look", start_s=2.0, end_s=4.0, fps=1),
+            _act("look", start_s=8.0, end_s=10.0, fps=1),
+            _act("answer", answer="Later beat after a skip."),
+        ]
+    )
+    result = run_loop(twelve_s_mp4, "walk through the whole tape", brain)
+    assert any(
+        step.do == "look" and step.ok is False and "skip" in step.detail
+        for step in result.steps
+    )
+    assert any(
+        step.do == "look" and step.ok and step.start_s == 8.0 for step in result.steps
+    )
+    skip = next(
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+        and "Do not take the next 2-second step" in call[-1]["content"]
+    )
+    assert "12.0s" in skip
+    assert result.answer == "Later beat after a skip."
+
+
+def test_tiny_file_does_not_skip_ahead(tiny_mp4: Path) -> None:
+    brain = FakeBrain(
+        [
+            _act("look", start_s=0.0, end_s=0.4, fps=1),
+            _act("listen", start_s=0.0, end_s=0.4),
+            _act("look", start_s=0.4, end_s=0.8, fps=1),
+            _act("answer", answer="Both short windows."),
+        ]
+    )
+    result = run_loop(tiny_mp4, "walk through the whole tape", brain)
+    assert all(
+        not (step.do == "look" and step.ok is False and "skip" in step.detail)
+        for step in result.steps
+    )
+    assert sum(1 for step in result.steps if step.do == "look" and step.ok) == 2
+
+
+def test_full_hit_export_is_nudged_then_bounced(twelve_s_mp4: Path) -> None:
+    from app.models import IndexStatus
+    from app.search.audio import AudioHit, AudioSearchResult
+    from app.tools.export import ExportResult
+
+    def search(_query: str) -> AudioSearchResult:
+        return AudioSearchResult(
+            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
+            clusters=[],
+            count=0,
+        )
+
+    def export_clip(start_s: float, end_s: float) -> ExportResult:
+        return ExportResult(
+            id=uuid.uuid4(),
+            kind="clip",
+            start_s=start_s,
+            end_s=end_s,
+            path=Path("/tmp/clip.mp4"),
+            url="/videos/x/exports/y",
+        )
+
+    brain = FakeBrain(
+        [
+            _act("search_audio", query="tone"),
+            _act("export_clip", start_s=9.0, end_s=12.0),
+            _act("answer", answer="Here is the full window."),
+            _act("export_clip", start_s=10.5, end_s=12.0),
+            _act("answer", answer="Shorter clip around the middle."),
+        ]
+    )
+    result = run_loop(
+        twelve_s_mp4,
+        "clip when that sound happens",
+        brain,
+        search_audio=search,
+        audio_status=IndexStatus.ready.value,
+        export_clip=export_clip,
+    )
+    assert result.answer == "Shorter clip around the middle."
+    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
+    assert [(step.start_s, step.end_s) for step in exports] == [
+        (9.0, 12.0),
+        (10.5, 12.0),
+    ]
+    nudge = next(
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+        and "whole search window" in call[-1]["content"]
+    )
+    assert "9.5s" in nudge
+    assert "11.5s" in nudge
+    bounce = [
+        call[-1]["content"]
+        for call in brain.calls
+        if isinstance(call[-1].get("content"), str)
+        and "whole search window" in call[-1]["content"]
+    ]
+    assert len(bounce) >= 2

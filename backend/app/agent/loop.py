@@ -15,11 +15,13 @@ from app.agent.parts import (
     audio_search_message,
     empty_move_nudge_message,
     export_message,
+    export_whole_window_nudge,
     listen_message,
     look_message,
     parse_again_message,
     refuse_message,
     search_message,
+    skip_ahead_message,
     speech_already_searched_message,
     slide_search_message,
     slides_already_searched_message,
@@ -183,6 +185,47 @@ def _same_look(
     return False
 
 
+# Skip a 2s look+listen crawl only when a lot of the file is still ahead.
+# Tiny 1s tests have remaining ≤ 6 after the first window, so they never fire.
+_SKIP_REMAINING_S = 6.0
+
+
+def _windows_match(
+    left: tuple[float, float],
+    right: tuple[float, float],
+    tol: float = 0.5,
+) -> bool:
+    return abs(left[0] - right[0]) < tol and abs(left[1] - right[1]) < tol
+
+
+def _is_next_step_after_listen(
+    start_s: float,
+    looked: list[tuple[float, float]],
+    last_listen: tuple[float, float] | None,
+    duration_s: float,
+) -> bool:
+    if not looked or last_listen is None:
+        return False
+    prev = looked[-1]
+    if duration_s - prev[1] <= _SKIP_REMAINING_S:
+        return False
+    if not _windows_match(prev, last_listen):
+        return False
+    return abs(start_s - prev[1]) < 0.75
+
+
+def _hit_middle(
+    start_s: float,
+    end_s: float,
+    windows: list[tuple[float, float]],
+    tol: float = 0.3,
+) -> float | None:
+    for hit_start, hit_end in windows:
+        if abs(start_s - hit_start) < tol and abs(end_s - hit_end) < tol:
+            return (hit_start + hit_end) / 2.0
+    return None
+
+
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
     raw = brain.complete(messages)
     try:
@@ -240,6 +283,11 @@ def run_loop(
     searched_slides = False
     slide_hit_times: list[float] = []
     looked_windows: list[tuple[float, float]] = []
+    last_listen_window: tuple[float, float] | None = None
+    audio_hit_windows: list[tuple[float, float]] = []
+    last_hit_middle: float | None = None
+    nudged_full_hit_export = False
+    bounced_full_export = False
     bounced_empty = False
     retried_empty_parse = False
 
@@ -294,6 +342,14 @@ def run_loop(
             ):
                 bounced_empty = True
                 messages.append(empty_move_nudge_message())
+                continue
+            if (
+                nudged_full_hit_export
+                and not bounced_full_export
+                and last_hit_middle is not None
+            ):
+                bounced_full_export = True
+                messages.append(export_whole_window_nudge(last_hit_middle))
                 continue
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
@@ -410,6 +466,7 @@ def run_loop(
                 continue
             result = search_audio(query)
             hits = result.hits[:8]
+            audio_hit_windows = [(hit.start_s, hit.end_s) for hit in hits]
             messages.append(audio_search_message(result, query))
             shown = ",".join(f"{hit.start_s:.2f}" for hit in hits)
             first = hits[0] if hits else None
@@ -516,6 +573,14 @@ def run_loop(
                     detail=result.url,
                 )
             )
+            middle = _hit_middle(result.start_s, result.end_s, audio_hit_windows)
+            if middle is not None:
+                nudged_full_hit_export = True
+                last_hit_middle = middle
+                bounced_full_export = False
+                messages.append(export_whole_window_nudge(middle))
+            else:
+                nudged_full_hit_export = False
             continue
 
         try:
@@ -531,6 +596,25 @@ def run_loop(
                             end_s=end_s,
                             ok=False,
                             detail="already looked",
+                        )
+                    )
+                    continue
+                if _is_next_step_after_listen(
+                    start_s,
+                    looked_windows,
+                    last_listen_window,
+                    meta.duration_s,
+                ):
+                    messages.append(
+                        skip_ahead_message(looked_windows[-1][1], meta.duration_s)
+                    )
+                    steps.append(
+                        Step(
+                            do="look",
+                            start_s=start_s,
+                            end_s=end_s,
+                            ok=False,
+                            detail="skip ahead",
                         )
                     )
                     continue
@@ -551,9 +635,29 @@ def run_loop(
                     unused = _unused_slide_times(slide_hit_times, looked_windows)
                     messages.append(after_look_slide_nudge(unused))
             else:
+                if _is_next_step_after_listen(
+                    start_s,
+                    looked_windows,
+                    last_listen_window,
+                    meta.duration_s,
+                ):
+                    messages.append(
+                        skip_ahead_message(looked_windows[-1][1], meta.duration_s)
+                    )
+                    steps.append(
+                        Step(
+                            do="listen",
+                            start_s=start_s,
+                            end_s=end_s,
+                            ok=False,
+                            detail="skip ahead",
+                        )
+                    )
+                    continue
                 wav = get_audio(path, start_s, end_s)
                 strip_input_audio(messages)
                 messages.append(listen_message(start_s, end_s, wav))
+                last_listen_window = (start_s, end_s)
                 steps.append(
                     Step(
                         do="listen",

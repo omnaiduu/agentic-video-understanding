@@ -71,7 +71,10 @@ def strip_input_audio(messages: list[dict[str, Any]]) -> int:
 def listen_message(start_s: float, end_s: float, wav: bytes) -> dict:
     text = (
         f"audio from {start_s:.2f}s to {end_s:.2f}s. "
-        "Audio part on this user turn, not a tool result."
+        "Audio part on this user turn, not a tool result. "
+        "Only count the sound you were asked about. "
+        "Speech, silence, or a different tone is not a match. "
+        "If you are not sure, the count is zero."
     )
     return {
         "role": "user",
@@ -182,10 +185,6 @@ def audio_search_message(result, query: str) -> dict:
         )
     else:
         lines = [
-            f"[{hit.start_s:.1f}s–{hit.end_s:.1f}s] score={hit.score:.3f}"
-            for hit in hits
-        ]
-        lines = [
             (
                 f"[{hit.start_s:.1f}s–{hit.end_s:.1f}s] "
                 f"middle={((hit.start_s + hit.end_s) / 2):.1f}s "
@@ -198,9 +197,12 @@ def audio_search_message(result, query: str) -> dict:
             "These are times to listen, not a count of how many times a sound happened. "
             "Look, listen, or export near the middle of a window (under 2 seconds), "
             "not the start. The start of a window can be a different moment. "
+            "If the user wants a short clip of the event, cut about 2 seconds around "
+            "the middle, not the full search window. "
             "If you are asked how many times a sound happened, listen at a hit first. "
-            "If you do not clearly hear that sound, the count is zero. "
-            "Do not treat silence or speech as a match. Do not guess. Do not only apologize. "
+            "Only count the exact sound in the query. Speech, silence, or a different "
+            "tone is not a match. If you are not sure, the count is zero. "
+            "Do not guess. Do not only apologize. "
             "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
         )
@@ -274,6 +276,8 @@ def after_look_slide_nudge(unused_times: list[float]) -> dict:
         "content": (
             "If those pixels do not answer, look at the next unused slide time "
             f"(under 2 seconds). Unused times: {unused}. "
+            "If a frame showed a price or digits, that is a printed number — name the color. "
+            "If they spoke a number, say whether it matches. "
             "Do not look at a time you already looked at. Do not only apologize."
         ),
     }
@@ -292,6 +296,34 @@ def already_looked_message(near_s: float, unused_times: list[float]) -> dict:
             f"You already looked near {near_s:.1f}s. Do not look there again. "
             f"Unused slide times: {unused}. {extra}"
             "Do not only apologize."
+        ),
+    }
+
+
+def skip_ahead_message(from_s: float, duration_s: float) -> dict:
+    return {
+        "role": "user",
+        "content": (
+            "You already looked and listened at that beat. "
+            "Do not take the next 2-second step. "
+            f"Look several seconds later (under 2 seconds). "
+            f"Video continues until {duration_s:.1f}s "
+            f"(you last stopped near {from_s:.1f}s). "
+            "Do not only apologize."
+        ),
+    }
+
+
+def export_whole_window_nudge(middle_s: float) -> dict:
+    lo = max(0.0, middle_s - 1.0)
+    hi = middle_s + 1.0
+    return {
+        "role": "user",
+        "content": (
+            "That cut is the whole search window, including the start, "
+            "which can be a different slide. "
+            f"Export again around the middle (~{lo:.1f}s–{hi:.1f}s), "
+            "not the full search window. Do not only apologize."
         ),
     }
 
