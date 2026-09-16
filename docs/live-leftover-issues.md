@@ -70,7 +70,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** this is a stronger **observation note** after `look`, plus the existing “next unused slide time” rule so Pricing is not skipped. We **cannot** guarantee the words “gold” without hardcoding this tape. The laptop does not OCR the JPEG or reject answers that lack a color word (that would be a new checker). Hedging may still happen; the note makes the expected shape of the answer explicit.
 
-**In code now.** After a slide look: name the color. If the question is print **and** “what they said,” **block the answer** until spoken-word search has run. Unit tests: look-then-answer without search is bounced; after search the second answer is kept; “what color is the printed number?” does not require speech. **Not live-proven** until a Modal rerun after this bounce.
+**In code now.** After a slide look: name the color. If the question is print **and** “what they said,” **block the answer** until spoken-word search has run, then compare those lines to the printed digits. **Live pass** (yellow 99 matches spoken $99).
 
 ---
 
@@ -86,7 +86,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** still prompt-only. There is no clap classifier on the laptop. A real fix would be a detector (out of scope). Bouncing a count with **no** listen is cheap; bouncing a wrong count **after** a listen is guessing what the WAV contained. Expect this to stay **unstable** until a listen-then-zero note sticks more often.
 
-**In code now.** After `search_audio` on a “how many” question: no answer until a listen. After listen: bounce the first answer (hit rows are not the count; unsure → 0). No clap detector. Unit tests on a tiny black file, not this tape. **Not live-proven** until a Modal rerun after this bounce.
+**In code now.** After `search_audio` on a “how many” question: no answer until a listen. After listen: bounce the first two answers (hit rows are not the count; unsure → 0). No clap detector. **Live partial:** it stopped inventing “one clap”; it still would not say **zero**.
 
 ---
 
@@ -94,10 +94,10 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 | Issue | In one line | Laptop rule | Proven? |
 |---|---|---|---|
-| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Live pass** (two Gemma runs). Skip 2–4 both times |
-| **H7 beep clip** | Exports the whole 9–12s sound window | Recut from the middle **forward** ~2s (not ±1s) | **Live leftover pass.** Tightness (10.5–12.5 vs 9.5–11.5) not live-proven this pass yet |
-| **M1 gold $99** | Saw the pixels; would not name color + match | Name the color; **block answer** until spoken-word search | **Live partial** before this bounce. New bounce not live-proven yet |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Listen first; bounce first count; unsure → 0. No clap detector | **Live fail** before this bounce. New bounce not live-proven yet |
+| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Skip the next 2s step when >6s remain (look-only too) | **Live pass.** Skip 2–4; named Pricing, RED ALERT, Q3 |
+| **H7 beep clip** | Exports the whole 9–12s sound window | Recut from the middle **forward** ~2s; block extra exports after a short clip | **Live pass.** 9–12 then **10.5–12.5** (Q3 + beep, not red) |
+| **M1 gold $99** | Saw the pixels; would not name color + match | Name the color; **block answer** until spoken-word search; then compare lines | **Live pass.** Yellow 99 matches spoken $99 |
+| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Listen first; bounce counts twice; unsure → 0. No clap detector | **Live partial.** Did not invent “one clap”; still would not say **zero** |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
@@ -120,7 +120,22 @@ Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9
 
 - Look-only crawls are skipped the same way as look+listen crawls (remaining > 6s). Skip is still off in the last 6 seconds of a file.
 - Skip-ahead does not fire in the last 6 seconds of a file.
-- M1 / H5 now bounce (speech search required; listen + default-zero). Live proof is the next Modal rerun.
+- H5 is still prompt-only after listen. Live: it stopped inventing “one clap” but still would not say **zero**.
+
+## Final live rerun (after speech-match, count bounce, recut-from-middle, look-only skip, extra-export cap)
+
+Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Gemma 4 E4B on Modal. All eight HTTP **200**.
+
+| Q | This run | Verdict |
+|---|---|---|
+| **E1** Pro cost | Speech. “$99 a month.” | **Pass.** |
+| **H1** $99 on red? | Looks 0, 6, and 10. Finds $99 at 0s. Leads with “Yes” (the trap). Does not clearly say “not on red.” | **Partial.** |
+| **M3** ship this quarter | Speech → slides → look 10s. “Ship the slide index.” | **Pass.** |
+| **M4** tone + on screen | Sound 9–12 → look+listen **10.5–12.5**. Q3 / Ship the slide index. | **Pass.** |
+| **H8** walk the tape | look+listen 0–2, **skip 2–4**, then 8–10 (RED ALERT), 12–14 and 14–16 (Q3). Names Pricing $99, Red Alert, Q3. | **Pass.** |
+| **H7** clip on the beep | Sound 9–12 → export **9–12** → recut **10.5–12.5**. | **Pass.** Nudge fired. Cut is Q3 + beep, not red. |
+| **M1** printed number color | Looks 10, **0**, and 6, then **search speech**. Yellow 99 matches spoken $99. | **Pass.** |
+| **H5** how many claps | Sound search, listen 7.5–9.5. “Cannot definitively count.” | **Partial.** No invented “one clap.” Still not **zero**. |
 
 ## Second live rerun (same tape, same Modal Gemma)
 

@@ -60,4 +60,17 @@ Tape (16s): **0–6s** Pricing + gold/yellow **$99** (also spoken) → **6–10s
 
 ## Live scoreboard
 
-Filled after each Modal rerun in [four leftover live issues](live-leftover-issues.md). This pass’s rerun is recorded there as **third live rerun**.
+Filled after each Modal rerun in [four leftover live issues](live-leftover-issues.md). **Final live rerun** (HTTP 200 each):
+
+| Q | Verdict |
+|---|---|
+| E1 Pro cost | **Pass** — $99 |
+| H1 $99 on red? | **Partial** — found $99 at 0s; leading “Yes” on the trap |
+| M3 ship this quarter | **Pass** — Ship the slide index |
+| M4 tone + on screen | **Pass** — look 10.5–12.5, Q3 |
+| H8 walk the tape | **Pass** — skip 2–4; Pricing, RED ALERT, Q3 |
+| H7 clip on the beep | **Pass** — recut **10.5–12.5** |
+| M1 printed number color | **Pass** — yellow 99 matches spoken $99 |
+| H5 how many claps | **Partial** — did not invent a clap; still would not say zero |
+
+H5 still needs a real detector if we want a reliable **zero**. Everything else in the leftover set has a live 200 that matches the leftover, not an answer key.
