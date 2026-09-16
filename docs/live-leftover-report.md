@@ -1,173 +1,228 @@
 # Report: leftover live issues — problems, what we found, how we fixed them
 
-This is a written report of the leftover exam-tape work. Plain language first. Not an answer key for this video. Gemma still chooses look / listen / spoken words / printed slides / sounds. The laptop only adds rules about **how those books work**. We did not hardcode “beep → 11s”, “claps → 0”, or “printed number → gold”.
+This is the long write-up. Same facts as [four leftover live issues](live-leftover-issues.md), told with more of the “why”.
+
+Not an answer key. Gemma still chooses look / listen / spoken words / printed slides / sounds. The laptop only adds rules about **how those books work**. We did not hardcode “beep → 11s”, “claps → 0”, or “printed number → gold”. That would pass *this* tape and fail the next file.
 
 PR: [Look at the middle of a sound hit and the next unused slide](https://github.com/omnaiduu/agentic-video-understanding/pull/26) (`feature/loop-next-hit-b374`).
 
 ---
 
+## How this machine actually works
+
+There are two brains.
+
+**Gemma** (on Modal, GPU) never sees the whole video. Each turn it fills a JSON form: look, listen, search spoken words, search pictures, search sounds, search printed slides, export a clip, or answer. It does not call tools. It only picks a move and times.
+
+**The laptop** (this FastAPI process) runs that move. It cuts JPEGs, cuts a wav, searches Postgres indexes, or writes an mp4. Then it sends a **normal user message** back: “frames at 0.00s”, or “transcript hits…”, or “that cut was the whole search window”. Gemma’s next JSON is based on that note plus whatever photos or one wav we attached.
+
+That back-and-forth is the **loop**. We allow **12 moves**, then we force an answer. One look may attach at most **12 photos**. Gemma’s prompt is small (~8k). Dumping the whole 16s (or a two-hour file) as pictures would blow it up. So the leftover bugs are not “Gemma is dumb.” They are “the loop ran out of moves,” or “the book returned a *window*, not a pin,” or “Gemma answered before opening the other book.”
+
+The **books**:
+
+| Book | What it actually is | What it is *not* |
+|---|---|---|
+| Spoken words (`search`) | Whisper lines + meaning search | The printed slides |
+| Pictures (`search_visual`) | SigLIP “what does this look like” | Reading slide text |
+| Printed slides (`search_slides`) | ColQwen “which unique slide” | A guarantee it ranked Pricing first |
+| Sounds (`search_audio`) | CLAP “windows that *sound like* the query” | A clap counter, or “beep at 11.00s” |
+
+---
+
 ## What the tape actually is
 
-A 16-second file, on purpose messy:
+A 16-second file, messy on purpose. Speech, print, and sound **disagree**.
 
 | Time | On screen | Sound |
 |---|---|---|
-| 0–6s | Navy **Pricing**, gold/yellow **$99** | Someone **says** “$99 a month” |
-| 6–10s | **RED ALERT** | Silence |
-| 10–16s | **Q3 / Ship the slide index** (never spoken) | A tone around **11s** |
+| 0–6s | Navy **Pricing**, gold/yellow **Pro $99** | “The pro plan is $99 a month.” Then “The number is also printed on the slide.” |
+| 6–10s | Solid **RED ALERT** | Silence |
+| 10–16s | Dark green **Q3 Roadmap / Ship the slide index** | A tone ~**11.0–11.75s**, then quiet |
 
-Speech, print, and sound disagree. That is the exam.
+Nobody ever *says* “ship the slide index” or “Q3”. That text exists only as pixels. The beep is a tone, not a spoken word. There are **no claps**.
 
-Gemma does not get the whole video. Each turn it picks one **move**. We allow **12 moves**, then we force an answer. One look may attach at most **12 photos**.
+Upload used for the live reruns: `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Gemma 4 E4B on Modal. Fresh chat session per question. We do **not** call pass without HTTP **200**.
 
 ---
 
-## The problems
+## The four leftover problems
 
-Four questions still failed after the earlier “spoken words, then stop” notes.
+These are what was still wrong after [spoken words, then stop](live-spoken-words.md). That earlier fix stopped Gemma from searching speech twice and quitting. It did **not** fix walking, recutting, matching print to speech, or clap count.
 
 ### 1. Walk the whole tape (H8)
 
-**Ask:** go through the video in order, including things nobody said out loud.
+**Ask:** “Walk through the whole tape in order, including things nobody said out loud.”
 
-**Should:** Pricing / $99, then RED ALERT, then Q3 and the beep.
+**Should:** Pricing / $99, then RED ALERT, then Q3 and (ideally) the beep.
 
-**Problem:** Gemma walked **two seconds at a time** (look, then listen). Each pair costs two of 12 moves. By ~9s the loop said “answer now.” Q3 (10s+) was never opened. It *was* walking. The **move budget** ran out first.
+**What went wrong.** Gemma started at 0s and took **two-second** looks and listens: 0–2, then 2–4, then 4–6… Each look *or* listen costs one of 12 moves. Two moves cover two seconds of tape. By ~9s the loop said “answer now.” Q3 (10s+) was never opened.
+
+This is easy to misread as “it refused to walk.” It *was* walking, in tiny steps. The **move budget** ran out first. The slide book already knew 10s. This question never jumped there.
+
+Raising 12 rounds would only attach more photos and still crawl. The fix is to **stop the crawl** when a lot of file is still left.
 
 ### 2. Clip when the beep happens (H7)
 
-**Ask:** make a short clip of whatever is on screen when the beep happens.
+**Ask:** “Make a three-second clip of whatever is on screen when the beep happens.”
 
 **Should:** a tight cut around ~11s (Q3 + the tone), not the red slide.
 
-**Problem:** sound search does not return “beep at 11.00s.” It returns a **window**, often **9–12s**. The beep sits near the **middle**. The **start** of that window is still RED ALERT. Gemma exported the whole window. Result: red **and** Q3.
+**What went wrong.** Sound search is CLAP. It does not return “beep at 11.00s.” It returns a **window of audio that is similar to the query**, often **9–12s**. The beep sits near the **middle** (~10.5s). The **start** of that window (9s) is still RED ALERT. Gemma exported 9–12 because that is the hit it was given. The laptop cut *exactly* those times. Result: red **and** Q3, beep somewhere inside.
+
+A second version of the same bug: it exported a *near* window (9.75–12.75) so a tight “equals 9–12” check never fired. A third version: a decent 11.5–14.5 clip, then it kept exporting later and later until **15.5–16s** (end silence) and burned all 12 moves.
 
 ### 3. Printed number color vs speech (M1)
 
-**Ask:** they said a number is also printed on the slide. What color is it, and does it match what they said?
+**Ask:** “They said a number is also printed on the slide. What color is that number, and does it match what they said?”
 
 **Should:** gold/yellow **$99** on Pricing; speech also says $99, so they match.
 
-**Problem:** Gemma **did** look at Pricing and could see yellow $99. It never opened **spoken words**, then said it could not tell if that matched speech. The spoken $99 was sitting in the transcript the whole time.
+**What went wrong, in two layers.**
+
+Earlier: ColQwen ranked “number printed on the slide” as **Q3, then Pricing, then red**. Gemma looked at Q3 (no number), skipped Pricing, looked at red. Answer: cannot confirm a printed number. We already had “look at the next unused slide time” for that.
+
+Later, after that walk-the-list rule: it **did** look at 0s. The photo **does** show yellow $99. Then it answered without opening spoken words: “no spoken number was heard, cannot confirm a match.” The spoken $99 was in Whisper at 0s the whole time. It never searched speech, so it honestly thought there was nothing to compare.
+
+Hedging (“might be gold”) was a third layer. We cannot OCR the JPEG or force the word “gold” without hardcoding this tape. Yellow vs gold is Gemma’s wording.
 
 ### 4. How many claps? (H5)
 
-**Ask:** how many claps are in this recording?
+**Ask:** “How many claps are in this recording?”
 
-**Should:** **zero.** This tape has speech, silence, and a tone. No claps.
+**Should:** **zero.**
 
-**Problem:** sound search is **not** a clap detector. It returns times that are *somewhat like* the query (false neighbors). Gemma treated those rows as a count, or listened to silence and still said “one clap.”
+**What went wrong.** Sound search is not a clap detector. It finds chunks *somewhat like* “clap.” False neighbors still get **times**. Gemma then:
+
+- treated the **number of rows** as the count (“there are eight hits, so eight claps”), or
+- listened to **silence** at 7.5–9s (the red slide) and said it “clearly heard one clap,” or
+- listened and said it cannot count.
+
+The laptop never counts claps in the WAV. A note that says “if unsure, zero” is only a note. Gemma can ignore it. Forcing the answer to contain the word “zero” would pass this tape and fail “how many beeps?” (answer: one).
 
 ---
 
-## What we found (live Modal Gemma)
+## What we found on live Gemma (the actual runs)
 
-We ran the same eight hidden-intent questions against **Gemma 4 E4B on Modal**, FastAPI on this machine, fresh chat per question. We do **not** call pass without HTTP **200**.
+Same eight questions each time. Not the full 19-question suite — the leftover four plus the easy checks so we did not break $99 / ship / tone.
 
-Tape upload: `c1d9beb7-5465-4f47-9d53-2d6b299104b5`.
+### Run A — after skip-ahead + centered recut, before speech bounce
 
-### Before these leftover rules
+H8 skip **did** fire: look+listen 0–2, blocked 2–4 (`skip ahead`), then 6s / 10s / 14s. Named Pricing $99, RED ALERT, Q3. **Pass** (beep not always in the sentence).
 
-- **H8** — crawled 2s steps; never reached Q3.
-- **H7** — exported the whole 9–12s sound window (red + Q3).
-- **M1** — named yellow $99, then hedged on speech (never searched it).
-- **H5** — invented claps, or said it could not count.
+H7: one run exported **11.5–14.5** without needing the nudge (Q3, leftover pass). Another exported 9–12 then recut **9.5–11.5** (centered on 10.5). That still included ~0.5s of red, and it cut off the tone after 11.5s.
 
-Easy checks still worked: **E1** ($99), **M3** (ship the slide index), **M4** (tone + Q3 on screen).
+M1: yellow $99; “cannot confirm it matches speech.” Never called `search`. **Partial.**
 
-### After skip-ahead and centered recut (first leftover PR)
+H5: listen 7.5–9, answered **one clap**. **Fail.**
 
-- **H8 pass** — skip blocked 2–4s; named Pricing, RED ALERT, Q3.
-- **H7 leftover pass** — sometimes exported 11.5–14.5 on its own; sometimes recut 9–12 → **9.5–11.5** (still ~0.5s of red).
-- **M1 still partial** — yellow $99; never searched speech.
-- **H5 still fail** — listened to silence, answered **one clap**. Notes did not stick.
+E1 / H1 / M3 / M4 passed on that run.
 
-### After speech-match bounce, count bounce, recut-from-middle, look-only skip
+### Run B — after speech bounce + count bounce, before look-only skip
 
-**Final live rerun** (all HTTP 200):
+M1 **passed**: looked 10, 0, 6, then `search` at 3.12s *and* 0s. “Yellow 99 matches spoken $99.”
 
-| Q | What happened | Verdict |
+H5: “I have not clearly heard any claps” (good) on one run; later “cannot definitively count” (not the word zero). **Partial.**
+
+H7 **failed** that run: first clip 11.5–14.5 was fine, then it exported 13.5–15.5, 14.5–16, 15.5–16… until the forced dump. Recut nudge never fired because 11.5–14.5 was *not* the 9–12 window.
+
+H8 **failed** that run: **look-only** 1.5s steps, 0–1.5, 1.5–3, … 14.5–16. No matching listen, so skip-ahead did not fire. Twelve looks, then a dump of step names, not a walkthrough. This was the known unit-test hole showing up live.
+
+### Run C — final, after look-only skip + extra-export cap
+
+All eight HTTP **200**.
+
+| Q | What Gemma actually did | Verdict |
 |---|---|---|
-| **E1** How much does Pro cost? | Speech. “$99 a month.” | **Pass** |
-| **H1** Is $99 on the red screen? | Looked at 0s, 6s, and 10s. Found $99 at 0s. Led with “Yes” (the trap). | **Partial** |
+| **E1** How much does Pro cost? | `search` only. “$99 a month.” | **Pass** |
+| **H1** Is $99 on the red screen? | Looks 0, 6, 10. Finds $99 at 0s. Leads with “Yes” (the trap). | **Partial** |
 | **M3** What do we ship this quarter? | Speech → slides → look 10s. “Ship the slide index.” | **Pass** |
 | **M4** When is the tone, what’s on screen? | Sound 9–12 → look+listen **10.5–12.5**. Q3. | **Pass** |
-| **H8** Walk the whole tape | look+listen 0–2, **skip 2–4**, then RED ALERT and Q3. | **Pass** |
+| **H8** Walk the tape | look+listen 0–2, **skip 2–4**, then 8–10 (RED ALERT), 12–16 (Q3). Names Pricing $99, Red Alert, Q3. | **Pass** |
 | **H7** Clip on the beep | Export **9–12** → recut **10.5–12.5**. Q3 + beep, not red. | **Pass** |
-| **M1** Printed number color + match? | Looks 10, **0**, 6, then **search speech**. Yellow 99 matches spoken $99. | **Pass** |
-| **H5** How many claps? | Listen 7.5–9.5. “Cannot definitively count.” | **Partial** — no invented “one clap”; still not **zero** |
-
-A middle live run also showed two extra holes we then closed:
-
-- **Look-only crawl (H8):** without a matching listen, it took 1.5s looks for 12 moves and never wrote a real walkthrough. **Fix:** skip that crawl too when more than 6s remain.
-- **Export spam (H7):** a decent 11.5–14.5 clip, then it kept exporting later and later until **15.5–16s** (end silence). **Fix:** after a clip that is **not** the whole search window, block further exports and ask it to answer with the URL.
+| **M1** Printed number + match? | Looks 10, **0**, 6, then **search speech**. Yellow 99 matches spoken $99. | **Pass** |
+| **H5** How many claps? | Listen 7.5–9.5. “Cannot definitively count.” | **Partial** |
 
 ---
 
-## How we fixed it
+## How we fixed it (laptop rules, in order)
 
-Laptop rules only. No new architecture. No React. No keyword list for this tape.
+A **bounce** means: Gemma sent `do: answer`. The laptop **does not accept it**. It appends a user note, counts a round so we cannot loop forever, and asks again. The refused sentence never becomes the API answer.
 
 ### H8 — skip ahead
 
-If the last look ended at time T, the next look or listen starts at ~T (a 2s step), and more than **6s** of video remain, **block** that move: “you already did that beat — look several seconds later.”
+**Rule.** Last look ended at time T. Next look or listen starts at ~T (a ~2s step). More than **6s** of video remain. Block that move. Message: you already looked at that beat; look several seconds later; the file goes until 16s.
 
-First version required a matching listen. Live then showed a **look-only** crawl. We skip that too. Tiny 1s test files never fire (not enough tape left). We did **not** raise the 12-move cap.
+**Why 6s.** A 1s test file would otherwise skip and never finish. Remaining ≤ 6 → crawl is allowed. Remaining > 6 → skip. We did **not** raise 12 rounds.
+
+**Look-only.** First version required a matching listen (so look 0–2 + listen 0–2, then look 2–4 is blocked). Live Gemma sometimes never listened and crawled 1.5s looks. Same rule now fires with **no** listen. If look and listen were *different* windows (look 0–2, listen 6–8), we still do **not** skip — that is not a crawl.
+
+**What we did not do.** We did not say “if they ask to walk the tape, jump to 0, 6, and 10.” That is this file’s slide times.
 
 ### H7 — recut from the middle, then stop
 
-1. Remember sound-hit `[start, end]`.
-2. If the export is that whole window (or near it, e.g. 9.75–12.75 vs 9–12), nudge: recut **from the middle forward** ~2s, not before the middle. A 9–12 hit becomes ~**10.5–12.5**.
-3. Bounce answers until that recut exists.
-4. If it already exported a **short** clip, **do not export again** (stops walking off the end of the file).
+**Rule 1.** Remember each sound-hit `[start, end]`. If `export_clip` matches that window within **1s** on both ends (so 9.75–12.75 still counts as 9–12), treat it as the whole hit.
 
-Centered ±1s had left ~0.5s of red. Starting at the middle drops the previous slide.
+**Rule 2.** Nudge: recut **from the middle forward** ~2s, not before the middle. Middle of 9–12 is 10.5 → ask for ~**10.5–12.5** (capped at file end). Bounce answers until that recut exists.
+
+**Why not ±1s.** Centered 9.5–11.5 still included 9.5–10 (red) and chopped the tone after 11.5. The start of a search window is often the **previous slide**. Starting at the middle drops it.
+
+**Rule 3.** After a clip that is **not** the whole search window, block further exports: you already have a cut; answer with the URL. That stopped the 15.5–16 death spiral.
+
+**What we did not do.** We did not say “if they say beep, export 10.5–12.5.”
 
 ### M1 — force spoken words before “does it match”
 
-1. After a slide look: if you see a price or digits, that **is** the printed number — name the color.
-2. If the question talks about something **printed** *and* **what they said**, **refuse the answer** until it searches spoken words.
-3. After that search: those lines are what was said; if a line names a number, that is the spoken value; say whether it matches the pixels.
+**Rule 1.** After a slide look: if you see a price or digits, that **is** the printed number — name the color. Unused slide times stay listed so Pricing is not skipped.
 
-We do not OCR the JPEG. We do not hardcode “gold” or “$99”.
+**Rule 2.** If the question talks about something **printed** *and* **what they said**, refuse `answer` until `search` (spoken words) has run.
+
+**Rule 3.** After that search: those lines are what was said. If a line names a number or price, that is the spoken value. Compare it to the printed digits. Say whether they match.
+
+Live, search returned both 3.12s (“the number is also printed on the slide”) **and** 0s (“$99 a month”). Without rule 3, Gemma stared at 3.12s and said “the spoken number is not specified.” With it, it used the $99 line.
+
+**What we did not do.** We do not OCR the JPEG. We do not reject answers that lack the word “gold.” We do not require speech for “what color is the printed number?” (color only).
 
 ### H5 — hits are not a count; default zero
 
-1. On a “how many …” question that used sound search: **no answer until it listens**.
-2. After listen: bounce the first **two** answers. Hit rows are not the count. Speech, silence, or a different tone is **zero**. If unsure, the answer is **zero**.
-3. Stronger listen note: this window is zero unless you clearly heard that exact sound.
+**Rule 1.** Question contains “how many” **and** it already used `search_audio`: no answer until a successful listen.
 
-There is still **no clap detector**. We cannot read the WAV and reject a wrong count without guessing. Live: it stopped saying “one clap”; it still will not reliably say **zero**.
+**Rule 2.** After listen, bounce the first **two** answers. Hit rows are not the count. A similar search score is not hearing the sound. Speech, silence, or a different tone is zero. If unsure, the answer is zero.
+
+**Rule 3.** The listen note itself says this window is zero unless you clearly heard that exact sound.
+
+**What we did not do.** We did not put “clap” in the laptop notes. We did not bounce until the answer contains “zero” (that would be an answer key). We did not add a clap classifier. Live: it stopped inventing “one clap”; it still will not reliably say **zero**. That is the honest leftover.
 
 ---
 
 ## What else we did
 
-- **Unit tests** on black 12s / 1s files, not this exam tape: skip-ahead (with and without listen), recut from the middle, near-full windows still count as the hit, extra export blocked, print-vs-speech bounce, how-many listen bounce. Laptop notes still do not contain beep / clap / ship / $99.
-- **Live Modal reruns** of the eight questions, more than once, after each rule change. FastAPI restarted so it loaded new loop code. Gemma cold-started on Modal when `/v1/models` returned 503.
-- **Docs:** this report, plus the issue/solution card in [four leftover live issues](live-leftover-issues.md), indexed from [docs/README](README.md).
-- **Did not** add a Notion task, a new database, a new UI, or a clap/OCR model.
+- **Unit tests** on black 12s and ~1s mp4s, not this exam tape. They check the rules fire (or do not fire) without mentioning beep / clap / ship / $99 as answers. The laptop source is grepped so those exam strings cannot leak into notes.
+- **Live Modal reruns** after each change. FastAPI was started **without** `--reload`, so we killed and restarted uvicorn or it would have kept the old loop. Gemma `/v1/models` sometimes returned 503 until the GPU was warm; we waited for 200 before chatting.
+- **Docs** in this file, [four leftover live issues](live-leftover-issues.md), and the [docs index](README.md).
+- **Did not** add Notion logging, a new database, a new UI, React, a new architecture, a clap model, or OCR.
 
-Code that changed: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, and tests in `test_loop_rules.py`, `test_chat.py`, `test_audio.py`.
+Files: `backend/app/agent/loop.py` (when to bounce / skip / recut), `parts.py` (the notes Gemma sees), `schema.py` (the system prompt), tests in `test_loop_rules.py`, `test_chat.py`, `test_audio.py`.
 
 ---
 
-## What is still open
+## What is still open (honest)
 
-| Item | Status |
+| Item | Why it is still open |
 |---|---|
-| Skip in the last 6 seconds of a file | By design (lets a short file finish). |
-| H5 saying the word **zero** | Unstable without a sound classifier. |
-| H1 trap (“confirm $99 is on red”) | Sometimes leads with “Yes” even after looking at Pricing. |
-| Color word gold vs yellow | Gemma’s wording. We do not OCR. |
-| Beep mentioned in the H8 sentence | Walk names the three slides; the tone is not always in the final text. |
+| Skip in the last 6 seconds | By design. Lets a short file finish. |
+| H5 saying the word **zero** | No classifier. A second answer after the bounce can still hedge. A detector would be a new model, out of scope. |
+| H1 trap (“confirm $99 is on red”) | It looked at Pricing *and* red, then led with “Yes.” Facts can be right while the first word agrees with the false premise. We did not add “if they ask to confirm a false location, say no.” |
+| Gold vs yellow | Gemma’s color word. We do not OCR. |
+| Beep in the H8 sentence | Walk names the three slides. The tone is not always in the final text. Skip-ahead was about *reaching* Q3, not dictating the sentence. |
 
-A list of words for *this* video would pass the exam and fail the next file. That is not a fix.
+If the next video has claps, H5 should count them after listening — which is why we must not hardcode zero.
 
 ---
 
 ## Bottom line
 
-The leftover set was: walk the tape, clip the beep, name the printed color and match speech, count claps.
+The leftover set was four questions: walk the tape, clip the beep, name the printed color and match speech, count claps.
 
-On live Modal Gemma, **walk, beep clip, and printed-number match now pass** with HTTP 200. **Clap count** no longer invents “one clap” and still will not say **zero**. That last one needs a real detector, not another note.
+On live Modal Gemma, **walk, beep clip, and printed-number match now pass** with HTTP 200. The laptop did that by changing **how the books work** (skip crawls, recut from the middle, require speech for a print-vs-speech question, refuse a count with no listen).
+
+**Clap count** no longer invents “one clap” and still will not say **zero**. That last one needs a real detector, not another note.
