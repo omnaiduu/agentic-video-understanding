@@ -38,7 +38,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** if the last look window matches the last listen window, the next look *or* listen starts at that end (~2s step), and more than **6s** of video remain, **block** that move and tell it to skip ahead. Tiny 1s test files would not fire (not enough tape left). Do **not** “fix” this by raising 12 rounds — that only attaches more photos.
 
-**In code now.** Unit tests (black 12s file, not the exam tape): paired look+listen then 2–4 is blocked; look-only 2–4 is blocked; a jump to 8–10 is allowed; 1s files do not skip. **Live pass** on Gemma + this tape (skip 2–4, then RED ALERT and Q3).
+**In code now.** Unit tests (black 12s file, not the exam tape): paired look+listen then 2–4 is blocked; look-only 2–4 is blocked; a jump to 8–10 is allowed; 1s files do not skip. **Live pass** on Gemma + this tape (skip 2–4, then RED ALERT and Q3). This is the leftover we **kept**: loop hygiene for any long file, not a content guess. A wedding video still should **search then jump**, not crawl.
 
 ---
 
@@ -46,15 +46,17 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **What we asked:** export a short video of the beep.
 
-**What should happen:** a tight cut around ~11s (Q3 + the tone), about **2 seconds**, not the red slide.
+**What should happen:** a tight cut around the tone (~11s, Q3 on screen), about **2–3 seconds**, not the red slide.
 
-**What happens:** sound search does not return “beep at 11.00s.” It returns a **window** of audio that is *similar* to the query, often **9–12s**. The beep sits near the **middle**. The **start** of that window is still RED ALERT. Gemma then exports **9–12** because that is the hit it was given. The laptop cuts exactly those times. Result: red **and** Q3, beep somewhere inside.
+**What happens:** sound search does not return “beep at 11.00s.” It returns a **window** of audio that is *similar* to the query, often **9–12s**. The beep sits somewhere **inside**. The **start** of that window is still RED ALERT. E4B then exports **9–12** because that is the hit it was given, **without listening**. The laptop cuts exactly those times. Result: red **and** Q3, beep somewhere inside.
 
-**Simple fix:** if they export the **whole** search window, make them cut again around the **middle** (~2s), not the full 3s.
+That is a **real issue**: CLAP returns a **range**, not a pin. Exporting the range exports the previous scene. Longer write-up: [sound search returns a range](sound-window-export.md).
 
-**A bit more technical:** remember sound-hit `[start, end]`. If `export_clip` matches that window (± a fraction of a second), append “recut from the middle for about 2 seconds, not before the middle.” If they **answer** while that full-window export is still the clip, bounce until they recut. When they export a shorter window that no longer matches the hit bounds, let the answer through.
+**Wrong fix (removed):** treat the **middle** of the window as the event, bounce until Gemma recuts ~2s from that midpoint, then block extra exports. That made a live pass (9–12 then 10.5–12.5). It **guesses**. Hop/chunk size made the tone near the middle *on this tape*. The laptop still never heard the wav.
 
-**In code now.** Unit tests: sound hit 9–12 → export 9–12 is nudged; two answers on that clip are both bounced; export 10.5–12 is accepted; an unrelated 0–2 cut is not nudged. Recut window is **from the middle forward** (~2s). A second export after a short clip is blocked. **Live pass:** 9–12 then **10.5–12.5**.
+**OG / correct path:** `search_audio` → **listen** at a hit → **export the range you heard**. If the model dumps the whole CLAP window, that cut stands. We do not recut it. Whether 12B listens first is an [A/B](e4b-vs-12b-plan.md), not another bounce.
+
+**In code now.** Recut / extra-export cap **removed**. Observe note: hits are times to listen; a hit is a similar-audio range; listen, then export what you heard. Unit tests: listen-then-export is accepted; exporting 9–12 is **not** nudged.
 
 ---
 
@@ -64,13 +66,13 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **What should happen:** gold **$99** on Pricing; speech also says $99, so they match.
 
-**What happens:** printed-slide search returns several times. Gemma **does** look at Pricing (0s). The photo **does** show gold $99. It still **hedges** (“might be gold,” “not sure if it matches”). Search worked. The final sentence is vague. Several slides are in the prompt at once, and speech also says $99, so it will not commit.
+**What happens:** printed-slide search returns several times. E4B **does** look at Pricing (0s). The photo **does** show gold/yellow $99. It still **hedges**, and it often **answers without opening spoken words** (“cannot confirm it matches”). Search worked. The planner did not open the second book.
 
-**Simple fix:** after a look, say: if you can see a price or digits, that **is** the printed number — **name the color**. If they spoke a number, say whether it matches. Do not stop at “there appears to be a price.”
+**Wrong fix (removed):** a keyword detector (`printed` + `they said`) that **blocked `answer`** until `search`, then a note to compare those lines to the pixels. Live pass only with that bounce (yellow 99 matches spoken $99). That is fragile prompting: the next wording of the same question will not match the tokens.
 
-**A bit more technical:** this is a stronger **observation note** after `look`, plus the existing “next unused slide time” rule so Pricing is not skipped. We **cannot** guarantee the words “gold” without hardcoding this tape. The laptop does not OCR the JPEG or reject answers that lack a color word (that would be a new checker). Hedging may still happen; the note makes the expected shape of the answer explicit.
+**What stays:** after a slide look, unused times on the ranked list are still listed so it does not skip hit #2. `look` still says to read prices, digits, and colors. We **cannot** guarantee the word “gold” without OCR.
 
-**In code now.** After a slide look: name the color. If the question is print **and** “what they said,” **block the answer** until spoken-word search has run, then compare those lines to the printed digits. **Live pass** (yellow 99 matches spoken $99).
+**12B A/B:** same M1 wording. Better if it searches speech **and** looks, without a bounce. Plan: [E4B vs 12B](e4b-vs-12b-plan.md).
 
 ---
 
@@ -94,12 +96,14 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 | Issue | In one line | Laptop rule | Proven? |
 |---|---|---|---|
-| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Skip the next 2s step when >6s remain (look-only too) | **Live pass.** Skip 2–4; named Pricing, RED ALERT, Q3 |
-| **H7 beep clip** | Exports the whole 9–12s sound window | Recut from the middle **forward** ~2s; block extra exports after a short clip | **Live pass.** 9–12 then **10.5–12.5** (Q3 + beep, not red) |
-| **M1 gold $99** | Saw the pixels; would not name color + match | Name the color; **block answer** until spoken-word search; then compare lines | **Live pass.** Yellow 99 matches spoken $99 |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | *(removed)* No “say zero” bounce. Hits remain times, not a count | **Not a laptop fix.** Trap question on this tape |
+| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Skip the next 2s step when >6s remain (look-only too) | **Live pass.** Kept. |
+| **H7 beep clip** | CLAP returns a **range**; E4B exports it without listening | **Removed recut.** Listen, then export what you heard | E4B live pass was **only with recut**. OG path is unproven on 12B. |
+| **M1 gold $99** | Saw the pixels; skipped speech | **Removed** print-vs-speech bounce. Unused slide times stay | E4B live pass was **only with the bounce**. |
+| **H5 claps** | Invents a count from hit rows / tone | *(removed)* Hits are times, not a count. No clap detector | **Not a laptop fix.** |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
+
+**Next task, not this PR:** [run the same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back if 12B fails; write that down.
 
 ## Live rerun (Modal Gemma, this machine)
 
@@ -119,8 +123,8 @@ Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9
 **Where tests still show a hole**
 
 - Look-only crawls are skipped the same way as look+listen crawls (remaining > 6s). Skip is still off in the last 6 seconds of a file.
-- Skip-ahead does not fire in the last 6 seconds of a file.
 - H5 exam bounce (“unsure → 0”) was removed. Sound hits are still times, not a count.
+- H7 recut-from-middle, extra-export cap, and M1 print-vs-speech bounce are **removed**. E4B live “passes” for H7/M1 on the scoreboards below used those crutches; they are not the current loop.
 
 ## Final live rerun (after speech-match, count bounce, recut-from-middle, look-only skip, extra-export cap)
 
@@ -151,3 +155,5 @@ Independent chat sessions after the first scoreboard. Same upload `c1d9beb7-5465
 | **H7** clip on the beep | Sound 9–12 → export **9–12** → recut **9.5–11.5**. | **Pass** on the leftover (nudge fired). Clip still includes ~0.5s of red before Q3; beep onset is in the cut, tail after 11.5s is not. |
 | **M1** printed number color | Looks 10, **0**, and 6. **Yellow $99.** Then: no spoken number heard, cannot confirm match. | **Partial.** Same hole as run 1. |
 | **H5** how many claps | Sound search, listen 7.5–9 (silence / red). Answers **one** clap. | **Fail.** |
+
+Those H7/M1 “passes” above were **with** recut-from-middle and the print-vs-speech bounce. Both crutches are gone. Re-score on [12B](e4b-vs-12b-plan.md) with `backend/eval/run_hidden_intent_suite.py`.

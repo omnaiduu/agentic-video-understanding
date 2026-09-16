@@ -726,7 +726,7 @@ def test_repeat_look_is_blocked_and_names_unused_slide(tiny_mp4: Path) -> None:
         and "next unused slide time" in call[-1]["content"]
     )
     assert "0.5s" in after
-    assert "name the color" in after
+    assert "name the color" not in after
 
 
 def test_skip_ahead_blocks_next_two_second_look(twelve_s_mp4: Path) -> None:
@@ -772,65 +772,3 @@ def test_tiny_file_does_not_skip_ahead(tiny_mp4: Path) -> None:
         for step in result.steps
     )
     assert sum(1 for step in result.steps if step.do == "look" and step.ok) == 2
-
-
-def test_full_hit_export_is_nudged_then_bounced(twelve_s_mp4: Path) -> None:
-    from app.models import IndexStatus
-    from app.search.audio import AudioHit, AudioSearchResult
-    from app.tools.export import ExportResult
-
-    def search(_query: str) -> AudioSearchResult:
-        return AudioSearchResult(
-            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
-            clusters=[],
-            count=0,
-        )
-
-    def export_clip(start_s: float, end_s: float) -> ExportResult:
-        return ExportResult(
-            id=uuid.uuid4(),
-            kind="clip",
-            start_s=start_s,
-            end_s=end_s,
-            path=Path("/tmp/clip.mp4"),
-            url="/videos/x/exports/y",
-        )
-
-    brain = FakeBrain(
-        [
-            _act("search_audio", query="tone"),
-            _act("export_clip", start_s=9.0, end_s=12.0),
-            _act("answer", answer="Here is the full window."),
-            _act("export_clip", start_s=10.5, end_s=12.0),
-            _act("answer", answer="Shorter clip around the middle."),
-        ]
-    )
-    result = run_loop(
-        twelve_s_mp4,
-        "clip when that sound happens",
-        brain,
-        search_audio=search,
-        audio_status=IndexStatus.ready.value,
-        export_clip=export_clip,
-    )
-    assert result.answer == "Shorter clip around the middle."
-    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
-    assert [(step.start_s, step.end_s) for step in exports] == [
-        (9.0, 12.0),
-        (10.5, 12.0),
-    ]
-    nudge = next(
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-        and "whole search window" in call[-1]["content"]
-    )
-    assert "10.5s" in nudge
-    assert "12.0s" in nudge
-    bounce = [
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-        and "whole search window" in call[-1]["content"]
-    ]
-    assert len(bounce) >= 2

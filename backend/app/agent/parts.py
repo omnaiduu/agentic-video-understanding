@@ -192,11 +192,9 @@ def audio_search_message(result, query: str) -> dict:
         text = (
             f"sound hits for {query!r} (at most 8 windows, not the whole file). "
             "These are times to listen, not a count of how many times a sound happened. "
-            "Look, listen, or export near the middle of a window (under 2 seconds), "
-            "not the start. The start of a window can be a different moment. "
-            "If the user wants a short clip of the event, cut about 2 seconds starting "
-            "at the middle, not before the middle, not the full search window. "
-            "Do not guess. Do not only apologize. "
+            "Each hit is a similar-audio range. The start of a window can be a different "
+            "moment. Listen at a hit. If the user wants a clip, export the range you "
+            "heard — not a guess. Do not only apologize. "
             "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
         )
@@ -270,9 +268,6 @@ def after_look_slide_nudge(unused_times: list[float]) -> dict:
         "content": (
             "If those pixels do not answer, look at the next unused slide time "
             f"(under 2 seconds). Unused times: {unused}. "
-            "If a frame showed a price or digits, that is a printed number — name the color. "
-            "If the question asks whether print matches what was said, search spoken "
-            "words before answering, then say whether those lines match the pixels. "
             "Do not look at a time you already looked at. Do not only apologize."
         ),
     }
@@ -309,34 +304,6 @@ def skip_ahead_message(from_s: float, duration_s: float) -> dict:
     }
 
 
-def export_whole_window_nudge(middle_s: float, duration_s: float | None = None) -> dict:
-    lo = middle_s
-    hi = middle_s + 2.0
-    if duration_s is not None:
-        hi = min(hi, duration_s)
-    return {
-        "role": "user",
-        "content": (
-            "That cut is the whole search window, including the start, "
-            "which can be a different slide. "
-            "Export again from the middle for about 2 seconds "
-            f"(~{lo:.1f}s–{hi:.1f}s), not before the middle, "
-            "not the full search window. Do not only apologize."
-        ),
-    }
-
-
-ALREADY_EXPORTED = (
-    "You already exported a clip that is not the whole search window. "
-    "Do not export again. Answer now and include the URL. "
-    "Do not only apologize."
-)
-
-
-def already_exported_message() -> dict:
-    return {"role": "user", "content": ALREADY_EXPORTED}
-
-
 EMPTY_MOVE_NUDGE = (
     "Do not answer yet. You have not looked, listened, or searched. "
     "Look, listen, search_visual, search_audio, or search_slides first. "
@@ -346,30 +313,6 @@ EMPTY_MOVE_NUDGE = (
 
 def empty_move_nudge_message() -> dict:
     return {"role": "user", "content": EMPTY_MOVE_NUDGE}
-
-
-NEED_SPEECH_FOR_MATCH = (
-    "Do not answer yet. You have not searched what was said. "
-    "If the question asks whether print matches speech, search spoken words first. "
-    "Then say whether the printed number matches those lines. "
-    "Do not only apologize."
-)
-
-
-def need_speech_for_match_message() -> dict:
-    return {"role": "user", "content": NEED_SPEECH_FOR_MATCH}
-
-
-SPEECH_MATCH_COMPARE = (
-    "Those lines are what was said. "
-    "If a line names a number or a price, that is the spoken value. "
-    "Compare it to the printed digits you already looked at. "
-    "Say whether they match. Do not only apologize."
-)
-
-
-def speech_match_compare_message() -> dict:
-    return {"role": "user", "content": SPEECH_MATCH_COMPARE}
 
 
 PARSE_AGAIN_NUDGE = (

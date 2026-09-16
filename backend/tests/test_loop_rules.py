@@ -1,7 +1,7 @@
-"""Laptop skip-ahead / recut rules. Black mp4s, not the exam tape.
+"""Laptop skip-ahead stays. Recut / print-vs-speech bounces are gone.
 
-These tests are meant to show both what the rule does and where it still
-does not fire. They must not mention beep / clap / ship / $99 as answers.
+Black mp4s, not the exam tape. Tests must not mention beep / clap / ship / $99
+as answers. The OG sound path is search_audio → listen → export the heard range.
 """
 
 from __future__ import annotations
@@ -10,12 +10,7 @@ import uuid
 from pathlib import Path
 
 from app.agent.client import FakeBrain
-from app.agent.loop import (
-    _asks_print_vs_speech,
-    _hit_middle,
-    _is_next_step_after_listen,
-    run_loop,
-)
+from app.agent.loop import _is_next_step_after_listen, run_loop
 from app.models import IndexStatus
 from app.search.audio import AudioHit, AudioSearchResult
 from app.search.transcript import TranscriptHit
@@ -45,6 +40,19 @@ def _export(start_s: float, end_s: float) -> ExportResult:
         path=Path("/tmp/clip.mp4"),
         url="/videos/x/exports/y",
     )
+
+
+def _user_texts(brain: FakeBrain) -> list[str]:
+    texts: list[str] = []
+    for call in brain.calls:
+        content = call[-1].get("content")
+        if isinstance(content, str):
+            texts.append(content)
+        elif isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "text":
+                    texts.append(str(part.get("text") or ""))
+    return texts
 
 
 EXAM_KEYS = (
@@ -87,21 +95,6 @@ def test_skip_rule_leaves_the_last_six_seconds_alone() -> None:
     assert _is_next_step_after_listen(2.0, looked, listen, 8.1)
     # Near the end of a 16s file: last look ended at 10s, remaining 6.
     assert not _is_next_step_after_listen(10.0, [(8.0, 10.0)], (8.0, 10.0), 16.0)
-
-
-def test_hit_middle_only_when_export_is_the_whole_window() -> None:
-    windows = [(9.0, 12.0), (1.0, 3.0)]
-    assert _hit_middle(9.0, 12.0, windows) == 10.5
-    assert _hit_middle(1.0, 3.0, windows) == 2.0
-    # Within 0.3s still counts as the same window.
-    assert _hit_middle(9.2, 11.9, windows) == 10.5
-    # Near the same bounds (shifted < 1s) still counts as the whole window.
-    assert _hit_middle(9.75, 12.75, windows) == 10.5
-    # A short cut around the middle is not the whole window.
-    assert _hit_middle(10.5, 12.0, windows) is None
-    # Overlap that is not the hit bounds.
-    assert _hit_middle(8.0, 11.0, windows) is None
-    assert _hit_middle(9.0, 12.0, []) is None
 
 
 def test_look_only_crawl_is_skipped(twelve_s_mp4: Path) -> None:
@@ -161,74 +154,96 @@ def test_mismatched_look_and_listen_does_not_skip(twelve_s_mp4: Path) -> None:
     assert sum(1 for step in result.steps if step.do == "look" and step.ok) == 2
 
 
-def test_export_that_is_not_a_hit_window_is_not_nudged(twelve_s_mp4: Path) -> None:
-    def search(_query: str) -> AudioSearchResult:
-        return AudioSearchResult(
-            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
-            clusters=[],
-            count=0,
-        )
+def _tone_hits(_query: str) -> AudioSearchResult:
+    return AudioSearchResult(
+        hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
+        clusters=[],
+        count=0,
+    )
 
+
+def test_search_audio_then_listen_then_export_heard_range(twelve_s_mp4: Path) -> None:
+    """OG path: a hit is a range. Listen. Export what you heard. No recut bounce."""
     brain = FakeBrain(
         [
             _act("search_audio", query="tone"),
-            _act("export_clip", start_s=0.0, end_s=2.0),
-            _act("answer", answer="Unrelated cut is fine."),
+            _act("listen", start_s=9.0, end_s=12.0),
+            _act("export_clip", start_s=10.8, end_s=12.0),
+            _act("answer", answer="Clip of the range I heard."),
         ]
     )
     result = run_loop(
         twelve_s_mp4,
         "clip when that sound happens",
         brain,
-        search_audio=search,
+        search_audio=_tone_hits,
         audio_status=IndexStatus.ready.value,
         export_clip=_export,
     )
-    assert result.answer == "Unrelated cut is fine."
-    texts = [
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-    ]
-    assert all("whole search window" not in text for text in texts)
+    assert result.answer == "Clip of the range I heard."
+    assert any(step.do == "listen" and step.ok for step in result.steps)
+    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
+    assert [(step.start_s, step.end_s) for step in exports] == [(10.8, 12.0)]
+    blob = "\n".join(_user_texts(brain))
+    assert "whole search window" not in blob
+    assert "not before the middle" not in blob
+    assert "Listen at a hit" in blob
+    assert "export the range you heard" in blob
 
 
-def test_second_full_window_answer_is_still_bounced(twelve_s_mp4: Path) -> None:
-    def search(_query: str) -> AudioSearchResult:
-        return AudioSearchResult(
-            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
-            clusters=[],
-            count=0,
-        )
-
+def test_exporting_the_full_hit_window_is_not_recut(twelve_s_mp4: Path) -> None:
+    """If the model dumps the CLAP range, the laptop cuts that range. No middle recut."""
     brain = FakeBrain(
         [
             _act("search_audio", query="tone"),
             _act("export_clip", start_s=9.0, end_s=12.0),
-            _act("answer", answer="Here is the full window."),
-            _act("answer", answer="Still the full window."),
-            _act("export_clip", start_s=10.5, end_s=12.0),
-            _act("answer", answer="Shorter clip around the middle."),
+            _act("answer", answer="Here is the search window."),
         ]
     )
     result = run_loop(
         twelve_s_mp4,
         "clip when that sound happens",
         brain,
-        search_audio=search,
+        search_audio=_tone_hits,
         audio_status=IndexStatus.ready.value,
         export_clip=_export,
     )
-    assert result.answer == "Shorter clip around the middle."
-    assert result.answer != "Still the full window."
-    bounces = [
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-        and "whole search window" in call[-1]["content"]
+    assert result.answer == "Here is the search window."
+    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
+    assert [(step.start_s, step.end_s) for step in exports] == [(9.0, 12.0)]
+    blob = "\n".join(_user_texts(brain))
+    assert "whole search window" not in blob
+    assert "Export again from the middle" not in blob
+
+
+def test_second_export_after_listen_is_allowed(twelve_s_mp4: Path) -> None:
+    brain = FakeBrain(
+        [
+            _act("search_audio", query="tone"),
+            _act("listen", start_s=9.0, end_s=12.0),
+            _act("export_clip", start_s=9.0, end_s=12.0),
+            _act("export_clip", start_s=10.8, end_s=12.0),
+            _act("answer", answer="Tighter clip after a listen."),
+        ]
+    )
+    result = run_loop(
+        twelve_s_mp4,
+        "clip when that sound happens",
+        brain,
+        search_audio=_tone_hits,
+        audio_status=IndexStatus.ready.value,
+        export_clip=_export,
+    )
+    assert result.answer == "Tighter clip after a listen."
+    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
+    assert [(step.start_s, step.end_s) for step in exports] == [
+        (9.0, 12.0),
+        (10.8, 12.0),
     ]
-    # One after the export, plus two refused answers.
-    assert len(bounces) >= 3
+    assert all(
+        not (step.do == "export_clip" and step.ok is False)
+        for step in result.steps
+    )
 
 
 def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
@@ -254,22 +269,18 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
     )
     observe = brain.calls[1][-1]["content"]
     assert "times to listen" in observe
-    assert "full search window" in observe
+    assert "Listen at a hit" in observe
+    assert "range you heard" in observe
+    assert "full search window" not in observe
+    assert "cut about 2 seconds" not in observe
     lowered = observe.lower()
     for key in EXAM_KEYS:
         assert key not in lowered
 
 
-def test_print_vs_speech_detector_needs_both_books() -> None:
-    assert _asks_print_vs_speech(
-        "They said a number is also printed on the slide. "
-        "What color is that number, and does it match what they said?"
-    )
-    assert not _asks_print_vs_speech("what color is the printed number?")
-    assert not _asks_print_vs_speech("How much does Pro cost?")
+def test_print_vs_speech_answer_is_not_blocked_without_search(tiny_mp4: Path) -> None:
+    """E4B needed a bounce. 12B A/B uses this hole; the laptop no longer fills it."""
 
-
-def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> None:
     def speech(_query: str) -> list[TranscriptHit]:
         return [TranscriptHit(t=0.0, text="they named a number")]
 
@@ -290,8 +301,6 @@ def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> Non
             _act("search_slides"),
             _act("look", start_s=0.1, end_s=0.3, fps=1),
             _act("answer", answer="Yellow digits; cannot confirm speech."),
-            _act("search", query="the number they named"),
-            _act("answer", answer="Yellow digits, and they match the spoken number."),
         ]
     )
     result = run_loop(
@@ -303,85 +312,16 @@ def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> Non
         transcript_status=IndexStatus.ready.value,
         slides_status=IndexStatus.ready.value,
     )
-    assert result.answer == "Yellow digits, and they match the spoken number."
-    assert any(
-        step.do == "search" and step.ok for step in result.steps
-    )
-    texts = [
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-    ]
-    assert any("not searched what was said" in text for text in texts)
-    assert any("spoken value" in text for text in texts)
+    assert result.answer == "Yellow digits; cannot confirm speech."
+    assert all(step.do != "search" for step in result.steps)
+    blob = "\n".join(_user_texts(brain))
+    assert "not searched what was said" not in blob
+    assert "spoken value" not in blob
 
 
-def test_recut_nudge_starts_at_the_middle(twelve_s_mp4: Path) -> None:
-    def search(_query: str) -> AudioSearchResult:
-        return AudioSearchResult(
-            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
-            clusters=[],
-            count=0,
-        )
+def test_system_prompt_asks_listen_then_export_not_middle_recut() -> None:
+    from app.agent.schema import SYSTEM_PROMPT
 
-    brain = FakeBrain(
-        [
-            _act("search_audio", query="tone"),
-            _act("export_clip", start_s=9.0, end_s=12.0),
-            _act("export_clip", start_s=10.5, end_s=12.0),
-            _act("answer", answer="Shorter clip from the middle."),
-        ]
-    )
-    result = run_loop(
-        twelve_s_mp4,
-        "clip when that sound happens",
-        brain,
-        search_audio=search,
-        audio_status=IndexStatus.ready.value,
-        export_clip=_export,
-    )
-    assert result.answer == "Shorter clip from the middle."
-    nudge = next(
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-        and "whole search window" in call[-1]["content"]
-    )
-    assert "not before the middle" in nudge
-    assert "10.5s" in nudge
-    # 12s file caps the +2s window.
-    assert "12.0s" in nudge
-    assert "9.5s" not in nudge
-
-
-def test_second_short_export_is_blocked(twelve_s_mp4: Path) -> None:
-    def search(_query: str) -> AudioSearchResult:
-        return AudioSearchResult(
-            hits=[AudioHit(start_s=9.0, end_s=12.0, score=0.9)],
-            clusters=[],
-            count=0,
-        )
-
-    brain = FakeBrain(
-        [
-            _act("search_audio", query="tone"),
-            _act("export_clip", start_s=10.5, end_s=12.0),
-            _act("export_clip", start_s=11.0, end_s=12.0),
-            _act("answer", answer="Here is the first short clip."),
-        ]
-    )
-    result = run_loop(
-        twelve_s_mp4,
-        "clip when that sound happens",
-        brain,
-        search_audio=search,
-        audio_status=IndexStatus.ready.value,
-        export_clip=_export,
-    )
-    assert result.answer == "Here is the first short clip."
-    exports = [step for step in result.steps if step.do == "export_clip" and step.ok]
-    assert [(step.start_s, step.end_s) for step in exports] == [(10.5, 12.0)]
-    assert any(
-        step.do == "export_clip" and step.ok is False and "already" in step.detail
-        for step in result.steps
-    )
+    assert "export the range you heard" in SYSTEM_PROMPT
+    assert "not before the middle" not in SYSTEM_PROMPT
+    assert "whole search window" not in SYSTEM_PROMPT

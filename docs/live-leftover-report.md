@@ -14,7 +14,7 @@ There are two brains.
 
 **Gemma** (on Modal, GPU) never sees the whole video. Each turn it fills a JSON form: look, listen, search spoken words, search pictures, search sounds, search printed slides, export a clip, or answer. It does not call tools. It only picks a move and times.
 
-**The laptop** (this FastAPI process) runs that move. It cuts JPEGs, cuts a wav, searches Postgres indexes, or writes an mp4. Then it sends a **normal user message** back: “frames at 0.00s”, or “transcript hits…”, or “that cut was the whole search window”. Gemma’s next JSON is based on that note plus whatever photos or one wav we attached.
+**The laptop** (this FastAPI process) runs that move. It cuts JPEGs, cuts a wav, searches Postgres indexes, or writes an mp4. Then it sends a **normal user message** back: “frames at 0.00s”, or “transcript hits…”, or “audio from 9.00s to 12.00s.” Gemma’s next JSON is based on that note plus whatever photos or one wav we attached.
 
 That back-and-forth is the **loop**. We allow **12 moves**, then we force an answer. One look may attach at most **12 photos**. Gemma’s prompt is small (~8k). Dumping the whole 16s (or a two-hour file) as pictures would blow it up. So the leftover bugs are not “Gemma is dumb.” They are “the loop ran out of moves,” or “the book returned a *window*, not a pin,” or “Gemma answered before opening the other book.”
 
@@ -158,29 +158,23 @@ A **bounce** means: Gemma sent `do: answer`. The laptop **does not accept it**. 
 
 **What we did not do.** We did not say “if they ask to walk the tape, jump to 0, 6, and 10.” That is this file’s slide times.
 
-### H7 — recut from the middle, then stop
+### H7 — recut from the middle (removed)
 
-**Rule 1.** Remember each sound-hit `[start, end]`. If `export_clip` matches that window within **1s** on both ends (so 9.75–12.75 still counts as 9–12), treat it as the whole hit.
+We **had** three rules: treat an export that matches a sound-hit window as “the whole search window”; recut ~2s **from the middle forward**; bounce answers until that recut; then block extra exports so E4B would not walk to 15.5–16.
 
-**Rule 2.** Nudge: recut **from the middle forward** ~2s, not before the middle. Middle of 9–12 is 10.5 → ask for ~**10.5–12.5** (capped at file end). Bounce answers until that recut exists.
+That made a live pass (9–12 then 10.5–12.5). It is still a **guess**. CLAP returns a **range**. The event is not contracted to the midpoint. The laptop cannot hear the wav.
 
-**Why not ±1s.** Centered 9.5–11.5 still included 9.5–10 (red) and chopped the tone after 11.5. The start of a search window is often the **previous slide**. Starting at the middle drops it.
+**Now:** listen at a hit, export the range you heard. If E4B dumps 9–12, that is the clip. Full write-up: [sound search returns a range](sound-window-export.md). A/B: [12B plan](e4b-vs-12b-plan.md).
 
-**Rule 3.** After a clip that is **not** the whole search window, block further exports: you already have a cut; answer with the URL. That stopped the 15.5–16 death spiral.
+**What we did not do.** We did not say “if they say beep, export 10.5–12.5.” We also no longer say “if they export 9–12, force 10.5–12.5.”
 
-**What we did not do.** We did not say “if they say beep, export 10.5–12.5.”
+### M1 — force spoken words before “does it match” (removed)
 
-### M1 — force spoken words before “does it match”
+We **had** a keyword detector (`printed` + `they said`) that refused `answer` until spoken-word search, then a note to compare those lines to the pixels. Live, that is the only reason M1 passed on E4B.
 
-**Rule 1.** After a slide look: if you see a price or digits, that **is** the printed number — name the color. Unused slide times stay listed so Pricing is not skipped.
+**Now:** unused slide times after a look still stay (walk the ranked list — that is not exam-shaped). The print-vs-speech bounce and “compare the lines” note are **gone**. If a smaller model answers from pixels only, that is the E4B hole 12B is supposed to fill.
 
-**Rule 2.** If the question talks about something **printed** *and* **what they said**, refuse `answer` until `search` (spoken words) has run.
-
-**Rule 3.** After that search: those lines are what was said. If a line names a number or price, that is the spoken value. Compare it to the printed digits. Say whether they match.
-
-Live, search returned both 3.12s (“the number is also printed on the slide”) **and** 0s (“$99 a month”). Without rule 3, Gemma stared at 3.12s and said “the spoken number is not specified.” With it, it used the $99 line.
-
-**What we did not do.** We do not OCR the JPEG. We do not reject answers that lack the word “gold.” We do not require speech for “what color is the printed number?” (color only).
+**What we did not do.** We do not OCR the JPEG. We do not reject answers that lack the word “gold.”
 
 ### H5 — clap count (removed)
 
@@ -194,10 +188,10 @@ There was no extra H1 (“confirm $99 is on red”) laptop rule to remove. That 
 
 ## What else we did
 
-- **Unit tests** on black 12s and ~1s mp4s, not this exam tape. They check skip / recut / print-vs-speech without mentioning beep / clap / ship / $99 as answers.
-- **Did not** add Notion logging, a new database, a new UI, React, a clap model, or OCR.
+- **Unit tests** on black 12s and ~1s mp4s, not this exam tape. Skip-ahead stays. Listen-then-export is accepted. Full-window export is **not** recut. Print-vs-speech is **not** blocked. Questions for the 12B A/B live in `backend/eval/hidden_intent.py`.
+- **Did not** add Notion logging, a new database, a new UI, React, a clap model, OCR, or a 12B Modal deploy.
 
-Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, tests in `test_loop_rules.py`, `test_chat.py`, `test_audio.py`.
+Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, `backend/eval/`, tests in `test_loop_rules.py`, `test_hidden_intent.py`, `test_chat.py`, `test_audio.py`. Docs: [sound windows](sound-window-export.md), [12B plan](e4b-vs-12b-plan.md).
 
 ---
 
@@ -206,6 +200,8 @@ Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, tests in `test_loop
 | Item | Why it is still open |
 |---|---|
 | Skip in the last 6 seconds | By design. Lets a short file finish. |
+| H7 without recut | E4B exports the CLAP range. 12B A/B not run yet. |
+| M1 without speech bounce | E4B often skips `search`. 12B A/B not run yet. |
 | Counting a sound that is not there | No classifier. We will not bounce toward zero. |
 | H1 trap (“confirm $99 is on red”) | No laptop rule. Gemma can still say “yes” to a false premise. |
 | Gold vs yellow | Gemma’s color word. We do not OCR. |
@@ -214,6 +210,7 @@ Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, tests in `test_loop
 
 ## Bottom line
 
-What we **kept** is loop hygiene for any file: don’t crawl 2s steps until the 12-move cap; don’t export the whole CLAP window from the previous scene; don’t export forever; if they asked print vs speech, open both books.
+What we **kept** is loop hygiene for any file: don’t crawl 2s steps until the 12-move cap; sound hits are times to listen, not a count; unused slide times stay listed; empty first answers still bounce.
 
-What we **removed** is the exam-shaped clap-count bounce (“say zero”). Counting events that aren’t in the WAV is still not a solved product feature.
+What we **removed** is guessing with prompts: recut-from-middle, extra-export cap, print-vs-speech bounce, and the earlier clap-count “say zero” bounce. Those were E4B crutches. The next measurement is the same eight questions on Gemma 4 12B Unified — [plan](e4b-vs-12b-plan.md) — not another note in the loop.
+

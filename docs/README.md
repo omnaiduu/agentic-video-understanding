@@ -36,3 +36,5 @@ Then:
 30. [Spoken words, then stop](live-spoken-words.md) — the quit-after-speech bug, the two notes we added, live rerun
 31. [Four leftover live issues](live-leftover-issues.md) — walk / beep clip / gold $99 / clap count, and whether there is a laptop fix
 32. [Leftover issues report](live-leftover-report.md) — what broke, what we changed, what is still open
+33. [Sound search returns a range](sound-window-export.md) — H7: CLAP windows vs listen-then-export; recut-from-middle removed
+34. [E4B vs 12B Unified plan](e4b-vs-12b-plan.md) — same eight questions; crutches vs a bigger planner; **not deployed**

@@ -11,21 +11,17 @@ from app.agent.client import Brain
 from app.agent.parts import (
     after_look_slide_nudge,
     already_looked_message,
-    already_exported_message,
     audio_not_ready_message,
     audio_search_message,
     empty_move_nudge_message,
     export_message,
-    export_whole_window_nudge,
     listen_message,
     look_message,
-    need_speech_for_match_message,
     parse_again_message,
     refuse_message,
     search_message,
     skip_ahead_message,
     speech_already_searched_message,
-    speech_match_compare_message,
     slide_search_message,
     slides_already_searched_message,
     slides_not_ready_message,
@@ -217,30 +213,6 @@ def _is_next_step_after_listen(
     return abs(start_s - prev[1]) < 0.75
 
 
-def _hit_middle(
-    start_s: float,
-    end_s: float,
-    windows: list[tuple[float, float]],
-    tol: float = 1.0,
-) -> float | None:
-    for hit_start, hit_end in windows:
-        if abs(start_s - hit_start) < tol and abs(end_s - hit_end) < tol:
-            return (hit_start + hit_end) / 2.0
-    return None
-
-
-def _asks_print_vs_speech(question: str) -> bool:
-    q = question.lower()
-    about_print = any(
-        token in q for token in ("printed", "on the slide", "on a slide")
-    )
-    about_said = any(
-        token in q
-        for token in ("they said", "what they said", "what was said", "spoken")
-    )
-    return about_print and about_said
-
-
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
     raw = brain.complete(messages)
     try:
@@ -299,9 +271,6 @@ def run_loop(
     slide_hit_times: list[float] = []
     looked_windows: list[tuple[float, float]] = []
     last_listen_window: tuple[float, float] | None = None
-    audio_hit_windows: list[tuple[float, float]] = []
-    last_hit_middle: float | None = None
-    nudged_full_hit_export = False
     bounced_empty = False
     retried_empty_parse = False
 
@@ -357,20 +326,6 @@ def run_loop(
                 bounced_empty = True
                 messages.append(empty_move_nudge_message())
                 continue
-            if (
-                nudged_full_hit_export
-                and last_hit_middle is not None
-            ):
-                # Keep asking for a recut. Count it as a round so we cannot loop forever.
-                rounds += 1
-                messages.append(
-                    export_whole_window_nudge(last_hit_middle, meta.duration_s)
-                )
-                continue
-            if _asks_print_vs_speech(question) and not searched_speech:
-                rounds += 1
-                messages.append(need_speech_for_match_message())
-                continue
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
                 answer=text,
@@ -406,8 +361,6 @@ def run_loop(
             hits = search(query)[:8]
             searched_speech = True
             messages.append(search_message(hits, query))
-            if _asks_print_vs_speech(question):
-                messages.append(speech_match_compare_message())
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
             steps.append(
@@ -488,7 +441,6 @@ def run_loop(
                 continue
             result = search_audio(query)
             hits = result.hits[:8]
-            audio_hit_windows = [(hit.start_s, hit.end_s) for hit in hits]
             messages.append(audio_search_message(result, query))
             shown = ",".join(f"{hit.start_s:.2f}" for hit in hits)
             first = hits[0] if hits else None
@@ -553,18 +505,6 @@ def run_loop(
             continue
 
         if action.do in ("export_clip", "export_audio"):
-            if last_export_url and not nudged_full_hit_export:
-                messages.append(already_exported_message())
-                steps.append(
-                    Step(
-                        do=action.do,
-                        start_s=action.start_s,
-                        end_s=action.end_s,
-                        ok=False,
-                        detail="already exported",
-                    )
-                )
-                continue
             fn = export_clip if action.do == "export_clip" else export_audio
             if fn is None:
                 messages.append(
@@ -607,13 +547,6 @@ def run_loop(
                     detail=result.url,
                 )
             )
-            middle = _hit_middle(result.start_s, result.end_s, audio_hit_windows)
-            if middle is not None:
-                nudged_full_hit_export = True
-                last_hit_middle = middle
-                messages.append(export_whole_window_nudge(middle, meta.duration_s))
-            else:
-                nudged_full_hit_export = False
             continue
 
         try:
