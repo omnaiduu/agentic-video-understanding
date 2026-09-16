@@ -94,21 +94,30 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 | Issue | In one line | Laptop rule | Proven? |
 |---|---|---|---|
-| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Unit test yes.** Live Gemma **not rerun** |
-| **H7 beep clip** | Exports the whole 9–12s sound window | If the cut equals a hit window, recut ~2s around the middle; bounce one answer | **Unit test yes.** Live Gemma **not rerun** |
-| **M1 gold $99** | Saw the pixels; would not name color + match | After look: name the color; say if speech matches. No OCR | Note only. Live **not rerun** |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Query sound only; unsure → 0. No clap detector | Note only. Live **not rerun** |
+| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Live pass.** Skip 2–4, then 6s / 10s / 14s |
+| **H7 beep clip** | Exports the whole 9–12s sound window | If the cut equals a hit window, recut ~2s around the middle | **Live pass** this run (exported 11.5–14.5 Q3, not 9–12). Recut nudge did not need to fire |
+| **M1 gold $99** | Saw the pixels; would not name color + match | After look: name the color; say if speech matches. No OCR | **Live partial.** Yellow $99; did not match speech |
+| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Query sound only; unsure → 0. No clap detector | **Live fail.** Still would not say zero |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
-## Live rerun (this machine)
+## Live rerun (Modal Gemma, this machine)
 
-The laptop rules are on `feature/loop-next-hit-b374`. `uv run pytest` → **147 passed**.
+Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Gemma 4 E4B on Modal. Fresh chat session per question. HTTP 200 unless noted.
 
-A live Gemma rerun of H5 / H8 / M1 / H7 / M4 was **not** done here: this VM has no `backend/.env` (no `VLLM_BASE_URL`), no Modal token, and not the indexed 16s tape (`af12a3ad-…`). Fake indexes and a scripted FakeBrain cannot stand in for Gemma. Until those three exist again, do not mark the four questions as pass.
+| Q | After this PR | Verdict |
+|---|---|---|
+| **E1** Pro cost | Speech (+ extra looks). “$99 a month.” | **Pass.** |
+| **H1** $99 on red? | Looks 6s, 10s, **and 0s**. Price is not on red. | **Pass.** |
+| **M3** ship this quarter | Speech → slides → look 10s. “Ship the slide index.” | **Pass.** |
+| **M4** tone + on screen | Sound hit 9–12 → **look 10.5–12**. Q3 / Ship the slide index. | **Pass.** Middle-of-window, not red at 9s. |
+| **H8** walk the tape | look+listen 0–2, **skip 2–4**, then 6–8, 10–12, 14–16. Names Pricing $99, RED ALERT, Q3 / ship the slide index. | **Pass.** Skip-ahead fired on live Gemma. Did not mention the beep in the sentence. |
+| **H7** clip on the beep | Sound 9–12 → export **11.5–14.5** (Q3 only, not 9–12 red+Q3). | **Pass** on the leftover (not the whole search window). Starts a bit after the 11.0s onset. |
+| **M1** printed number color | Looks 10, **0**, and 6. Says **yellow $99**. Then: cannot confirm it matches speech (it never searched speech). | **Partial.** Color + next unused slide worked. Speech match still hedged. |
+| **H5** how many claps | Sound search, listen 13.5–14.8 and 7.5–9 (silence). Still talks as if it heard claps; no **zero**. | **Fail.** Notes did not stick. |
 
-**Where the new tests still show a hole**
+**Where tests still show a hole**
 
-- Look-only 2s crawls are allowed. H8 only gets skip-ahead if Gemma also **listens** on the same window.
-- Skip-ahead does not fire in the last 6 seconds of a file (so a 16s tape can still crawl 10–12).
-- M1 / H5 are notes only. If Gemma hedges or treats a tone as a clap, the laptop does not reject the sentence.
+- Look-only 2s crawls are allowed. H8 only gets skip-ahead if Gemma also **listens** on the same window (it did, this run).
+- Skip-ahead does not fire in the last 6 seconds of a file.
+- M1 / H5 are notes only. Live: M1 named yellow but skipped the speech match; H5 still would not say zero.
