@@ -38,7 +38,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** if the last look window matches the last listen window, the next look *or* listen starts at that end (~2s step), and more than **6s** of video remain, **block** that move and tell it to skip ahead. Tiny 1s test files would not fire (not enough tape left). Do **not** “fix” this by raising 12 rounds — that only attaches more photos.
 
-**In code now.** Unit test: 12s file, look+listen 0–2, look 2–4 is blocked, look 8–10 is allowed. 1s file does not skip. **Not live-proven** on Gemma + this tape.
+**In code now.** Unit tests (black 12s file, not the exam tape): paired look+listen then 2–4 is blocked; a jump to 8–10 is allowed; 1s files do not skip; a matching listen crawl is blocked; look-only 2s steps are **not** blocked (known gap). **Not live-proven** on Gemma + this tape.
 
 ---
 
@@ -54,7 +54,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** remember sound-hit `[start, end]`. If `export_clip` matches that window (± a fraction of a second), append “recut ~1s either side of the middle.” If they **answer** while that full-window export is still the clip, bounce once and ask for the recut. When they export a shorter window that no longer matches the hit bounds, let the answer through.
 
-**In code now.** Unit test: sound hit 9–12 → export 9–12 is nudged; an answer is bounced; export 10.5–12 is accepted. **Not live-proven** on Gemma + this tape.
+**In code now.** Unit tests: sound hit 9–12 → export 9–12 is nudged; two answers on that clip are both bounced; export 10.5–12 is accepted; an unrelated 0–2 cut is not nudged. **Not live-proven** on Gemma + this tape.
 
 ---
 
@@ -106,3 +106,9 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 The laptop rules are on `feature/loop-next-hit-b374`. `uv run pytest` → **147 passed**.
 
 A live Gemma rerun of H5 / H8 / M1 / H7 / M4 was **not** done here: this VM has no `backend/.env` (no `VLLM_BASE_URL`), no Modal token, and not the indexed 16s tape (`af12a3ad-…`). Fake indexes and a scripted FakeBrain cannot stand in for Gemma. Until those three exist again, do not mark the four questions as pass.
+
+**Where the new tests still show a hole**
+
+- Look-only 2s crawls are allowed. H8 only gets skip-ahead if Gemma also **listens** on the same window.
+- Skip-ahead does not fire in the last 6 seconds of a file (so a 16s tape can still crawl 10–12).
+- M1 / H5 are notes only. If Gemma hedges or treats a tone as a clap, the laptop does not reject the sentence.

@@ -287,7 +287,6 @@ def run_loop(
     audio_hit_windows: list[tuple[float, float]] = []
     last_hit_middle: float | None = None
     nudged_full_hit_export = False
-    bounced_full_export = False
     bounced_empty = False
     retried_empty_parse = False
 
@@ -345,10 +344,10 @@ def run_loop(
                 continue
             if (
                 nudged_full_hit_export
-                and not bounced_full_export
                 and last_hit_middle is not None
             ):
-                bounced_full_export = True
+                # Keep asking for a recut. Count it as a round so we cannot loop forever.
+                rounds += 1
                 messages.append(export_whole_window_nudge(last_hit_middle))
                 continue
             steps.append(Step(do="answer", detail=text, ok=True))
@@ -577,7 +576,6 @@ def run_loop(
             if middle is not None:
                 nudged_full_hit_export = True
                 last_hit_middle = middle
-                bounced_full_export = False
                 messages.append(export_whole_window_nudge(middle))
             else:
                 nudged_full_hit_export = False

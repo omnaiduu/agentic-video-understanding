@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import subprocess
 import uuid
 from pathlib import Path
 
-import pytest
 from app.agent.client import FakeBrain, VllmBrain
 from app.agent.loop import LoopError, run_loop
 from app.agent.schema import RESPONSE_FORMAT, parse_action
@@ -729,39 +727,6 @@ def test_repeat_look_is_blocked_and_names_unused_slide(tiny_mp4: Path) -> None:
     )
     assert "0.5s" in after
     assert "name the color" in after
-
-
-@pytest.fixture(scope="module")
-def twelve_s_mp4(media_dir: Path) -> Path:
-    path = media_dir / "twelve.mp4"
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-y",
-            "-f",
-            "lavfi",
-            "-i",
-            "color=c=black:s=64x64:d=12",
-            "-f",
-            "lavfi",
-            "-i",
-            "sine=f=440:d=12",
-            "-shortest",
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            str(path),
-        ],
-        check=True,
-        capture_output=True,
-    )
-    return path
 
 
 def test_skip_ahead_blocks_next_two_second_look(twelve_s_mp4: Path) -> None:
