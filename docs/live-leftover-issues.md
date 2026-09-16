@@ -1,6 +1,6 @@
 # Four leftover live issues
 
-Same 16s tape as the [hidden-intent suite](live-intent-questions.md). This note is **not** a live rerun. It names the four questions that still fail after [spoken words, then stop](live-spoken-words.md), and whether we have a fix.
+Same 16s tape as the [hidden-intent suite](live-intent-questions.md). It names the four questions that still fail after [spoken words, then stop](live-spoken-words.md), the laptop rules we added, and what has been proven.
 
 Video: `af12a3ad-c22d-4359-8de9-ec7baff9eb6a` (`live-test-talk.mp4`)
 
@@ -36,9 +36,9 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **Simple fix:** stop the 2-second crawl when a lot of the file is still left. Say “you already did that beat — look several seconds later, the video goes until 16s.”
 
-**A bit more technical:** if the last look window matches the last listen window, the next look starts at that end (~2s step), and more than ~4s of video remain, **block** that look and tell it to skip ahead. Tiny 1s test files would not fire (not enough tape left). Do **not** “fix” this by raising 12 rounds — that only attaches more photos.
+**A bit more technical:** if the last look window matches the last listen window, the next look *or* listen starts at that end (~2s step), and more than **6s** of video remain, **block** that move and tell it to skip ahead. Tiny 1s test files would not fire (not enough tape left). Do **not** “fix” this by raising 12 rounds — that only attaches more photos.
 
-**Is there a solution?** Yes. Laptop rule, not an answer key. Not live-proven yet.
+**In code now.** Unit test: 12s file, look+listen 0–2, look 2–4 is blocked, look 8–10 is allowed. 1s file does not skip. **Not live-proven** on Gemma + this tape.
 
 ---
 
@@ -54,7 +54,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** remember sound-hit `[start, end]`. If `export_clip` matches that window (± a fraction of a second), append “recut ~1s either side of the middle.” If they **answer** while that full-window export is still the clip, bounce once and ask for the recut. When they export a shorter window that no longer matches the hit bounds, let the answer through.
 
-**Is there a solution?** Yes. The laptop rewrites the *cut*, not the word “beep.” Not live-proven yet.
+**In code now.** Unit test: sound hit 9–12 → export 9–12 is nudged; an answer is bounced; export 10.5–12 is accepted. **Not live-proven** on Gemma + this tape.
 
 ---
 
@@ -70,7 +70,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** this is a stronger **observation note** after `look`, plus the existing “next unused slide time” rule so Pricing is not skipped. We **cannot** guarantee the words “gold” without hardcoding this tape. The laptop does not OCR the JPEG or reject answers that lack a color word (that would be a new checker). Hedging may still happen; the note makes the expected shape of the answer explicit.
 
-**Is there a solution?** Partial. We can push it to read pixels and compare to speech. We cannot honestly promise “gold” every run without cheating.
+**In code now** (the note after a slide look). No unit test can prove Gemma will say “gold.” **Not live-proven.**
 
 ---
 
@@ -86,17 +86,23 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** still prompt-only. There is no clap classifier on the laptop. A real fix would be a detector (out of scope). Bouncing a count with **no** listen is cheap; bouncing a wrong count **after** a listen is guessing what the WAV contained. Expect this to stay **unstable** until a listen-then-zero note sticks more often.
 
-**Is there a solution?** Partial. We can stop presenting hits as a counter (already done) and tighten the listen note. We cannot guarantee “zero” without hardcoding claps.
+**In code now** (sound-search + listen notes). No clap detector. **Not live-proven.**
 
 ---
 
 ## Concise
 
-| Issue | In one line | Fix? |
-|---|---|---|
-| **H8 walk** | 2s look+listen burns 12 moves by ~9s | **Yes** — block the next 2s step when >4s of tape remains; skip ahead |
-| **H7 beep clip** | Exports the whole 9–12s sound window | **Yes** — if the cut equals a hit window, recut ~2s around the middle |
-| **M1 gold $99** | Saw the pixels; would not name color + match | **Partial** — after look: name the color; say if speech matches. No OCR |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | **Partial** — query sound only; unsure → 0. No clap detector |
+| Issue | In one line | Laptop rule | Proven? |
+|---|---|---|---|
+| **H8 walk** | 2s look+listen burns 12 moves by ~9s | Block the next 2s step when >6s of tape remains; skip ahead | **Unit test yes.** Live Gemma **not rerun** |
+| **H7 beep clip** | Exports the whole 9–12s sound window | If the cut equals a hit window, recut ~2s around the middle; bounce one answer | **Unit test yes.** Live Gemma **not rerun** |
+| **M1 gold $99** | Saw the pixels; would not name color + match | After look: name the color; say if speech matches. No OCR | Note only. Live **not rerun** |
+| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Query sound only; unsure → 0. No clap detector | Note only. Live **not rerun** |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
+
+## Live rerun (this machine)
+
+The laptop rules are on `feature/loop-next-hit-b374`. `uv run pytest` → **147 passed**.
+
+A live Gemma rerun of H5 / H8 / M1 / H7 / M4 was **not** done here: this VM has no `backend/.env` (no `VLLM_BASE_URL`), no Modal token, and not the indexed 16s tape (`af12a3ad-…`). Fake indexes and a scripted FakeBrain cannot stand in for Gemma. Until those three exist again, do not mark the four questions as pass.
