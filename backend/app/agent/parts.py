@@ -71,12 +71,7 @@ def strip_input_audio(messages: list[dict[str, Any]]) -> int:
 def listen_message(start_s: float, end_s: float, wav: bytes) -> dict:
     text = (
         f"audio from {start_s:.2f}s to {end_s:.2f}s. "
-        "Audio part on this user turn, not a tool result. "
-        "Only count the sound you were asked about. "
-        "Speech, silence, or a different tone is not a match. "
-        "This window is zero unless you clearly heard that exact sound. "
-        "Do not use the number of search rows as the count. "
-        "If you are not sure, the count is zero."
+        "Audio part on this user turn, not a tool result."
     )
     return {
         "role": "user",
@@ -201,10 +196,6 @@ def audio_search_message(result, query: str) -> dict:
             "not the start. The start of a window can be a different moment. "
             "If the user wants a short clip of the event, cut about 2 seconds starting "
             "at the middle, not before the middle, not the full search window. "
-            "If you are asked how many times a sound happened, listen at a hit first. "
-            "Only count the exact sound in the query. Speech, silence, or a different "
-            "tone is not a match. Hit rows are not a count. This window is zero unless "
-            "you clearly heard that exact sound. If you are not sure, the count is zero. "
             "Do not guess. Do not only apologize. "
             "Scores are not the answer; listen at a hit to hear:\n"
             + "\n".join(lines)
@@ -379,32 +370,6 @@ SPEECH_MATCH_COMPARE = (
 
 def speech_match_compare_message() -> dict:
     return {"role": "user", "content": SPEECH_MATCH_COMPARE}
-
-
-NEED_LISTEN_FOR_COUNT = (
-    "Do not answer yet. Sound hits are times to listen, not a count. "
-    "Listen at a hit (under 2 seconds, near the middle), then answer. "
-    "Do not only apologize."
-)
-
-
-def need_listen_for_count_message() -> dict:
-    return {"role": "user", "content": NEED_LISTEN_FOR_COUNT}
-
-
-COUNT_DEFAULT_ZERO = (
-    "Do not treat the number of search rows as the count. "
-    "A similar search score is not hearing the sound. "
-    "If the clip you heard was not clearly the sound in the question "
-    "(speech, silence, or a different tone is not a match), that window is zero. "
-    "If you are not sure you heard that exact sound, the answer is zero. "
-    "Do not say you heard it once unless that exact sound is in the clip. "
-    "Answer now with the count."
-)
-
-
-def count_default_zero_message() -> dict:
-    return {"role": "user", "content": COUNT_DEFAULT_ZERO}
 
 
 PARSE_AGAIN_NUDGE = (

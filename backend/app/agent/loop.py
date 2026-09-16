@@ -14,13 +14,11 @@ from app.agent.parts import (
     already_exported_message,
     audio_not_ready_message,
     audio_search_message,
-    count_default_zero_message,
     empty_move_nudge_message,
     export_message,
     export_whole_window_nudge,
     listen_message,
     look_message,
-    need_listen_for_count_message,
     need_speech_for_match_message,
     parse_again_message,
     refuse_message,
@@ -243,18 +241,6 @@ def _asks_print_vs_speech(question: str) -> bool:
     return about_print and about_said
 
 
-def _asks_how_many(question: str) -> bool:
-    return "how many" in question.lower()
-
-
-def _has_ok_listen(steps: list[Step]) -> bool:
-    return any(step.do == "listen" and step.ok for step in steps)
-
-
-def _has_ok_sound_search(steps: list[Step]) -> bool:
-    return any(step.do == "search_audio" and step.ok for step in steps)
-
-
 def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
     raw = brain.complete(messages)
     try:
@@ -317,7 +303,6 @@ def run_loop(
     last_hit_middle: float | None = None
     nudged_full_hit_export = False
     bounced_empty = False
-    bounced_count_zero = 0
     retried_empty_parse = False
 
     while True:
@@ -386,16 +371,6 @@ def run_loop(
                 rounds += 1
                 messages.append(need_speech_for_match_message())
                 continue
-            if _asks_how_many(question) and _has_ok_sound_search(steps):
-                if not _has_ok_listen(steps):
-                    rounds += 1
-                    messages.append(need_listen_for_count_message())
-                    continue
-                if bounced_count_zero < 2:
-                    bounced_count_zero += 1
-                    rounds += 1
-                    messages.append(count_default_zero_message())
-                    continue
             steps.append(Step(do="answer", detail=text, ok=True))
             return LoopResult(
                 answer=text,
@@ -725,8 +700,6 @@ def run_loop(
                         detail="audio",
                     )
                 )
-                if _asks_how_many(question):
-                    messages.append(count_default_zero_message())
         except ScissorsError as exc:
             messages.append(refuse_message(str(exc)))
             steps.append(

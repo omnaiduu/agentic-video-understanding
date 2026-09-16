@@ -38,7 +38,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** if the last look window matches the last listen window, the next look *or* listen starts at that end (~2s step), and more than **6s** of video remain, **block** that move and tell it to skip ahead. Tiny 1s test files would not fire (not enough tape left). Do **not** “fix” this by raising 12 rounds — that only attaches more photos.
 
-**In code now.** Unit tests (black 12s file, not the exam tape): paired look+listen then 2–4 is blocked; a jump to 8–10 is allowed; 1s files do not skip; a matching listen crawl is blocked; look-only 2s steps are **not** blocked (known gap). **Not live-proven** on Gemma + this tape.
+**In code now.** Unit tests (black 12s file, not the exam tape): paired look+listen then 2–4 is blocked; look-only 2–4 is blocked; a jump to 8–10 is allowed; 1s files do not skip. **Live pass** on Gemma + this tape (skip 2–4, then RED ALERT and Q3).
 
 ---
 
@@ -54,7 +54,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** remember sound-hit `[start, end]`. If `export_clip` matches that window (± a fraction of a second), append “recut from the middle for about 2 seconds, not before the middle.” If they **answer** while that full-window export is still the clip, bounce until they recut. When they export a shorter window that no longer matches the hit bounds, let the answer through.
 
-**In code now.** Unit tests: sound hit 9–12 → export 9–12 is nudged; two answers on that clip are both bounced; export 10.5–12 is accepted; an unrelated 0–2 cut is not nudged. Recut window is **from the middle forward** (~2s), not ±1s, so a 9–12 hit asks for ~10.5–12.5 (capped at file end). **Live:** leftover pass on two Gemma runs; tightness of the recut is this pass’s change.
+**In code now.** Unit tests: sound hit 9–12 → export 9–12 is nudged; two answers on that clip are both bounced; export 10.5–12 is accepted; an unrelated 0–2 cut is not nudged. Recut window is **from the middle forward** (~2s). A second export after a short clip is blocked. **Live pass:** 9–12 then **10.5–12.5**.
 
 ---
 
@@ -86,7 +86,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 
 **A bit more technical:** still prompt-only. There is no clap classifier on the laptop. A real fix would be a detector (out of scope). Bouncing a count with **no** listen is cheap; bouncing a wrong count **after** a listen is guessing what the WAV contained. Expect this to stay **unstable** until a listen-then-zero note sticks more often.
 
-**In code now.** After `search_audio` on a “how many” question: no answer until a listen. After listen: bounce the first two answers (hit rows are not the count; unsure → 0). No clap detector. **Live partial:** it stopped inventing “one clap”; it still would not say **zero**.
+**In code now.** **Removed.** The listen-first / “unsure → 0” bounce was exam-shaped (this tape has zero claps; a real file with claps could be pushed toward zero). Sound search still describes hits as **times to listen, not a count** (that is true of CLAP on any file). There is no clap detector.
 
 ---
 
@@ -97,7 +97,7 @@ This is **not** us cancelling the walk. Gemma *is* walking, in tiny steps. The *
 | **H8 walk** | 2s look+listen burns 12 moves by ~9s | Skip the next 2s step when >6s remain (look-only too) | **Live pass.** Skip 2–4; named Pricing, RED ALERT, Q3 |
 | **H7 beep clip** | Exports the whole 9–12s sound window | Recut from the middle **forward** ~2s; block extra exports after a short clip | **Live pass.** 9–12 then **10.5–12.5** (Q3 + beep, not red) |
 | **M1 gold $99** | Saw the pixels; would not name color + match | Name the color; **block answer** until spoken-word search; then compare lines | **Live pass.** Yellow 99 matches spoken $99 |
-| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | Listen first; bounce counts twice; unsure → 0. No clap detector | **Live partial.** Did not invent “one clap”; still would not say **zero** |
+| **H5 claps** | Sometimes 0, sometimes invents claps from silence/tone | *(removed)* No “say zero” bounce. Hits remain times, not a count | **Not a laptop fix.** Trap question on this tape |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
@@ -120,7 +120,7 @@ Same 16s tape recipe (Pricing / RED ALERT / Q3 + ~11s tone). New upload id `c1d9
 
 - Look-only crawls are skipped the same way as look+listen crawls (remaining > 6s). Skip is still off in the last 6 seconds of a file.
 - Skip-ahead does not fire in the last 6 seconds of a file.
-- H5 is still prompt-only after listen. Live: it stopped inventing “one clap” but still would not say **zero**.
+- H5 exam bounce (“unsure → 0”) was removed. Sound hits are still times, not a count.
 
 ## Final live rerun (after speech-match, count bounce, recut-from-middle, look-only skip, extra-export cap)
 

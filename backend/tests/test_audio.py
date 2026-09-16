@@ -285,39 +285,12 @@ def test_search_audio_does_not_dump_all_times(client, tiny_mp4: Path) -> None:
                 "times": [],
             },
             {
-                "do": "listen",
-                "start_s": 0.0,
-                "end_s": 0.4,
-                "fps": None,
-                "query": None,
-                "answer": None,
-                "times": [],
-            },
-            {
                 "do": "answer",
                 "start_s": None,
                 "end_s": None,
                 "fps": None,
                 "query": None,
                 "answer": "Claps around those times.",
-                "times": [0.0],
-            },
-            {
-                "do": "answer",
-                "start_s": None,
-                "end_s": None,
-                "fps": None,
-                "query": None,
-                "answer": "I heard one.",
-                "times": [0.0],
-            },
-            {
-                "do": "answer",
-                "start_s": None,
-                "end_s": None,
-                "fps": None,
-                "query": None,
-                "answer": "Zero. That clip was not the queried sound.",
                 "times": [0.0],
             },
         ]
@@ -335,7 +308,7 @@ def test_search_audio_does_not_dump_all_times(client, tiny_mp4: Path) -> None:
     assert "times to listen" in observe
     assert "count=" not in observe
     assert "middle=" in observe
-    assert "count is zero" in observe
+    assert "count is zero" not in observe
     assert len(re.findall(r"\[\d+\.\d+s–", observe)) <= TOP_HITS
 
 

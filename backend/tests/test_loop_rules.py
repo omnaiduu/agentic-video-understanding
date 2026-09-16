@@ -11,7 +11,6 @@ from pathlib import Path
 
 from app.agent.client import FakeBrain
 from app.agent.loop import (
-    _asks_how_many,
     _asks_print_vs_speech,
     _hit_middle,
     _is_next_step_after_listen,
@@ -243,10 +242,7 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
     brain = FakeBrain(
         [
             _act("search_audio", query="knock"),
-            _act("listen", start_s=0.0, end_s=0.5),
             _act("answer", answer="I need to listen first."),
-            _act("answer", answer="Maybe one."),
-            _act("answer", answer="Zero times."),
         ]
     )
     run_loop(
@@ -258,7 +254,6 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
     )
     observe = brain.calls[1][-1]["content"]
     assert "times to listen" in observe
-    assert "count is zero" in observe
     assert "full search window" in observe
     lowered = observe.lower()
     for key in EXAM_KEYS:
@@ -272,8 +267,6 @@ def test_print_vs_speech_detector_needs_both_books() -> None:
     )
     assert not _asks_print_vs_speech("what color is the printed number?")
     assert not _asks_print_vs_speech("How much does Pro cost?")
-    assert _asks_how_many("how many times does that sound happen?")
-    assert not _asks_how_many("How much does Pro cost?")
 
 
 def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> None:
@@ -321,43 +314,6 @@ def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> Non
     ]
     assert any("not searched what was said" in text for text in texts)
     assert any("spoken value" in text for text in texts)
-
-
-def test_how_many_answer_without_listen_is_bounced(tiny_mp4: Path) -> None:
-    def search(_query: str) -> AudioSearchResult:
-        return AudioSearchResult(
-            hits=[AudioHit(start_s=0.0, end_s=0.4, score=0.4)],
-            clusters=[],
-            count=0,
-        )
-
-    brain = FakeBrain(
-        [
-            _act("search_audio", query="knock"),
-            _act("answer", answer="There is one hit so there is one."),
-            _act("listen", start_s=0.0, end_s=0.4),
-            _act("answer", answer="Still counting hits."),
-            _act("answer", answer="I heard it once."),
-            _act("answer", answer="Zero. That clip was not the queried sound."),
-        ]
-    )
-    result = run_loop(
-        tiny_mp4,
-        "how many times does that sound happen?",
-        brain,
-        search_audio=search,
-        audio_status=IndexStatus.ready.value,
-    )
-    assert result.answer == "Zero. That clip was not the queried sound."
-    assert result.answer != "There is one hit so there is one."
-    assert any(step.do == "listen" and step.ok for step in result.steps)
-    texts = [
-        call[-1]["content"]
-        for call in brain.calls
-        if isinstance(call[-1].get("content"), str)
-    ]
-    assert any("times to listen, not a count" in text for text in texts)
-    assert any("answer is zero" in text for text in texts)
 
 
 def test_recut_nudge_starts_at_the_middle(twelve_s_mp4: Path) -> None:

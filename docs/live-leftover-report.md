@@ -182,26 +182,22 @@ Live, search returned both 3.12s (“the number is also printed on the slide”)
 
 **What we did not do.** We do not OCR the JPEG. We do not reject answers that lack the word “gold.” We do not require speech for “what color is the printed number?” (color only).
 
-### H5 — hits are not a count; default zero
+### H5 — clap count (removed)
 
-**Rule 1.** Question contains “how many” **and** it already used `search_audio`: no answer until a successful listen.
+We had a bounce that said “if you are not sure, the count is zero.” That helps **this** tape (zero claps) and can make Gemma too shy on a file that **does** have claps. That bounce, the listen-first-for-how-many gate, and the “this window is zero” listen note are **gone**.
 
-**Rule 2.** After listen, bounce the first **two** answers. Hit rows are not the count. A similar search score is not hearing the sound. Speech, silence, or a different tone is zero. If unsure, the answer is zero.
+What stays, because it is true of CLAP on any file: sound hits are **times to listen**, not `count=` of events. The laptop still does not count claps in the WAV.
 
-**Rule 3.** The listen note itself says this window is zero unless you clearly heard that exact sound.
-
-**What we did not do.** We did not put “clap” in the laptop notes. We did not bounce until the answer contains “zero” (that would be an answer key). We did not add a clap classifier. Live: it stopped inventing “one clap”; it still will not reliably say **zero**. That is the honest leftover.
+There was no extra H1 (“confirm $99 is on red”) laptop rule to remove. That was a trap question, not a code path.
 
 ---
 
 ## What else we did
 
-- **Unit tests** on black 12s and ~1s mp4s, not this exam tape. They check the rules fire (or do not fire) without mentioning beep / clap / ship / $99 as answers. The laptop source is grepped so those exam strings cannot leak into notes.
-- **Live Modal reruns** after each change. FastAPI was started **without** `--reload`, so we killed and restarted uvicorn or it would have kept the old loop. Gemma `/v1/models` sometimes returned 503 until the GPU was warm; we waited for 200 before chatting.
-- **Docs** in this file, [four leftover live issues](live-leftover-issues.md), and the [docs index](README.md).
-- **Did not** add Notion logging, a new database, a new UI, React, a new architecture, a clap model, or OCR.
+- **Unit tests** on black 12s and ~1s mp4s, not this exam tape. They check skip / recut / print-vs-speech without mentioning beep / clap / ship / $99 as answers.
+- **Did not** add Notion logging, a new database, a new UI, React, a clap model, or OCR.
 
-Files: `backend/app/agent/loop.py` (when to bounce / skip / recut), `parts.py` (the notes Gemma sees), `schema.py` (the system prompt), tests in `test_loop_rules.py`, `test_chat.py`, `test_audio.py`.
+Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, tests in `test_loop_rules.py`, `test_chat.py`, `test_audio.py`.
 
 ---
 
@@ -210,19 +206,14 @@ Files: `backend/app/agent/loop.py` (when to bounce / skip / recut), `parts.py` (
 | Item | Why it is still open |
 |---|---|
 | Skip in the last 6 seconds | By design. Lets a short file finish. |
-| H5 saying the word **zero** | No classifier. A second answer after the bounce can still hedge. A detector would be a new model, out of scope. |
-| H1 trap (“confirm $99 is on red”) | It looked at Pricing *and* red, then led with “Yes.” Facts can be right while the first word agrees with the false premise. We did not add “if they ask to confirm a false location, say no.” |
+| Counting a sound that is not there | No classifier. We will not bounce toward zero. |
+| H1 trap (“confirm $99 is on red”) | No laptop rule. Gemma can still say “yes” to a false premise. |
 | Gold vs yellow | Gemma’s color word. We do not OCR. |
-| Beep in the H8 sentence | Walk names the three slides. The tone is not always in the final text. Skip-ahead was about *reaching* Q3, not dictating the sentence. |
-
-If the next video has claps, H5 should count them after listening — which is why we must not hardcode zero.
 
 ---
 
 ## Bottom line
 
-The leftover set was four questions: walk the tape, clip the beep, name the printed color and match speech, count claps.
+What we **kept** is loop hygiene for any file: don’t crawl 2s steps until the 12-move cap; don’t export the whole CLAP window from the previous scene; don’t export forever; if they asked print vs speech, open both books.
 
-On live Modal Gemma, **walk, beep clip, and printed-number match now pass** with HTTP 200. The laptop did that by changing **how the books work** (skip crawls, recut from the middle, require speech for a print-vs-speech question, refuse a count with no listen).
-
-**Clap count** no longer invents “one clap” and still will not say **zero**. That last one needs a real detector, not another note.
+What we **removed** is the exam-shaped clap-count bounce (“say zero”). Counting events that aren’t in the WAV is still not a solved product feature.
