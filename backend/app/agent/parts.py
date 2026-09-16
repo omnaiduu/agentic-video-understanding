@@ -358,6 +358,18 @@ def need_speech_for_match_message() -> dict:
     return {"role": "user", "content": NEED_SPEECH_FOR_MATCH}
 
 
+SPEECH_MATCH_COMPARE = (
+    "Those lines are what was said. "
+    "If a line names a number or a price, that is the spoken value. "
+    "Compare it to the printed digits you already looked at. "
+    "Say whether they match. Do not only apologize."
+)
+
+
+def speech_match_compare_message() -> dict:
+    return {"role": "user", "content": SPEECH_MATCH_COMPARE}
+
+
 NEED_LISTEN_FOR_COUNT = (
     "Do not answer yet. Sound hits are times to listen, not a count. "
     "Listen at a hit (under 2 seconds, near the middle), then answer. "
@@ -371,9 +383,11 @@ def need_listen_for_count_message() -> dict:
 
 COUNT_DEFAULT_ZERO = (
     "Do not treat the number of search rows as the count. "
+    "A similar search score is not hearing the sound. "
     "If the clip you heard was not clearly the sound in the question "
     "(speech, silence, or a different tone is not a match), that window is zero. "
     "If you are not sure you heard that exact sound, the answer is zero. "
+    "Do not say you heard it once unless that exact sound is in the clip. "
     "Answer now with the count."
 )
 

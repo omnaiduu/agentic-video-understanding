@@ -96,6 +96,8 @@ def test_hit_middle_only_when_export_is_the_whole_window() -> None:
     assert _hit_middle(1.0, 3.0, windows) == 2.0
     # Within 0.3s still counts as the same window.
     assert _hit_middle(9.2, 11.9, windows) == 10.5
+    # Near the same bounds (shifted < 1s) still counts as the whole window.
+    assert _hit_middle(9.75, 12.75, windows) == 10.5
     # A short cut around the middle is not the whole window.
     assert _hit_middle(10.5, 12.0, windows) is None
     # Overlap that is not the hit bounds.
@@ -240,6 +242,7 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
             _act("search_audio", query="knock"),
             _act("listen", start_s=0.0, end_s=0.5),
             _act("answer", answer="I need to listen first."),
+            _act("answer", answer="Maybe one."),
             _act("answer", answer="Zero times."),
         ]
     )
@@ -314,6 +317,7 @@ def test_print_vs_speech_answer_without_search_is_bounced(tiny_mp4: Path) -> Non
         if isinstance(call[-1].get("content"), str)
     ]
     assert any("not searched what was said" in text for text in texts)
+    assert any("spoken value" in text for text in texts)
 
 
 def test_how_many_answer_without_listen_is_bounced(tiny_mp4: Path) -> None:
@@ -330,6 +334,7 @@ def test_how_many_answer_without_listen_is_bounced(tiny_mp4: Path) -> None:
             _act("answer", answer="There is one hit so there is one."),
             _act("listen", start_s=0.0, end_s=0.4),
             _act("answer", answer="Still counting hits."),
+            _act("answer", answer="I heard it once."),
             _act("answer", answer="Zero. That clip was not the queried sound."),
         ]
     )

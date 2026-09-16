@@ -26,6 +26,7 @@ from app.agent.parts import (
     search_message,
     skip_ahead_message,
     speech_already_searched_message,
+    speech_match_compare_message,
     slide_search_message,
     slides_already_searched_message,
     slides_not_ready_message,
@@ -221,7 +222,7 @@ def _hit_middle(
     start_s: float,
     end_s: float,
     windows: list[tuple[float, float]],
-    tol: float = 0.3,
+    tol: float = 1.0,
 ) -> float | None:
     for hit_start, hit_end in windows:
         if abs(start_s - hit_start) < tol and abs(end_s - hit_end) < tol:
@@ -315,7 +316,7 @@ def run_loop(
     last_hit_middle: float | None = None
     nudged_full_hit_export = False
     bounced_empty = False
-    bounced_count_zero = False
+    bounced_count_zero = 0
     retried_empty_parse = False
 
     while True:
@@ -389,8 +390,8 @@ def run_loop(
                     rounds += 1
                     messages.append(need_listen_for_count_message())
                     continue
-                if not bounced_count_zero:
-                    bounced_count_zero = True
+                if bounced_count_zero < 2:
+                    bounced_count_zero += 1
                     rounds += 1
                     messages.append(count_default_zero_message())
                     continue
@@ -429,6 +430,8 @@ def run_loop(
             hits = search(query)[:8]
             searched_speech = True
             messages.append(search_message(hits, query))
+            if _asks_print_vs_speech(question):
+                messages.append(speech_match_compare_message())
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
             steps.append(
