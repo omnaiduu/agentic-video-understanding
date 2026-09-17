@@ -1,0 +1,1172 @@
+{
+  "brain_label": "e4b-thinking",
+  "vllm_model": "google/gemma-4-E4B-it",
+  "thinking": true,
+  "video_id": "c1d9beb7-5465-4f47-9d53-2d6b299104b5",
+  "base_url": "http://127.0.0.1:8000",
+  "questions": {
+    "E1": {
+      "http": 200,
+      "answer": "The Pro plan costs $99 a month.",
+      "export_url": null,
+      "citations": [],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search",
+          "text": "The user is asking for the cost of \"Pro\". Since I have a transcript, I should use `search` to find this information."
+        },
+        {
+          "do": "answer",
+          "text": "The user wants to know how much Pro costs.\nI used `search` with the query \"Pro cost.\"\nThe transcript provided two hits:\n1.  [0.0s] \"The pro plan is $99 a month.\" (This directly answers the question.)\n2.  [3.1s] \"The number is also printed on the slide.\" (This suggests a visual reference.)\n\nSince the first hit at 0.0s provides a clear answer (\"The pro plan is $99 a month.\"), I can use this information to answer the user's question. I don't need to look at the slide at 3.1s unless the spoken answer was unclear or contradicted.\n\nI will use the information from the search result to formulate the final answer."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 0.0,
+          "detail": "Pro cost.: 0.00,3.12"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The Pro plan costs $99 a month."
+        }
+      ],
+      "error": null,
+      "question": "How much does Pro cost?",
+      "elapsed_s": 23.1,
+      "listened_before_export": false,
+      "searched_speech": true,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass",
+        "what_happened": "Opened spoken words. Answered $99 a month.",
+        "fragile_crutch_we_removed": "none",
+        "what_12b_should_try_without_a_bounce": "Same question. Speech or a look at Pricing is enough."
+      }
+    },
+    "H1": {
+      "http": 200,
+      "answer": "I could not confirm that the $99 price is on a red emergency screen. The red emergency screen shown in the video only displays the text 'RED ALERT'.",
+      "export_url": null,
+      "citations": [],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search_visual",
+          "text": "The user is asking to confirm if a \"$99 price\" is visible on a \"red emergency screen\" in the video.\nI have several tools available: `search` (transcript), `search_visual` (images), `search_audio` (sound), `search_slides` (slides).\nSince the query involves both a price/text (\"$99 price\") and a visual characteristic (\"red emergency screen\"), `search_visual` seems the most appropriate starting point. `search_slides` is also an option if the information is in a presentation slide, but \"emergency screen\" suggests a general visual element.\n\nI will use `search_visual` with the query \"red emergency screen $99 price\"."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to confirm if the $99 price is on the red emergency screen.\nI have search_visual results which point to several time windows, especially around 6s to 9s, and also early on.\nI will look at the top hit time, 6.0s, to check if it matches the description."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to look at another frame since the previous look at 6.0-7.0s did not confirm the price.\nThe search results had hits at 8.0s, 9.0s, and other earlier times.\nI should pick the next available time from the original search results that I haven't looked at and is under 2 seconds from its timestamp.\n\nThe hits were:\n[6.0s] (Looked)\n[7.0s] (Looked/covered)\n[8.0s] (Next logical hit)\n[9.0s]\n[0.0s]\n[1.0s]\n[2.0s]\n[3.0s]\n\nI will choose 8.0s."
+        },
+        {
+          "do": "look",
+          "text": "The user is asking to confirm if a \"$99 price\" is on a \"red emergency screen\".\nI have searched visually using the query \"red emergency screen $99 price\".\nI got several hits, all clustered between 0.0s and 9.0s, with low scores.\nI have looked at 6.0s, 7.0s, and 8.0s.\nThe visual information so far (6.0s, 8.0s) only shows \"RED ALERT\" on a red background, no price.\nI looked at 9.0s in the previous turn (though the user gave me feedback about the sequence, the prompt implies I need to look at 9.0s now based on the original hits).\n\nLet's look at the 9.0s frame (which was a visual hit time).\n\nIf 9.0s also does not show the price, I need to check the other visual hits (0.0s, 1.0s, 2.0s, 3.0s). I should pick one further down or check 9.0s first as it was a hit.\n\nBased on the prompt, I need to look at the next unused time on the list, keeping it under 2 seconds (from the previous look or the hit list). Since I looked at 6.0s, 7.0s, 8.0s, I should now look at 9.0s."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to look at frames that are not close to the previously checked times (6.0-9.0s) but still under 2 seconds away from the last checked time (9.0s).\n\nPrevious looks were at:\n1. 6.0s - 7.0s\n2. 7.0s - 8.0s\n3. 8.0s - 9.0s\n4. 9.0s - 10.0s (This was the last look)\n\nThe visual hits were mostly clustered between 0s and 9s. Since the first few looks revealed only \"RED ALERT\" (no price), I need to continue searching in the vicinity of the hits (0-9s) but at a new time, or check visually later in the video if the relevant scene might be there, although the hits suggested an early scene.\n\nGiven the instruction to look \"several seconds later (under 2 seconds)\" from the last look (9.0s - 10.0s), I should check around 11s or 12s, assuming the red emergency screen might appear later or there might be another instance of the red alert.\n\nI will check 11.0s to 12.0s."
+        },
+        {
+          "do": "search_visual",
+          "text": "The user is asking to confirm if a \"$99 price\" is on a \"red emergency screen\".\nI previously used `search_visual` and got several hits, mostly around 0-3 seconds (low scores) and 6-9 seconds (low scores).\nI looked at the frames around 6-9 seconds (6-7s, 8-9s) and they showed \"RED ALERT\" but no price.\nI looked at 11-12s and 12-13s, which showed a \"Q3 Roadmap\" slide, not a red emergency screen with a price.\n\nSince the initial visual search was inconclusive, and subsequent look moves failed to find the price on the red screen, I need to check other modalities or broaden the visual search.\n\nThe visual search query was \"red emergency screen $99 price\". Maybe the price or the \"red emergency screen\" itself is not prominent enough for the search.\n\nLet's try a general search for \"red\" combined with \"price\" or \"$99\" to see if they appear together.\n\nI will perform a new visual search focusing on the price and the color red, as this is the key piece of information the user is looking for."
+        },
+        {
+          "do": "look",
+          "text": "The user is asking to confirm if a \"$99 price\" is on a \"red emergency screen\".\nI have searched visually and received several hits across the times I have already checked (6s, 7s, 8s, 9s, 10s, 11s, 12s, 13s).\nAt 6s, 7s, 8s, 9s, the screen was red and displayed \"RED ALERT\" but no price.\nAt 11s, 12s, 13s, the screen was dark green/black and displayed \"Q3 Roadmap\" but no price or red color.\n\nThe search results suggest that around 6s-9s the search query is most relevant (high scores). I need to re-examine the frames in this range to see if there was a price that I might have missed, or if the search is misleading.\n\nLet's look at 6.0s again, as it has a higher score now (0.060) than before (0.034), suggesting it might be a better candidate.\n\nI will look at 6.0s again."
+        },
+        {
+          "do": "look",
+          "text": "The user wants to confirm if a $99 price is on the \"red emergency screen\".\nI previously searched for visual hits and looked at 6.0s, 7.0s, 8.0s, 9.0s, 11.0s, and 12.0s.\nThe 6.0s frame shows \"RED ALERT\" on a red background, but no price.\nThe other frames I looked at (7.0s, 8.0s, 9.0s, 12.0s) also showed \"RED ALERT\" or \"Q3 Roadmap\" without a price.\n\nThe latest search for '$99 red price' returned hits from 6.0s to 13.0s.\nI should continue checking the relevant times, specifically 7.0s, 8.0s, 9.0s, 10.0s, 11.0s, 12.0s, and 13.0s, as these were previous hits and I haven't explicitly examined all of them for a price.\n\nI already examined 6.0s (RED ALERT, no price).\nI already examined 7.0s (implicitly, but let's check it explicitly or use the sequence).\nI already examined 8.0s (RED ALERT, no price).\nI already examined 9.0s (RED ALERT, no price).\nI already examined 11.0s (Q3 Roadmap, no price).\nI already examined 12.0s (Q3 Roadmap, no price).\n\nI need to check 10.0s and 13.0s. Since the hits are clustered, and I've seen a lot of red alert slides, the specific price information might not be present in these general \"red emergency screen\" type visuals.\n\nLet's look at 10.0s next, as it's the next unexamined hit."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search_visual",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 6.0,
+          "detail": "red emergency screen $99 price: 6.00,7.00,8.00,9.00,0.00,1.00,2.00,3.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 7.0,
+          "detail": "6.00"
+        },
+        {
+          "do": "look",
+          "ok": false,
+          "start_s": 7.0,
+          "end_s": 8.0,
+          "detail": "skip ahead"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 8.0,
+          "end_s": 9.0,
+          "detail": "8.00"
+        },
+        {
+          "do": "look",
+          "ok": false,
+          "start_s": 9.0,
+          "end_s": 10.0,
+          "detail": "skip ahead"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 11.0,
+          "end_s": 12.0,
+          "detail": "11.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 13.0,
+          "detail": "12.00"
+        },
+        {
+          "do": "search_visual",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 6.0,
+          "detail": "$99 red price: 6.00,7.00,8.00,9.00,10.00,11.00,12.00,13.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 7.0,
+          "detail": "6.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 11.0,
+          "detail": "10.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 13.0,
+          "detail": "12.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "I could not confirm that the $99 price is on a red emergency screen. The red emergency screen shown in the video only displays the text 'RED ALERT'."
+        }
+      ],
+      "error": null,
+      "question": "I think the $99 price is on the red emergency screen \u2014 can you confirm?",
+      "elapsed_s": 192.7,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "unstable",
+        "what_happened": "Sometimes looked at Pricing, red, and Q3 and said the price is not on red. Sometimes led with Yes (the trap) even after seeing $99 on navy.",
+        "fragile_crutch_we_removed": "none \u2014 there was never an H1 laptop rule",
+        "what_12b_should_try_without_a_bounce": "Reject the false premise from the pixels. Do not add a 'say no' bounce."
+      }
+    },
+    "M3": {
+      "http": 200,
+      "answer": "According to the Q3 Roadmap, we are supposed to ship the slide index this quarter.",
+      "export_url": null,
+      "citations": [
+        10.0
+      ],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search",
+          "text": "The user is asking what items should be shipped this quarter.\nI have a transcript, visual, and audio available.\nI should use `search` to find relevant keywords in the transcript, such as \"ship\", \"quarter\", or specific product names if they are mentioned in the context of shipping."
+        },
+        {
+          "do": "search_slides",
+          "text": "The user is asking \"What are we supposed to ship this quarter?\".\nThe search results from the transcript are:\n[3.1s] The number is also printed on the slide.\n[0.0s] The pro plan is $99 a month.\nNeither of these directly answers what needs to be shipped this quarter.\n\nI should check the slides or visuals for information related to shipping or quarterly goals. I will start with `search_slides`."
+        },
+        {
+          "do": "look",
+          "text": "The user wants to know what we are supposed to ship this quarter.\nI have performed a search on the transcript and slides.\nThe top slide hit is at 10.0s with score 9.215. I need to look at this slide.\n\nAction: look at 10.0s."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to check the remaining slide time, 0.0s, as the previous two slides (10.0s and 6.0s) did not answer the question \"What are we supposed to ship this quarter?\".\nI need to perform a `look` action at 0.0s."
+        },
+        {
+          "do": "answer",
+          "text": "The user wants to know what is supposed to be shipped this quarter.\nI have already searched the transcript and slides.\nI looked at the slides at:\n1. 10.0s: \"Q3 Roadmap\", \"Ship the slide index\" -> This directly answers the question regarding shipping for Q3.\n2. 6.0s: \"RED ALERT\" -> Not relevant.\n3. 0.0s: \"Pricing\", \"Pro $99 per month\" -> Not relevant.\n\nThe slide at 10.0s clearly states: \"Q3 Roadmap\" and \"Ship the slide index\". This provides the answer.\n\nI should now provide the answer based on the information from the slide at 10.0s."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search",
+          "ok": true,
+          "start_s": 3.12,
+          "end_s": 3.12,
+          "detail": "ship this quarter: 3.12,0.00"
+        },
+        {
+          "do": "search_slides",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 16.0,
+          "detail": "ship this quarter: 10.00,6.00,0.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 11.0,
+          "detail": "10.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 7.0,
+          "detail": "6.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 1.0,
+          "detail": "0.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "According to the Q3 Roadmap, we are supposed to ship the slide index this quarter."
+        }
+      ],
+      "error": null,
+      "question": "What are we supposed to ship this quarter?",
+      "elapsed_s": 63.7,
+      "listened_before_export": false,
+      "searched_speech": true,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass",
+        "what_happened": "Speech missed the never-spoken heading, then slides + look at Q3.",
+        "fragile_crutch_we_removed": "none",
+        "what_12b_should_try_without_a_bounce": "Still leave speech when it does not answer; look at the printed slide."
+      }
+    },
+    "M4": {
+      "http": 200,
+      "answer": "The notification tone plays between 9.0s and 12.0s, and the screen displays \"RED ALERT\" on a red background during that time.",
+      "export_url": null,
+      "citations": [
+        9.0,
+        12.0
+      ],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search_audio",
+          "text": "The user is asking for the timestamp when a \"notification tone\" plays, and what is visible on screen at that time.\nI have access to transcript, visual, and audio data.\nI should use `search_audio` to find the notification tone.\nThen, I will use the returned time window with `look` to see what is on screen.\n\nStep 1: Search for \"notification tone\" in the audio.\nStep 2: If found, use the timestamp to look at the video.\nStep 3: Formulate the answer."
+        },
+        {
+          "do": "listen",
+          "text": "The user wants to know when the notification tone plays and what is on screen at that moment.\nI have search results for the 'notification tone' sound. I should listen to the hits to identify the specific playing time.\n\nThe highest scored/most relevant hits are:\n1. [9.0s\u201312.0s] middle=10.5s score=0.305\n2. [10.5s\u201313.5s] middle=12.0s score=0.285\n\nI will start by listening to the first hit: [9.0s\u201312.0s]."
+        },
+        {
+          "do": "look",
+          "text": "The user is asking for when the notification tone plays and what is on screen at that moment.\nI have listened to the audio from 9.0s to 12.0s and heard a notification tone.\nNow I need to check what is on screen during this time.\nI will use `look` for the time range [9.0s, 12.0s]."
+        },
+        {
+          "do": "answer",
+          "text": "The user wants to know when the notification tone plays and what is on screen at that moment.\nI previously searched for the \"notification tone\" and found several hits.\nI listened to the sound between 9.0s and 12.0s, and then looked at the frames during that time.\n\nThe frames show:\nAt 9.0s, 10.0s, and 11.0s: a red background with \"RED ALERT\" in white text.\nAt a later time (implied by the sequence, though the user might have only provided the current frames, they looked at multiple frames within the 9.0-12.0 window which is what I requested): a green/dark background with \"Q3 Roadmap\" and \"Ship the slide index\" in white/light green text.\n\nBased on the provided frames for 9.0s, 10.0s, and 11.0s, the screen displays \"RED ALERT\" on a red background.\n\nSince the sound played between 9.0s and 12.0s, and the frames for this period show \"RED ALERT\", I can now answer the question."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search_audio",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "notification tone: 9.00,10.50,0.00,1.50,4.50,3.00,6.00,7.50"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "audio"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "9.00,10.00,11.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The notification tone plays between 9.0s and 12.0s, and the screen displays \"RED ALERT\" on a red background during that time."
+        }
+      ],
+      "error": null,
+      "question": "When does the notification tone play, and what is on screen at that moment?",
+      "elapsed_s": 64.0,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass_with_hint",
+        "what_happened": "Sound hit 9\u201312s. Then look+listen near the middle (10.5\u201312.5). Named Q3 / Ship the slide index. The observe note used to say 'cut from the middle'.",
+        "fragile_crutch_we_removed": "Prompt that told it to look/export at the middle of a CLAP window.",
+        "what_12b_should_try_without_a_bounce": "Listen inside the 9\u201312s hit, then say what is on screen at the tone."
+      }
+    },
+    "M1": {
+      "http": 200,
+      "answer": "The number, $99, which is printed on the slide is yellow/gold in color. The speakers stated that a number is also printed on the slide, but they did not specify its color.",
+      "export_url": null,
+      "citations": [
+        0.0
+      ],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search_slides",
+          "text": "The user is asking about a number printed on a slide, its color, and whether it matches what was said in the video.\nI need to search for slides containing numbers or related concepts.\n\nI will use `search_slides` to find relevant slides."
+        },
+        {
+          "do": "look",
+          "text": "The user is asking about a number printed on a slide, its color, and whether it matches what was said.\nI have search results from `search_slides`. The top hit is at 6.0s.\nI need to use `look` on the top hit (6.0s) to examine the slide and answer the question."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to continue searching for a number printed on the slide, its color, and whether it matches what was said.\nI have already checked the first slide hit at 6.0s and it only showed \"RED ALERT\" on a red background, no number.\nThe unused slide hits are:\n1. 10.0s\n2. 0.0s\n\nI will look at the next unused time, 10.0s."
+        },
+        {
+          "do": "search",
+          "text": "The user is asking about a number printed on the slide and its color, specifically if it matches what was said.\nI have searched slides and looked at the top 3 hits:\n1.  [6.0s] (Red Alert) - No price/number visible.\n2.  [10.0s] (Q3 Roadmap) - No price/number visible.\n3.  [0.0s] (Pricing, Pro $99) - A price ($99) is visible in yellow/gold color.\n\nThe user's question is: \"They said a number is also printed on the slide. What color is that number, and does it match what they said?\"\n\nThe slide at 0.0s shows \"Pro $99 per month\". The number 99 is yellow/gold.\n\nI need to check if the audio at 0.0s mentions this number ($99) and if the color mentioned in the audio matches yellow/gold.\n\nI should search the transcript near 0.0s for \"99\" or \"price\" or \"color\" to see what was said.\n\nI will use the `search` tool."
+        },
+        {
+          "do": "listen",
+          "text": "The user is asking about a number printed on the slide, its color, and whether it matches what was said.\n1.  I have already searched the slides and looked at the top 3 hits (0.0s, 6.0s, 10.0s).\n2.  I have checked the visuals:\n    *   6.0s: \"RED ALERT\" (No number/price)\n    *   10.0s: \"Q3 Roadmap\" (No number/price)\n    *   0.0s: \"Pricing / Pro $99 / per month\" (Contains the number $99 in yellow/gold)\n3.  The transcript confirms:\n    *   [0.0s] \"The pro plan is $99 a month.\" (Relates to the price in the 0.0s slide)\n    *   [3.1s] \"The number is also printed on the slide.\" (This is the critical piece of information).\n\nThe slide at 0.0s shows \"$99\" in a yellow/gold color. The user question asks for the color of the number and if it matches what was said.\n\nThe transcript doesn't explicitly say \"The number is yellow.\" It just says \"The number is also printed on the slide.\" I need to determine if the speaker described the color or if the number I see matches some implied expectation or if the speaker mentioned a color for the number.\n\nSince the transcript hit at 3.1s is vague (\"The number is also printed on the slide\"), and I have seen the slide (0.0s), I should check the audio around 3.1s to see if the color is mentioned.\n\nI will use `listen` on the time hit [3.1s]."
+        },
+        {
+          "do": "answer",
+          "text": "The user wants to know the color of the number that was printed on the slide, and if that color matches what was said.\nI've looked at the slides, which showed a pricing slide with \"$99\" in yellow/gold text.\nI have searched and found that \"The number is also printed on the slide\" was said at 3.1s.\nI listened to the audio around 3.1s-5.1s, but it only confirms that \"the number is also printed on the slide\" was said, without providing the color.\nThe slide at 0.0s (which is a print slide) shows the number \"$99\" in a yellow/gold color.\nI need to answer based on the visual information, as the audio/transcript does not specify the color.\n\nI will formulate the answer by stating the number and its color, and relating it to the statement they made."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search_slides",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 10.0,
+          "detail": "number printed on the slide color match statement.: 6.00,10.00,0.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "detail": "6.00,7.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 12.0,
+          "detail": "10.00,11.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "detail": "0.00,1.00"
+        },
+        {
+          "do": "search",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 0.0,
+          "detail": "number price 99 color: 0.00,3.12"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 3.1,
+          "end_s": 5.1,
+          "detail": "audio"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The number, $99, which is printed on the slide is yellow/gold in color. The speakers stated that a number is also printed on the slide, but they did not specify its color."
+        }
+      ],
+      "error": null,
+      "question": "They said a number is also printed on the slide. What color is that number, and does it match what they said?",
+      "elapsed_s": 118.3,
+      "listened_before_export": false,
+      "searched_speech": true,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "fail_without_bounce",
+        "what_happened": "Looked at Q3, Pricing, and red. Named yellow $99. Then answered without searching speech: cannot confirm a match. With a bounce that blocked answer until search, E4B passed (yellow 99 matches spoken $99).",
+        "fragile_crutch_we_removed": "Keyword bounce on 'printed' + 'they said': block answer until a forced speech search, then a 'compare the lines' note.",
+        "what_12b_should_try_without_a_bounce": "Open both books on its own: look at the printed number, search speech, then say whether they match."
+      }
+    },
+    "H5": {
+      "http": 200,
+      "answer": "I heard claps in several sections of the recording, specifically around 6.0s-9.0s, 7.5s-10.5s, 12.0s-15.0s, and 13.5s-16.0s.",
+      "export_url": null,
+      "citations": [],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search_audio",
+          "text": "The user is asking for the count of \"claps\" in the recording.\nI have `audio_status=ready` and a `transcript_status=ready`.\nSince \"claps\" is a sound, I should use `search_audio`.\nI will search for \"claps\"."
+        },
+        {
+          "do": "listen",
+          "text": "The user wants to know the total number of claps in the recording.\nI have search_audio results that indicate several time ranges where 'claps' sounds are present.\nSince the question asks \"How many claps\", I need to listen to the provided hits to count them, as the tool only gives similarity scores and ranges, not a count.\n\nI should select a few representative ranges to listen to. I will start with the top-scoring and distinct ranges.\n\nHits:\n1. [6.0s\u20139.0s] score=0.184\n2. [7.5s\u201310.5s] score=0.184\n3. [12.0s\u201315.0s] score=0.184\n4. [13.5s\u201316.0s] score=0.184\n5. [15.0s\u201316.0s] score=0.184\n6. [9.0s\u201312.0s] score=0.172\n7. [10.5s\u201313.5s] score=0.162\n8. [4.5s\u20137.5s] score=0.103\n\nI will start by listening to the first hit [6.0s\u20139.0s] to hear the content and estimate the number of claps."
+        },
+        {
+          "do": "listen",
+          "text": "The user is asking for the total number of claps in the recording.\nI have searched for \"claps\" and got several audio hits.\nI listened to the first hit (6.0s\u20139.0s) and the user provided the audio.\n\nThe audio from 6.0s to 9.0s contains a clap.\n\nTo determine the total number of claps, I need to listen to the other audio hits.\n\nThe hits are:\n1. [6.0s\u20139.0s] (Listened, found 1 clap)\n2. [7.5s\u201310.5s]\n3. [12.0s\u201315.0s]\n4. [13.5s\u201316.0s]\n5. [15.0s\u201316.0s]\n6. [9.0s\u201312.0s]\n7. [10.5s\u201313.5s]\n8. [4.5s\u20137.5s]\n\nI will listen to the next relevant hit, perhaps [7.5s\u201310.5s]."
+        },
+        {
+          "do": "listen",
+          "text": "The user is asking \"How many claps are in this recording?\".\nI have already searched for 'claps' using `search_audio` and received 8 sound hits.\nI have listened to the first two hits: [6.0s\u20139.0s] and [7.5s\u201310.5s].\nThe user has provided the audio for these clips.\n\nNow I will listen to the third hit: [12.0s\u201315.0s]."
+        },
+        {
+          "do": "listen",
+          "text": "The user is asking \"How many claps are in this recording?\".\nI have previously searched for 'claps' using `search_audio` and got 8 hits.\nI have listened to the first three hits: [6.0s\u20139.0s], [7.5s\u201310.5s], and [12.0s\u201315.0s].\n\nNow I have listened to three of the eight suggested windows. I should continue listening to the remaining suggested windows to gather more information about the claps.\n\nRemaining windows:\n[13.5s\u201316.0s]\n[15.0s\u201316.0s]\n[9.0s\u201312.0s]\n[10.5s\u201313.5s]\n[4.5s\u20137.5s]\n\nI will listen to the next window: [13.5s\u201316.0s]."
+        },
+        {
+          "do": "answer",
+          "text": "The user is asking for the number of claps in the recording.\nI have performed several audio searches for 'claps' and listened to the resulting segments.\n\n1.  **Listen [6.0s\u20139.0s]:** I heard claps.\n2.  **Listen [7.5s\u201310.5s]:** I heard claps.\n3.  **Listen [12.0s\u201315.0s]:** I heard claps.\n4.  **Listen [13.5s\u201316.0s]:** I heard claps.\n\nBased on these four segments, there are definitely claps, and they appear to be clustered in these areas. While I have not heard the entire recording, the segments suggest there are multiple instances of claps.\n\nI should summarize my findings and answer the question. I cannot give an exact number as I haven't heard the whole video, but I can confirm the presence of claps and their general timing.\n\nI will answer by stating that claps were found in the specified time ranges."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search_audio",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 9.0,
+          "detail": "claps: 6.00,7.50,12.00,13.50,15.00,9.00,10.50,4.50"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 9.0,
+          "detail": "audio"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 7.5,
+          "end_s": 10.5,
+          "detail": "audio"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 15.0,
+          "detail": "audio"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 13.5,
+          "end_s": 16.0,
+          "detail": "audio"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "I heard claps in several sections of the recording, specifically around 6.0s-9.0s, 7.5s-10.5s, 12.0s-15.0s, and 13.5s-16.0s."
+        }
+      ],
+      "error": null,
+      "question": "How many claps are in this recording?",
+      "elapsed_s": 114.1,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "fail",
+        "what_happened": "Sound search is not a clap detector. E4B treated hit rows as a count, or listened to silence/tone and said one clap. An 'if unsure, say zero' bounce was exam-shaped and was already removed.",
+        "fragile_crutch_we_removed": "unsure \u2192 zero bounce (already gone)",
+        "what_12b_should_try_without_a_bounce": "Listen at a hit. If the wav is not claps, say zero. Still no laptop clap counter."
+      }
+    },
+    "H7": {
+      "http": 200,
+      "answer": "Here is a three-second clip of what is on screen when the beep happens: /videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/89110f9c-5fba-4ffa-b9ae-c7131fbe9c48",
+      "export_url": "/videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/89110f9c-5fba-4ffa-b9ae-c7131fbe9c48",
+      "citations": [],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "search_audio",
+          "text": "The user wants a 3-second video clip centered around the moment a \"beep\" happens.\nI need to search the audio for the sound \"beep\".\nThen, I will use `export_clip` around the detected time.\n\nFirst, I will use `search_audio` for \"beep\"."
+        },
+        {
+          "do": "listen",
+          "text": "The user wants a three-second clip of what is on screen when the beep happens.\nI have search_audio results for \"beep\".\nThe time ranges are:\n1. [9.0s\u201312.0s]\n2. [10.5s\u201313.5s]\n3. [6.0s\u20139.0s]\n4. [7.5s\u201310.5s]\n5. [12.0s\u201315.0s]\n6. [13.5s\u201316.0s]\n7. [15.0s\u201316.0s]\n8. [4.5s\u20137.5s]\n\nI should start by listening to the first relevant hit, [9.0s\u201312.0s], to confirm the beep and then look at the visual content during that time.\n\nThe user asked for a three-second clip. If I identify a suitable time, I can use `export_clip`.\n\nFirst, I will listen to the first hit."
+        },
+        {
+          "do": "export_clip",
+          "text": "The user wants a three-second clip of whatever is on screen when the beep happens.\nI found several hits for 'beep' and listened to the range [9.0s\u201312.0s].\nThe audio from 9.0s to 12.0s contains the beep sound.\nNow I need to look at the video frames around this time to capture what is on screen.\nThe user asked for a three-second clip. I should select a three-second window around the detected sound, for example, [9.0s\u201312.0s].\nI should use `export_clip` for this."
+        }
+      ],
+      "steps": [
+        {
+          "do": "search_audio",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "beep: 9.00,10.50,6.00,7.50,12.00,13.50,15.00,4.50"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "audio"
+        },
+        {
+          "do": "export_clip",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "/videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/89110f9c-5fba-4ffa-b9ae-c7131fbe9c48"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "Here is a three-second clip of what is on screen when the beep happens: /videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/89110f9c-5fba-4ffa-b9ae-c7131fbe9c48"
+        }
+      ],
+      "error": null,
+      "question": "Make a three-second clip of whatever is on screen when the beep happens.",
+      "elapsed_s": 51.5,
+      "listened_before_export": true,
+      "searched_speech": false,
+      "exported_heard_range": true,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "fail_without_recut",
+        "what_happened": "search_audio returned a similar-audio RANGE (often 9\u201312s). E4B exported that whole range without listening. The start of the window is the previous slide. Recut-from-middle then extra-export-cap made a later live pass (9\u201312 then 10.5\u201312.5). Without that crutch, exporting the range is the bug.",
+        "fragile_crutch_we_removed": "Laptop recut-from-middle (~2s from the hit midpoint), bounce answers until that recut, and block further exports.",
+        "what_12b_should_try_without_a_bounce": "search_audio \u2192 listen at a hit \u2192 export only the range it heard. If it still dumps the whole CLAP window, that is a 12B fail, not a reason to put the recut bounce back."
+      }
+    },
+    "H8": {
+      "http": 200,
+      "answer": "The video began with a 'Pricing' slide displaying 'Pro $99 per month'. This was followed by a 'Red Alert' screen against a red background. The latter part of the video showed a 'Q3 Roadmap' slide, which featured the text 'Ship the slide index'.",
+      "export_url": null,
+      "citations": [],
+      "thinking": true,
+      "thoughts": [
+        {
+          "do": "look",
+          "text": "The user wants a comprehensive walk-through of the entire 16-second video, including non-verbal elements.\nSince the video is short (16s), I should break it down into small, continuous time segments (e.g., 2-4 seconds each) to provide a full overview.\n\nI will use `look` to describe the visuals and `listen` to describe the audio for each segment.\n\nSegment 1: 0.0s to 2.0s\nSegment 2: 2.0s to 4.0s\nSegment 3: 4.0s to 6.0s\nSegment 4: 6.0s to 8.0s\nSegment 5: 8.0s to 10.0s\nSegment 6: 10.0s to 12.0s\nSegment 7: 12.0s to 14.0s\nSegment 8: 14.0s to 16.0s"
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to walk through the whole video chronologically, including non-verbal aspects.\nI have started at 0.0s to 2.0s. The frames at 0.00s and 1.00s showed a pricing slide: \"Pricing\", \"Pro $99 per month\".\n\nThe video is 16.000s long. I need to continue moving through the tape. I should probably look at the next 2-second segment."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to continue walking through the tape in order, but specifically requested that I skip the next 2-second segment (which would be 2.0s to 4.0s, as per the previous turn).\nThe last look was at 0.0s to 2.0s.\nThe next look should start sometime after 4.0s, but the segment itself must be under 2 seconds long.\n\nI will choose to look from 4.0s to 6.0s."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to continue walking through the tape, but skip the next 2-second interval because I already looked at it (6.0s to 8.0s).\nMy last look was 6.0s - 8.0s. I need to look later, under 2 seconds window, and before 16.0s.\n\nI will choose 8.0s to 10.0s."
+        },
+        {
+          "do": "look",
+          "text": "The user wants me to continue walking through the video, covering the remaining duration of 16.0s.\nI have looked at segments up to 12.0s.\nI should continue the sequential look process, taking the next 2-second window.\nThe next window is 12.0s to 14.0s."
+        }
+      ],
+      "steps": [
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "detail": "0.00,1.00"
+        },
+        {
+          "do": "look",
+          "ok": false,
+          "start_s": 2.0,
+          "end_s": 4.0,
+          "detail": "skip ahead"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 4.0,
+          "end_s": 6.0,
+          "detail": "4.00,5.00"
+        },
+        {
+          "do": "look",
+          "ok": false,
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "detail": "skip ahead"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 8.0,
+          "end_s": 10.0,
+          "detail": "8.00,9.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 12.0,
+          "detail": "10.00,11.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 14.0,
+          "detail": "12.00,13.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 14.0,
+          "end_s": 16.0,
+          "detail": "14.00,15.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The video began with a 'Pricing' slide displaying 'Pro $99 per month'. This was followed by a 'Red Alert' screen against a red background. The latter part of the video showed a 'Q3 Roadmap' slide, which featured the text 'Ship the slide ind"
+        }
+      ],
+      "error": null,
+      "question": "Walk through the whole tape in order, including things nobody said out loud.",
+      "elapsed_s": 79.3,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass_with_skip",
+        "what_happened": "2s look+listen crawl burned 12 moves by ~9s until skip-ahead blocked the next 2s step when >6s remained (look-only too). Then it named Pricing, RED ALERT, and Q3.",
+        "fragile_crutch_we_removed": "none \u2014 skip-ahead stays; it is loop hygiene, not a prompt guess",
+        "what_12b_should_try_without_a_bounce": "Search then jump, or skip 2s crawls. Same skip-ahead rule is still on."
+      }
+    }
+  },
+  "score": {
+    "brain_label": "e4b-thinking",
+    "video_id": "c1d9beb7-5465-4f47-9d53-2d6b299104b5",
+    "vllm_model": "google/gemma-4-E4B-it",
+    "questions": {
+      "E1": {
+        "qid": "E1",
+        "verdict": "pass",
+        "reason": "HTTP 200 and names $99.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": true,
+          "looked": false,
+          "exported": false
+        },
+        "answer": "The Pro plan costs $99 a month.",
+        "steps": [
+          [
+            "search",
+            true,
+            0.0,
+            0.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H1": {
+        "qid": "H1",
+        "verdict": "partial",
+        "reason": "HTTP 200 but does not clearly say the price is not on red.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "I could not confirm that the $99 price is on a red emergency screen. The red emergency screen shown in the video only displays the text 'RED ALERT'.",
+        "steps": [
+          [
+            "search_visual",
+            true,
+            6.0,
+            6.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            7.0
+          ],
+          [
+            "look",
+            false,
+            7.0,
+            8.0
+          ],
+          [
+            "look",
+            true,
+            8.0,
+            9.0
+          ],
+          [
+            "look",
+            false,
+            9.0,
+            10.0
+          ],
+          [
+            "look",
+            true,
+            11.0,
+            12.0
+          ],
+          [
+            "look",
+            true,
+            12.0,
+            13.0
+          ],
+          [
+            "search_visual",
+            true,
+            6.0,
+            6.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            7.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            11.0
+          ],
+          [
+            "look",
+            true,
+            12.0,
+            13.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "M3": {
+        "qid": "M3",
+        "verdict": "pass",
+        "reason": "HTTP 200 and names what to ship.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": true,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "According to the Q3 Roadmap, we are supposed to ship the slide index this quarter.",
+        "steps": [
+          [
+            "search",
+            true,
+            3.12,
+            3.12
+          ],
+          [
+            "search_slides",
+            true,
+            10.0,
+            16.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            11.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            7.0
+          ],
+          [
+            "look",
+            true,
+            0.0,
+            1.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "M4": {
+        "qid": "M4",
+        "verdict": "partial",
+        "reason": "Looked or listened after sound search but did not name the slide.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The notification tone plays between 9.0s and 12.0s, and the screen displays \"RED ALERT\" on a red background during that time.",
+        "steps": [
+          [
+            "search_audio",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "listen",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "look",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "M1": {
+        "qid": "M1",
+        "verdict": "partial",
+        "reason": "Opened both books and named a color, but no clear match sentence.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": true,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The number, $99, which is printed on the slide is yellow/gold in color. The speakers stated that a number is also printed on the slide, but they did not specify its color.",
+        "steps": [
+          [
+            "search_slides",
+            true,
+            6.0,
+            10.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            8.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            12.0
+          ],
+          [
+            "look",
+            true,
+            0.0,
+            2.0
+          ],
+          [
+            "search",
+            true,
+            0.0,
+            0.0
+          ],
+          [
+            "listen",
+            true,
+            3.1,
+            5.1
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H5": {
+        "qid": "H5",
+        "verdict": "partial",
+        "reason": "Listened and did not invent a count, but did not say zero.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": false,
+          "exported": false
+        },
+        "answer": "I heard claps in several sections of the recording, specifically around 6.0s-9.0s, 7.5s-10.5s, 12.0s-15.0s, and 13.5s-16.0s.",
+        "steps": [
+          [
+            "search_audio",
+            true,
+            6.0,
+            9.0
+          ],
+          [
+            "listen",
+            true,
+            6.0,
+            9.0
+          ],
+          [
+            "listen",
+            true,
+            7.5,
+            10.5
+          ],
+          [
+            "listen",
+            true,
+            12.0,
+            15.0
+          ],
+          [
+            "listen",
+            true,
+            13.5,
+            16.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H7": {
+        "qid": "H7",
+        "verdict": "pass",
+        "reason": "Listened, then exported the range it heard.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": true,
+          "exported_heard_range": true,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": false,
+          "exported": true
+        },
+        "answer": "Here is a three-second clip of what is on screen when the beep happens: /videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/89110f9c-5fba-4ffa-b9ae-c7131fbe9c48",
+        "steps": [
+          [
+            "search_audio",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "listen",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "export_clip",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H8": {
+        "qid": "H8",
+        "verdict": "pass",
+        "reason": "Walk names Pricing, RED ALERT, and Q3.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The video began with a 'Pricing' slide displaying 'Pro $99 per month'. This was followed by a 'Red Alert' screen against a red background. The latter part of the video showed a 'Q3 Roadmap' slide, which featured the text 'Ship the slide index'.",
+        "steps": [
+          [
+            "look",
+            true,
+            0.0,
+            2.0
+          ],
+          [
+            "look",
+            false,
+            2.0,
+            4.0
+          ],
+          [
+            "look",
+            true,
+            4.0,
+            6.0
+          ],
+          [
+            "look",
+            false,
+            6.0,
+            8.0
+          ],
+          [
+            "look",
+            true,
+            8.0,
+            10.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            12.0
+          ],
+          [
+            "look",
+            true,
+            12.0,
+            14.0
+          ],
+          [
+            "look",
+            true,
+            14.0,
+            16.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    "tallies": {
+      "pass": 4,
+      "partial": 4,
+      "fail": 0
+    },
+    "order": [
+      "E1",
+      "H1",
+      "M3",
+      "M4",
+      "M1",
+      "H5",
+      "H7",
+      "H8"
+    ]
+  }
+}
