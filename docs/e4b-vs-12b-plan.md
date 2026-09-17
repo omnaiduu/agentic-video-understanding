@@ -1,6 +1,8 @@
 # E4B vs Gemma 4 12B Unified — A/B
 
-Default brain stays **Gemma 4 E4B** (`google/gemma-4-E4B-it`). This file is the 12B task: a **second** Modal worker, the **same hidden-intent questions**, and a scorer. Crutches stay **off**. Skip-ahead stays.
+**Closed.** The live A/B is done. Default brain stays **Gemma 4 E4B** (`google/gemma-4-E4B-it`). Keep the 12B Modal worker as an optional side app. Do not switch the default. Next experiment is [E4B thinking on/off](e4b-thinking.md), not another 12B pass.
+
+This file is the 12B task that we ran: a **second** Modal worker, the **same hidden-intent questions**, and a scorer. Crutches stay **off**. Skip-ahead stays.
 
 Confirmed Hugging Face id: [`google/gemma-4-12B-it`](https://huggingface.co/google/gemma-4-12B-it) (instruction-tuned Unified, text + image + audio). Do not pick 31B / 26B-A4B (no audio).
 
@@ -172,6 +174,17 @@ Traces: `backend/eval/results/hidden-intent-e4b.json` and `hidden-intent-12b.jso
 Automated tallies (strict scorer): E4B 6 pass / 1 partial / 1 fail. 12B 5 pass / 2 partial / 1 fail. **Do not switch the default brain.** 12B won the leftover that the crutches were faking (H7). It did not win clap count or “what is on screen at the tone.” Next for those is a detector or architecture, not more notes. Plain write-up of the same facts: [why 4B is enough](why-4b-is-enough.md).
 
 Default in `settings.py` remains `google/gemma-4-E4B-it`.
+
+### Verdict
+
+| | |
+|---|---|
+| Status | **Closed** (docs only; GitHub PR stays open as the record) |
+| Default | **E4B** |
+| 12B worker | Optional. Do not overwrite `agentic-video-brain`. |
+| 12B clearly won | H7 listen-then-cut |
+| 12B lost / worse | H5 clap count (invented five); M4 tone+screen this run (RED ALERT) |
+| Next | [E4B thinking](e4b-thinking.md) — same leftover questions, thinking off vs on |
 
 ---
 

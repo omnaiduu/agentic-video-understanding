@@ -4,6 +4,8 @@ Plain note of leftover problems, what 4B vs 12B actually did on the live tape, a
 
 The numbered labels (H7, H5, …) are only test ids. This file talks in questions.
 
+**Closed.** The 12B A/B is done. Default stays **E4B**. The 12B Modal worker remains an optional side app. Next experiment is [E4B thinking on/off](e4b-thinking.md), not another 12B pass.
+
 Related: [leftover issues](live-leftover-issues.md) · [leftover report](live-leftover-report.md) · [sound search is a range](sound-window-export.md) · [A/B plan + scoreboard](e4b-vs-12b-plan.md)
 
 ---
@@ -159,3 +161,19 @@ So: do not add clap math. Do not restore “say zero.” Next step for counting,
 - Do **not** count CLAP hit rows as claps.
 
 4B is enough for the product loop we shipped. 12B is a measured extra: better at listen-then-cut, worse at inventing clap counts, not a reason to change the default.
+
+---
+
+## Closed (12B A/B)
+
+This comparison is finished. Do not merge that as a default-brain switch.
+
+| Keep | Drop |
+|---|---|
+| Default **E4B** (`google/gemma-4-E4B-it`) | Switching FastAPI to 12B |
+| 12B worker as an **optional** second Modal app | Another 12B hidden-intent pass |
+| Skip-ahead (loop hygiene) | Recut / print-vs-speech / “say zero” crutches |
+
+12B only clearly won **listen-then-cut** (clip the beep). It lost clap count (invented five) and, this run, tone+screen (named RED ALERT). Automated tally: E4B 6/1/1 vs 12B 5/2/1.
+
+Next: turn **Gemma thinking** on for E4B and see if the planner starts listening before it exports. That is a separate note: [e4b-thinking.md](e4b-thinking.md).
