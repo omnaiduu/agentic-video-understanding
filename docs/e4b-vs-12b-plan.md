@@ -151,18 +151,27 @@ Do not add the recut / print-vs-speech bounces back if 12B fails; record the fai
 
 ## Live scoreboard
 
-Filled after `GET /v1/models` is 200 and the eight questions return. Until then this is the worker + scorer, not a claim that 12B passed.
+Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`, indexes `ready`. Clean loop (skip-ahead on; recut / print-vs-speech / “say zero” off). Fresh chat session per question. All eight HTTP **200** on both brains.
 
-| Q | E4B without crutches | 12B (this run) |
-|---|---|---|
-| **E1** | pass | *pending live* |
-| **H1** | unstable | *pending live* |
-| **M3** | pass | *pending live* |
-| **M4** | pass after middle hint | *pending live* |
-| **M1** | fail without bounce | *pending live* |
-| **H5** | fail | *pending live* |
-| **H7** | fail without recut | *pending live* |
-| **H8** | pass with skip-ahead | *pending live* |
+- E4B: existing FastAPI on port 8000 → `agentic-video-brain` (`google/gemma-4-E4B-it`)
+- 12B: FastAPI on port 8001 → `agentic-video-brain-12b` serving `google/gemma-4-12B-it` from QAT `google/gemma-4-12B-it-qat-w4a16-ct`
+
+Traces: `backend/eval/results/hidden-intent-e4b.json` and `hidden-intent-12b.json`. Scorer: `eval/score_hidden_intent.py`.
+
+| Q | E4B this run | 12B this run | What that means |
+|---|---|---|---|
+| **E1** | **pass.** `search` speech. “$99 a month.” | **pass.** Slides + look at Pricing. “$99 per month.” | No regression. |
+| **H1** | **pass** (scorer). Leads with “Yes” about speech matching print; also says yellow on **dark blue** at 0s. Looked at red, Pricing, and Q3. | **pass.** Explicit: price is **not** on red; it is on navy Pricing; red is RED ALERT. | 12B is clearer on the trap. E4B still likes to start with Yes. |
+| **M3** | **pass.** Speech → slides → look 10s. “Ship the slide index.” | **pass.** Same path. | No regression. |
+| **M4** | **pass.** Sound 9–12 → look+listen **10–13**. Names Q3 / Ship the slide index. | **partial.** Sound 9–12 → listen **9–12** + look **9–12**. Names **RED ALERT** (the start of the CLAP window). | 12B listened (good) but described the window start, not the tone. Do not put “cut from the middle” back. |
+| **M1** | **pass.** Looks 10, 0, 6, then `search` speech. Yellow $99 matches spoken $99. **No bounce.** | **partial** (scorer). Same path: looks 10, 0, 6, then `search`. Yellow $99; speaker said the number is printed. Did not say the word “match.” | Both opened both books without the keyword bounce. E4B is not *always* skip-speech; historically it was. |
+| **H5** | **partial.** Listen 7–9. “Couldn’t clearly hear any claps.” Not the word zero. | **fail.** Listened 6–9, 7.5–10.5, 12–15, 13.5–16. Invented **five claps**. | 12B did **not** fix counting. Still no clap detector. Do not restore “say zero.” |
+| **H7** | **fail.** Sound 9–12 → **export 9–12 with no listen**, then a second export 10–12.5. Answer talks about “the middle of the search window.” Flag: `dumped_unheard_clap_window`. | **pass.** Sound 9–12 → **listen 10.5–13.5** → look 10.5–13.5 → **export 10.5–13.5**. Flags: `listened_before_export`, `exported_heard_range`. Real `export_url` is the laptop path. The answer text also hallucinated a GCS mp4 URL — ignore that; the cut is the heard range (Q3 + beep), not 9–12 red+Q3. | **This is the A/B.** 12B did the OG path. E4B still dumped the CLAP range. Crutches stay off. |
+| **H8** | **pass.** Skip-ahead blocked 1–2s. Names Pricing, RED ALERT, Q3. | **pass.** Skip-ahead blocked 4–8s. Names Pricing, RED ALERT, Q3 / Ship the slide index. | Skip-ahead is enough. |
+
+Automated tallies (strict scorer): E4B 6 pass / 1 partial / 1 fail. 12B 5 pass / 2 partial / 1 fail. **Do not switch the default brain.** 12B won the leftover that the crutches were faking (H7). It did not win clap count or “what is on screen at the tone.” Next for those is a detector or architecture, not more notes.
+
+Default in `settings.py` remains `google/gemma-4-E4B-it`.
 
 ---
 
@@ -178,6 +187,7 @@ Filled after `GET /v1/models` is 200 and the eight questions return. Until then 
 | Live runner | `backend/eval/run_hidden_intent_suite.py` |
 | Scorer | `backend/eval/score_hidden_intent.py` |
 | Wait for `/v1/models` | `backend/eval/wait_vllm.py` |
+| Live traces (this A/B) | `backend/eval/results/hidden-intent-e4b.json`, `hidden-intent-12b.json` |
 | Catalog + scorer tests | `backend/tests/test_hidden_intent.py` |
 | OG loop tests | `backend/tests/test_loop_rules.py` |
 | Skip-ahead (kept) | `backend/app/agent/loop.py` |

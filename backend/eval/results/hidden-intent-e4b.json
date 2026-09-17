@@ -1,0 +1,388 @@
+{
+  "brain_label": "e4b",
+  "vllm_model": "google/gemma-4-E4B-it",
+  "video_id": "c1d9beb7-5465-4f47-9d53-2d6b299104b5",
+  "tallies": {
+    "pass": 6,
+    "partial": 1,
+    "fail": 1
+  },
+  "questions": {
+    "E1": {
+      "http": 200,
+      "elapsed_s": 13.8,
+      "answer": "The pro plan costs $99 a month.",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": true,
+      "steps": [
+        [
+          "search",
+          true,
+          0.0,
+          0.0
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "pass",
+      "reason": "HTTP 200 and names $99."
+    },
+    "H1": {
+      "http": 200,
+      "elapsed_s": 83.5,
+      "answer": "Yes, the printed price of $99, which appears in yellow on a dark blue background (0.0s), matches what was said in the transcript at 0.0s.\n\nSpecifically, the transcript at 0.0s states, \"The pro plan is $99 a month.\"",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": true,
+      "steps": [
+        [
+          "search",
+          true,
+          0.0,
+          0.0
+        ],
+        [
+          "search_slides",
+          true,
+          6.0,
+          10.0
+        ],
+        [
+          "look",
+          true,
+          6.0,
+          8.0
+        ],
+        [
+          "look",
+          true,
+          0.0,
+          2.0
+        ],
+        [
+          "look",
+          true,
+          10.0,
+          12.0
+        ],
+        [
+          "search",
+          false,
+          null,
+          null
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "pass",
+      "reason": "Rejects the false premise from the pixels."
+    },
+    "M3": {
+      "http": 200,
+      "elapsed_s": 30.4,
+      "answer": "Based on the slide at 10.0s, we are supposed to ship the slide index this quarter.",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": true,
+      "steps": [
+        [
+          "search",
+          true,
+          3.12,
+          3.12
+        ],
+        [
+          "search_slides",
+          true,
+          10.0,
+          16.0
+        ],
+        [
+          "look",
+          true,
+          10.0,
+          11.0
+        ],
+        [
+          "look",
+          true,
+          6.0,
+          7.0
+        ],
+        [
+          "look",
+          true,
+          0.0,
+          1.0
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "pass",
+      "reason": "HTTP 200 and names what to ship."
+    },
+    "M4": {
+      "http": 200,
+      "elapsed_s": 59.3,
+      "answer": "The notification tone plays between 9.0s and 13.5s. At 12.0s, the screen shows 'Q3 Roadmap' and 'Ship the slide index' on a dark green background.",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": false,
+      "steps": [
+        [
+          "search_audio",
+          true,
+          9.0,
+          12.0
+        ],
+        [
+          "look",
+          true,
+          10.0,
+          13.0
+        ],
+        [
+          "listen",
+          true,
+          10.0,
+          13.0
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "pass",
+      "reason": "Opened sound, then looked/listened, and named the screen."
+    },
+    "M1": {
+      "http": 200,
+      "elapsed_s": 37.3,
+      "answer": "The transcript mentions that \"The number is also printed on the slide\" [3.1s]. Reviewing the slide at 0.0s, the printed number is $99 in yellow. The transcript mentions a number in relation to the pro plan being $99 a month [0.0s], which matches the printed number. The number is printed in yellow.",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": true,
+      "steps": [
+        [
+          "search_slides",
+          true,
+          10.0,
+          16.0
+        ],
+        [
+          "look",
+          true,
+          10.0,
+          11.0
+        ],
+        [
+          "look",
+          true,
+          0.0,
+          1.0
+        ],
+        [
+          "look",
+          true,
+          6.0,
+          7.0
+        ],
+        [
+          "search",
+          true,
+          3.12,
+          3.12
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "pass",
+      "reason": "Looked and searched speech; names a color and match/no-match."
+    },
+    "H5": {
+      "http": 200,
+      "elapsed_s": 19.7,
+      "answer": "I couldn't clearly hear any claps in the recording.",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": false,
+      "steps": [
+        [
+          "search_audio",
+          true,
+          6.0,
+          9.0
+        ],
+        [
+          "listen",
+          true,
+          7.0,
+          9.0
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "partial",
+      "reason": "Listened and did not invent a count, but did not say zero."
+    },
+    "H7": {
+      "http": 200,
+      "elapsed_s": 25.8,
+      "answer": "Here is the three-second clip from the middle of the search window where the beep was detected: /videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/cba7d4e7-4c52-4db6-8bb0-c4461b2f4db5.",
+      "export_url": "/videos/c1d9beb7-5465-4f47-9d53-2d6b299104b5/exports/cba7d4e7-4c52-4db6-8bb0-c4461b2f4db5",
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": true,
+      "searched_speech": true,
+      "steps": [
+        [
+          "search",
+          true,
+          3.12,
+          3.12
+        ],
+        [
+          "search_audio",
+          true,
+          9.0,
+          12.0
+        ],
+        [
+          "export_clip",
+          true,
+          9.0,
+          12.0
+        ],
+        [
+          "export_clip",
+          true,
+          10.0,
+          12.5
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "fail",
+      "reason": "Exported without listening first."
+    },
+    "H8": {
+      "http": 200,
+      "elapsed_s": 92.2,
+      "answer": "The video begins with a pricing slide titled \"Pricing\" showing a \"Pro $99 per month\". Next, there is a \"RED ALERT\" slide on a red background. Following this, the screen displays the \"Q3 Roadmap\" with the item \"Ship the slide index\". The video concludes with another slide showing the \"Q3 Roadmap\" with the item \"Ship the slide index\" again.",
+      "export_url": null,
+      "listened_before_export": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "searched_speech": false,
+      "steps": [
+        [
+          "look",
+          true,
+          0.0,
+          1.0
+        ],
+        [
+          "listen",
+          true,
+          0.0,
+          1.0
+        ],
+        [
+          "look",
+          false,
+          1.0,
+          2.0
+        ],
+        [
+          "look",
+          true,
+          3.0,
+          4.0
+        ],
+        [
+          "listen",
+          true,
+          3.0,
+          4.0
+        ],
+        [
+          "look",
+          true,
+          7.0,
+          8.0
+        ],
+        [
+          "listen",
+          true,
+          7.0,
+          8.0
+        ],
+        [
+          "look",
+          true,
+          11.0,
+          12.0
+        ],
+        [
+          "listen",
+          true,
+          11.0,
+          12.0
+        ],
+        [
+          "look",
+          true,
+          15.0,
+          16.0
+        ],
+        [
+          "answer",
+          true,
+          null,
+          null
+        ]
+      ],
+      "score": "pass",
+      "reason": "Walk names Pricing, RED ALERT, and Q3."
+    }
+  }
+}

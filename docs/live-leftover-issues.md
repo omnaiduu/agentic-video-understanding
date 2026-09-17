@@ -54,9 +54,9 @@ That is a **real issue**: CLAP returns a **range**, not a pin. Exporting the ran
 
 **Wrong fix (removed):** treat the **middle** of the window as the event, bounce until Gemma recuts ~2s from that midpoint, then block extra exports. That made a live pass (9–12 then 10.5–12.5). It **guesses**. Hop/chunk size made the tone near the middle *on this tape*. The laptop still never heard the wav.
 
-**OG / correct path:** `search_audio` → **listen** at a hit → **export the range you heard**. If the model dumps the whole CLAP window, that cut stands. We do not recut it. Whether 12B listens first is an [A/B](e4b-vs-12b-plan.md), not another bounce.
+**OG / correct path:** `search_audio` → **listen** at a hit → **export the range you heard**. If the model dumps the whole CLAP window, that cut stands. We do not recut it. **12B live (this A/B):** listen 10.5–13.5 then export that range. **E4B on the same loop:** still exported 9–12 with no listen.
 
-**In code now.** Recut / extra-export cap **removed**. Observe note: hits are times to listen; a hit is a similar-audio range; listen, then export what you heard. Unit tests: listen-then-export is accepted; exporting 9–12 is **not** nudged.
+**In code now.** Recut / extra-export cap **removed**. Observe note: hits are times to listen; a hit is a similar-audio range; listen, then export what you heard. Unit tests: listen-then-export is accepted; exporting 9–12 is **not** nudged. **12B live:** listen 10.5–13.5 then export that range. **E4B live (same loop):** export 9–12 with no listen.
 
 ---
 
@@ -97,13 +97,13 @@ That is a **real issue**: CLAP returns a **range**, not a pin. Exporting the ran
 | Issue | In one line | Laptop rule | Proven? |
 |---|---|---|---|
 | **H8 walk** | 2s look+listen burns 12 moves by ~9s | Skip the next 2s step when >6s remain (look-only too) | **Live pass.** Kept. |
-| **H7 beep clip** | CLAP returns a **range**; E4B exports it without listening | **Removed recut.** Listen, then export what you heard | E4B live pass was **only with recut**. OG path is unproven on 12B. |
-| **M1 gold $99** | Saw the pixels; skipped speech | **Removed** print-vs-speech bounce. Unused slide times stay | E4B live pass was **only with the bounce**. |
-| **H5 claps** | Invents a count from hit rows / tone | *(removed)* Hits are times, not a count. No clap detector | **Not a laptop fix.** |
+| **H7 beep clip** | CLAP returns a **range**; E4B exports it without listening | **Removed recut.** Listen, then export what you heard | **12B live pass** (listen then export 10.5–13.5). **E4B still dumps 9–12.** |
+| **M1 gold $99** | Saw the pixels; skipped speech | **Removed** print-vs-speech bounce. Unused slide times stay | Both brains opened speech+slides on this A/B run. Bounce stays off. |
+| **H5 claps** | Invents a count from hit rows / tone | *(removed)* Hits are times, not a count. No clap detector | **Not a laptop fix.** 12B invented five claps. |
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
-**Next task, this PR:** [run the same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back if 12B fails; write that down. Live 12B column is in the scoreboard at the bottom of [the plan](e4b-vs-12b-plan.md) and below.
+**This PR:** [same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back. Live 12B column is in the scoreboard below.
 
 ## Live rerun (Modal Gemma, this machine)
 
@@ -160,15 +160,15 @@ Those H7/M1 “passes” above were **with** recut-from-middle and the print-vs-
 
 ## 12B live scoreboard
 
-Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Clean loop (skip-ahead on; recut / print-vs-speech / “say zero” off). Worker: `modal_brain_12b.py` serving `google/gemma-4-12B-it` from the official QAT checkpoint. Default FastAPI brain is still E4B.
+Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Clean loop (skip-ahead on; recut / print-vs-speech / “say zero” off). Worker: `modal_brain_12b.py` serving `google/gemma-4-12B-it` from the official QAT checkpoint. Side-by-side E4B run on the same loop / same tape. Default FastAPI brain is still E4B. Full write-up: [E4B vs 12B](e4b-vs-12b-plan.md).
 
 | Q | 12B (this run) | Verdict |
 |---|---|---|
-| **E1** Pro cost | *pending live* | |
-| **H1** $99 on red? | *pending live* | |
-| **M3** ship this quarter | *pending live* | |
-| **M4** tone + on screen | *pending live* | |
-| **M1** printed number color | *pending live* | |
-| **H5** how many claps | *pending live* | |
-| **H7** clip on the beep | *pending live* | |
-| **H8** walk the tape | *pending live* | |
+| **E1** Pro cost | Slides + look 0–2s. “$99 per month.” | **Pass.** |
+| **H1** $99 on red? | Looks 6s, 10s, **and 0s**. Price is not on red; it is on navy Pricing. | **Pass.** Clearer than E4B’s “Yes, … dark blue.” |
+| **M3** ship this quarter | Speech → slides → look 10s. “Ship the slide index.” | **Pass.** |
+| **M4** tone + on screen | Sound 9–12 → listen+look **9–12**. Names **RED ALERT** (window start). | **Partial.** Listened. Did not name Q3. |
+| **M1** printed number color | Looks 10, **0**, 6, then **search speech**. Yellow $99. Did not say “match.” | **Partial** (scorer). Both books opened; no bounce. |
+| **H5** how many claps | Several listens. Invented **five** claps. | **Fail.** 12B did not fix counting. |
+| **H7** clip on the beep | Sound 9–12 → **listen 10.5–13.5** → export **10.5–13.5**. Q3 + beep, not 9–12. | **Pass.** OG listen-then-export. E4B on the same loop **exported 9–12 with no listen.** |
+| **H8** walk the tape | Looks 0–4, **skip 4–8**, then 8–16. Names Pricing $99, RED ALERT, Q3. | **Pass.** |

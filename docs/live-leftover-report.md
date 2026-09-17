@@ -200,9 +200,9 @@ Files: `backend/modal_brain_12b.py`, `backend/eval/`, tests in `test_hidden_inte
 | Item | Why it is still open |
 |---|---|
 | Skip in the last 6 seconds | By design. Lets a short file finish. |
-| H7 without recut | E4B exports the CLAP range. 12B live column: [plan](e4b-vs-12b-plan.md). |
-| M1 without speech bounce | E4B often skips `search`. 12B live column: [plan](e4b-vs-12b-plan.md). |
-| Counting a sound that is not there | No classifier. We will not bounce toward zero. |
+| H7 without recut | **12B live pass** on listen-then-export (10.5–13.5 after a listen). **E4B live fail** on the same loop: export 9–12 with no listen. Crutches stay off. |
+| M1 without speech bounce | Both brains opened slides **and** speech on this run. E4B historically skipped `search`; that is unstable, not a reason to restore the bounce. |
+| Counting a sound that is not there | No classifier. 12B invented five claps. E4B said it could not hear claps. We will not bounce toward zero. |
 | H1 trap (“confirm $99 is on red”) | No laptop rule. Gemma can still say “yes” to a false premise. |
 | Gold vs yellow | Gemma’s color word. We do not OCR. |
 
@@ -212,5 +212,5 @@ Files: `backend/modal_brain_12b.py`, `backend/eval/`, tests in `test_hidden_inte
 
 What we **kept** is loop hygiene for any file: don’t crawl 2s steps until the 12-move cap; sound hits are times to listen, not a count; unused slide times stay listed; empty first answers still bounce.
 
-What we **removed** is guessing with prompts: recut-from-middle, extra-export cap, print-vs-speech bounce, and the earlier clap-count “say zero” bounce. Those were E4B crutches. The next measurement is the same eight questions on Gemma 4 12B Unified — [plan](e4b-vs-12b-plan.md) — not another note in the loop.
+What we **removed** is guessing with prompts: recut-from-middle, extra-export cap, print-vs-speech bounce, and the earlier clap-count “say zero” bounce. Those were E4B crutches. The measurement is in [the 12B A/B](e4b-vs-12b-plan.md): 12B **listened then exported** on H7; E4B still dumped 9–12. 12B did **not** fix clap count. E4B stays the default brain.
 
