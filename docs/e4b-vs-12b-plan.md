@@ -4,7 +4,7 @@ Default brain stays **Gemma 4 E4B** (`google/gemma-4-E4B-it`). This file is the 
 
 Confirmed Hugging Face id: [`google/gemma-4-12B-it`](https://huggingface.co/google/gemma-4-12B-it) (instruction-tuned Unified, text + image + audio). Do not pick 31B / 26B-A4B (no audio).
 
-Related: [sound windows](sound-window-export.md) · [leftover issues](live-leftover-issues.md) · [leftover report](live-leftover-report.md)
+Related: [why 4B is enough](why-4b-is-enough.md) · [sound windows](sound-window-export.md) · [leftover issues](live-leftover-issues.md) · [leftover report](live-leftover-report.md)
 
 ---
 
@@ -169,7 +169,7 @@ Traces: `backend/eval/results/hidden-intent-e4b.json` and `hidden-intent-12b.jso
 | **H7** | **fail.** Sound 9–12 → **export 9–12 with no listen**, then a second export 10–12.5. Answer talks about “the middle of the search window.” Flag: `dumped_unheard_clap_window`. | **pass.** Sound 9–12 → **listen 10.5–13.5** → look 10.5–13.5 → **export 10.5–13.5**. Flags: `listened_before_export`, `exported_heard_range`. Real `export_url` is the laptop path. The answer text also hallucinated a GCS mp4 URL — ignore that; the cut is the heard range (Q3 + beep), not 9–12 red+Q3. | **This is the A/B.** 12B did the OG path. E4B still dumped the CLAP range. Crutches stay off. |
 | **H8** | **pass.** Skip-ahead blocked 1–2s. Names Pricing, RED ALERT, Q3. | **pass.** Skip-ahead blocked 4–8s. Names Pricing, RED ALERT, Q3 / Ship the slide index. | Skip-ahead is enough. |
 
-Automated tallies (strict scorer): E4B 6 pass / 1 partial / 1 fail. 12B 5 pass / 2 partial / 1 fail. **Do not switch the default brain.** 12B won the leftover that the crutches were faking (H7). It did not win clap count or “what is on screen at the tone.” Next for those is a detector or architecture, not more notes.
+Automated tallies (strict scorer): E4B 6 pass / 1 partial / 1 fail. 12B 5 pass / 2 partial / 1 fail. **Do not switch the default brain.** 12B won the leftover that the crutches were faking (H7). It did not win clap count or “what is on screen at the tone.” Next for those is a detector or architecture, not more notes. Plain write-up of the same facts: [why 4B is enough](why-4b-is-enough.md).
 
 Default in `settings.py` remains `google/gemma-4-E4B-it`.
 

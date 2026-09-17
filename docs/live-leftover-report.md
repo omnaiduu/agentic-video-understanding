@@ -212,5 +212,5 @@ Files: `backend/modal_brain_12b.py`, `backend/eval/`, tests in `test_hidden_inte
 
 What we **kept** is loop hygiene for any file: don’t crawl 2s steps until the 12-move cap; sound hits are times to listen, not a count; unused slide times stay listed; empty first answers still bounce.
 
-What we **removed** is guessing with prompts: recut-from-middle, extra-export cap, print-vs-speech bounce, and the earlier clap-count “say zero” bounce. Those were E4B crutches. The measurement is in [the 12B A/B](e4b-vs-12b-plan.md): 12B **listened then exported** on H7; E4B still dumped 9–12. 12B did **not** fix clap count. E4B stays the default brain.
+What we **removed** is guessing with prompts: recut-from-middle, extra-export cap, print-vs-speech bounce, and the earlier clap-count “say zero” bounce. Those were E4B crutches. The measurement is in [the 12B A/B](e4b-vs-12b-plan.md): 12B **listened then exported** on H7; E4B still dumped 9–12. 12B did **not** fix clap count. E4B stays the default brain. Plain note: [why 4B is enough](why-4b-is-enough.md).
 

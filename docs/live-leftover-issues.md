@@ -103,7 +103,7 @@ That is a **real issue**: CLAP returns a **range**, not a pin. Exporting the ran
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
-**This PR:** [same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back. Live 12B column is in the scoreboard below.
+**This PR:** [same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back. Live 12B column is in the scoreboard below. Plain note (problems, 4B vs 12B, why 4B stays default): [why 4B is enough](why-4b-is-enough.md).
 
 ## Live rerun (Modal Gemma, this machine)
 

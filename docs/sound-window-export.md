@@ -2,7 +2,7 @@
 
 This is leftover issue **H7** (clip when the beep happens). It is a real product issue, not an exam trick. The laptop should **not** guess the middle and recut. The original (correct) path is: **search_audio → listen → export the range you heard.**
 
-Related: [four leftover live issues](live-leftover-issues.md) · [E4B vs 12B plan](e4b-vs-12b-plan.md)
+Related: [why 4B is enough](why-4b-is-enough.md) · [four leftover live issues](live-leftover-issues.md) · [E4B vs 12B plan](e4b-vs-12b-plan.md)
 
 ---
 
