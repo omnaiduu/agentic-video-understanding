@@ -13,6 +13,35 @@ Related: [sound windows](sound-window-export.md) · [leftover issues](live-lefto
 
 ---
 
+## What 4B failed that 12B will be tested on (no prompt crutches)
+
+This is the whole point of the A/B. **Do not put the prompt/bounce crutches back.** Run 12B on the **clean loop** (skip-ahead stays; recut / print-vs-speech / “say zero” are gone). Same eight questions in `backend/eval/hidden_intent.py`. Same 16s tape.
+
+E4B **could not do these on its own**. Those are the 12B tests:
+
+| Q | What 4B did *before* the prompt crutches | What 12B must do without those crutches |
+|---|---|---|
+| **H7** clip when the beep happens | `search_audio` returned a 9–12s **range**. E4B **exported 9–12 with no listen**. Clip mixed the previous slide (red) with the tone. | **Listen first**, then export **only the range it heard**. Pass = `listen` before `export_clip`, and the cut is not the raw CLAP window unless that is what it heard. Script flag: `listened_before_export`. |
+| **M1** printed number color, match speech? | Looked at the pixels (yellow $99). **Answered without `search`.** “Cannot confirm it matches.” | Open **both** books on its own: look at the printed number **and** search speech, then say match / no match. Script flag: `searched_speech`. |
+| **H5** how many claps? | Treated CLAP **hit rows** as a count, or listened to silence/tone and said **one clap**. This tape has **zero** claps. | Listen at a hit. If the wav is not claps, say **zero**. Still no laptop clap detector. |
+| **H1** is $99 on red? | Unstable. Sometimes named navy/yellow correctly; sometimes led with **Yes** (the trap). No laptop rule existed. | Reject the false premise from the pixels. Do not add a “say no” bounce. |
+| **M4** tone + on screen? | Worked only after a note that said **look/cut at the middle** of the CLAP window. | Listen inside the hit, then say what is on screen. `middle=` is information, not a command. |
+
+**Not a 12B test of “smarter prompting.”** These crutches stay **off** for the A/B (they are what 4B needed, and what we are measuring 12B against):
+
+- Recut-from-middle (~2s from the CLAP midpoint) + bounce answers until that recut + extra-export cap. That is how H7 “passed” on E4B.
+- Keyword bounce: block `answer` until `search` if the question has `printed` + `they said`. That is how M1 “passed” on E4B.
+- “If unsure, say zero” clap bounce. Exam-shaped; already removed.
+
+**Not a 12B vs 4B gap (keep as-is):**
+
+- **H8** walk the tape: 4B crawled 2s steps and burned 12 moves. **Skip-ahead stays** — that is loop hygiene, not a prompt guess.
+- **E1** Pro cost and **M3** ship this quarter: 4B already passed without a crutch. 12B must not regress.
+
+If 12B still dumps the CLAP window or still skips speech, write **12B still failed H7 / M1**. Next step is a detector or architecture, **not** restoring the crutches.
+
+---
+
 ## Why prompting was fragile
 
 The laptop owns the loop. Gemma only fills JSON. When E4B picked a weak plan, we appended **user notes** and sometimes **refused `answer`** until it obeyed.
