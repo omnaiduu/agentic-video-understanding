@@ -2,7 +2,7 @@
 
 This is leftover issue **H7** (clip when the beep happens). It is a real product issue, not an exam trick. The laptop should **not** guess the middle and recut. The original (correct) path is: **search_audio → listen → export the range you heard.**
 
-Related: [four leftover live issues](live-leftover-issues.md) · [E4B vs 12B plan](e4b-vs-12b-plan.md)
+Related: [why 4B is enough](why-4b-is-enough.md) · [four leftover live issues](live-leftover-issues.md) · [E4B vs 12B plan](e4b-vs-12b-plan.md)
 
 ---
 
@@ -56,7 +56,7 @@ That **did** make one live pass: 9–12 then **10.5–12.5**. It is still the wr
 1. Sound hits are **times to listen**, not a count, not a pin.
 2. The observe note says: a hit is a **similar-audio range**; the start can be a different moment; **listen at a hit**; if the user wants a clip, **export the range you heard**.
 3. The laptop **does not** recut, bounce, or block a second export.
-4. If Gemma exports the whole CLAP window without listening, **that cut is what we ship**. That is an honest fail for a small model (and a fair A/B for 12B).
+4. If Gemma exports the whole CLAP window without listening, **that cut is what we ship**. That is an honest fail for a small model. On this tape, **12B listened then exported the heard range**; **E4B still dumped 9–12**. See [the A/B](e4b-vs-12b-plan.md).
 
 Unit tests (black 12s file, not this tape):
 

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     brain: str = "fake"
     vllm_base_url: str = ""
     vllm_api_key: str = "EMPTY"
+    # Default stays E4B. 12B A/B overrides VLLM_MODEL in a gitignored .env.
     vllm_model: str = "google/gemma-4-E4B-it"
     ingest: str = "fake"
     embedder: str = "fake"

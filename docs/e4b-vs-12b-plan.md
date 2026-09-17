@@ -1,15 +1,12 @@
-# E4B vs Gemma 4 12B Unified — plan (not deployed)
+# E4B vs Gemma 4 12B Unified — A/B
 
-Default brain stays **Gemma 4 E4B** (`google/gemma-4-E4B-it`). This file is the next task: run the **same hidden-intent questions** on **Gemma 4 12B Unified** and see which leftover fails were “small model + fragile prompting” vs real loop/index limits.
+**Closed.** The live A/B is done. Default brain stays **Gemma 4 E4B** (`google/gemma-4-E4B-it`). Keep the 12B Modal worker as an optional side app. Do not switch the default. Next experiment is [E4B thinking on/off](e4b-thinking.md), not another 12B pass.
 
-**This change does not deploy 12B.** It only:
+This file is the 12B task that we ran: a **second** Modal worker, the **same hidden-intent questions**, and a scorer. Crutches stay **off**. Skip-ahead stays.
 
-- Removes the E4B crutches (recut-from-middle, extra-export cap, print-vs-speech bounce).
-- Keeps skip-ahead (H8).
-- Gives unit tests for the OG listen-then-export path.
-- Gives a live suite script with the eight questions E4B already ran.
+Confirmed Hugging Face id: [`google/gemma-4-12B-it`](https://huggingface.co/google/gemma-4-12B-it) (instruction-tuned Unified, text + image + audio). Do not pick 31B / 26B-A4B (no audio).
 
-Related: [sound windows](sound-window-export.md) · [leftover issues](live-leftover-issues.md) · [leftover report](live-leftover-report.md)
+Related: [why 4B is enough](why-4b-is-enough.md) · [sound windows](sound-window-export.md) · [leftover issues](live-leftover-issues.md) · [leftover report](live-leftover-report.md)
 
 ---
 
@@ -80,17 +77,17 @@ Nothing in this table is an answer key for times (no “if they say beep, jump t
 
 ---
 
-## What 12B is (confirm on the card before deploy)
+## What 12B is
 
 | | **E4B (today)** | **12B Unified (this plan)** |
 |---|---|---|
-| Hugging Face id | `google/gemma-4-E4B-it` | **`google/gemma-4-12B-it`** (instruction-tuned Unified; confirm on [the HF card](https://huggingface.co/google/gemma-4-12B-it) before `modal deploy`) |
+| Hugging Face id | `google/gemma-4-E4B-it` | **`google/gemma-4-12B-it`** ([HF card](https://huggingface.co/google/gemma-4-12B-it), confirmed) |
+| Weights this L4 loads | same as the served id | Official QAT [`google/gemma-4-12B-it-qat-w4a16-ct`](https://huggingface.co/google/gemma-4-12B-it-qat-w4a16-ct) (~8.3 GB). Served **as** `google/gemma-4-12B-it`. BF16 12B is ~23 GB weights; vLLM’s server recipe wants ~40 GB+ in BF16. The [16 GB laptop figure](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemma-4-12b/) is on-device, not a BF16 vLLM replica. |
 | Modalities | text + image + audio | text + image + audio (encoder-free Unified) |
 | Do **not** pick | — | 31B / 26B-A4B: **no audio** |
 | Tau2 | ~42% | ~69% |
-| 4-bit weights | ~4.5 GB | ~6.7 GB |
-| GPU | L4 24 GB is enough | L4 24 GB is enough (16 GB min on the 12B blog) |
-| vLLM | same JSON schema, `--limit-mm-per-prompt` image 64 / audio 1, `max-model-len` 8192 | **same flags** unless 12B OOMs — then lower image cap or util, do not raise 12 loop rounds as a “fix” |
+| GPU | L4 24 GB | L4 24 GB (QAT). Same card as E4B. |
+| vLLM | `vllm[audio]==0.29.0`, JSON schema, image 64 / audio 1, `max-model-len` 8192 | **same flags**. No `tools=`, no `--reasoning-parser`. If this OOMs, lower image cap or util — do not raise 12 loop rounds. |
 
 We still **own the JSON loop**. 12B still does not call `tools=`. Same FastAPI, same four books, same scissors.
 
@@ -98,62 +95,112 @@ We still **own the JSON loop**. 12B still does not call `tools=`. Same FastAPI, 
 
 ---
 
-## Concrete implement steps (future task)
+## What we implemented (this PR)
 
-Do these in order. Do not add the recut / print-vs-speech bounces back if 12B fails; record the fail.
+Do not add the recut / print-vs-speech bounces back if 12B fails; record the fail.
 
-1. **Confirm the id.** Open the HF card. If Google renamed the IT checkpoint, use that name. Same gated Gemma access; existing Modal secret `huggingface` should work.
-
-2. **Do not overwrite E4B.** Copy `backend/modal_brain.py` to a second app (suggested: `agentic-video-brain-12b`) **or** add `MODEL_NAME` from env with a different `modal.App` name. Keep the E4B worker up so you can flip FastAPI between URLs.
-
-3. **Set** `MODEL_NAME = "google/gemma-4-12B-it"` (or the confirmed id). Same image (`vllm[audio]==0.29.0`), same L4, same volumes, same `json_schema` on the laptop client (`VllmBrain` already sends `RESPONSE_FORMAT`).
-
-4. **`modal deploy`** that file from `backend/`. Wait until `GET /v1/models` is 200. Cold start can take minutes (weights + snapshot).
-
-5. **Point FastAPI only.** In `backend/.env` (gitignored):
-   - `BRAIN=vllm`
-   - `VLLM_BASE_URL=https://<12b-worker>/v1`
-   - `VLLM_MODEL=google/gemma-4-12B-it`
-   Restart uvicorn **without** assuming `--reload`. Do not commit `.env`.
-
-6. **Same tape.** Reuse upload `c1d9beb7-5465-4f47-9d53-2d6b299104b5` if the DB still has it and indexes are `ready`. Otherwise re-upload the same 16s recipe (Pricing / RED ALERT / Q3 + ~11s tone). Do not bake those times into loop code.
-
-7. **Same questions.** From `backend/`:
+1. **Id confirmed.** `google/gemma-4-12B-it`. Same gated Gemma access; Modal secret `huggingface`.
+2. **Second app, E4B left up.** `backend/modal_brain_12b.py`, Modal app `agentic-video-brain-12b`. `modal_brain.py` still serves E4B as `agentic-video-brain`.
+3. **Served name** `google/gemma-4-12B-it`. **Weights** `google/gemma-4-12B-it-qat-w4a16-ct` (L4). Same image (`vllm[audio]==0.29.0`), same L4, same HF/vLLM volumes, same `json_schema` from `VllmBrain`. The 12B image applies `modal_patches/patch_gemma4_unified_audio_dummy.py` because vLLM 0.29 dummy-audio profiling still reads tower `fft_length`; Unified 12B does not have that attribute. E4B is unpatched.
+4. **Deploy:** `cd backend && modal deploy modal_brain_12b.py`. Then:
 
    ```bash
-   VIDEO_ID=<id> BASE_URL=http://127.0.0.1:8000 BRAIN_LABEL=12b \
-     OUT=/tmp/hidden-intent-12b.json \
+   VLLM_BASE_URL=https://<12b-worker>/v1 uv run python eval/wait_vllm.py
+   ```
+
+5. **Point FastAPI only** (gitignored `.env`, or a second uvicorn on another port so E4B stays on 8000):
+
+   ```bash
+   BRAIN=vllm \
+   VLLM_BASE_URL=https://<12b-worker>/v1 \
+   VLLM_MODEL=google/gemma-4-12B-it \
+     uv run uvicorn app.main:app --host 127.0.0.1 --port 8001
+   ```
+
+   Restart **without** assuming `--reload`. Do not commit `.env`. Default in `settings.py` stays E4B.
+
+6. **Same tape.** `c1d9beb7-5465-4f47-9d53-2d6b299104b5` when indexes are `ready`. Do not bake those times into loop code.
+
+7. **Same questions:**
+
+   ```bash
+   VIDEO_ID=c1d9beb7-5465-4f47-9d53-2d6b299104b5 \
+   BASE_URL=http://127.0.0.1:8001 BRAIN_LABEL=12b \
+   VLLM_MODEL=google/gemma-4-12B-it \
+   OUT=/tmp/hidden-intent-12b.json \
      uv run python eval/run_hidden_intent_suite.py
    ```
 
-   Then the same command with `BRAIN_LABEL=e4b` against the E4B URL so the traces sit side by side. Fresh chat session per question (the script POSTs `/videos/{id}/chat` without `session_id`).
+   Then the same command with `BRAIN_LABEL=e4b` against the E4B FastAPI so the traces sit side by side. Fresh chat session per question.
 
-8. **Score the A/B, not the wording of the note.** For each question, compare **steps**:
+8. **Score steps, not the observe note.** `eval/score_hidden_intent.py` (also printed at the end of the runner):
 
-   | Q | 12B looks better if… |
-   |---|---|
-   | **H7** | `listen` (ok) **before** `export_clip`. Export is the heard range, not the raw 9–12 hit (unless the listen window *was* 9–12 and that is what it heard). Script field: `listened_before_export`. |
-   | **M1** | `search` (speech) **and** a look at Pricing. Script field: `searched_speech`. Names a color; says match / no match from those lines. |
-   | **H5** | After a listen, does not invent claps from hit-row count. Zero is allowed if the wav is not claps. |
-   | **H8** | Still names Pricing, RED ALERT, Q3. Skip-ahead may still fire; that is fine. |
-   | **E1 / M3 / M4** | Must not regress. |
+   | Q | 12B looks better if… | Script flags |
+   |---|---|---|
+   | **H7** | `listen` before `export_clip`. Cut is the heard range, not the raw CLAP hit unless that is what it heard. | `listened_before_export`, `exported_heard_range`, `dumped_unheard_clap_window` |
+   | **M1** | Speech `search` **and** a look. Names a color; says match / no match. | `searched_speech` |
+   | **H5** | After a listen, does not invent claps from hit-row count. Zero is allowed. | — |
+   | **H8** | Names Pricing, RED ALERT, Q3. Skip-ahead may still fire. | — |
+   | **E1 / M3 / M4** | Must not regress. | — |
 
-   Pass only on HTTP **200** plus the content/steps above. Do not call H7 a pass because the observe note mentioned `middle=`.
+   Pass only on HTTP **200** plus those steps. Do not call H7 a pass because the observe note mentioned `middle=`.
 
-9. **Write the 12B column** into [leftover issues](live-leftover-issues.md) (new scoreboard). If 12B still dumps the CLAP window, document that as **12B still failed H7** — next options are a detector or architecture, **not** restoring recut-from-middle.
+9. **12B column** goes in [leftover issues](live-leftover-issues.md). If 12B still dumps the CLAP window, write **12B still failed H7** — next is a detector or architecture, **not** restoring recut-from-middle.
 
-10. **Leave E4B as default** in `settings.py` / `.env.example` until the A/B is done and someone chooses to switch.
+10. **E4B stays default** in `settings.py` / `.env.example` until someone chooses to switch.
 
 ---
 
-## What this repo already contains for that task
+## Live scoreboard
+
+Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`, indexes `ready`. Clean loop (skip-ahead on; recut / print-vs-speech / “say zero” off). Fresh chat session per question. All eight HTTP **200** on both brains.
+
+- E4B: existing FastAPI on port 8000 → `agentic-video-brain` (`google/gemma-4-E4B-it`)
+- 12B: FastAPI on port 8001 → `agentic-video-brain-12b` serving `google/gemma-4-12B-it` from QAT `google/gemma-4-12B-it-qat-w4a16-ct`
+
+Traces: `backend/eval/results/hidden-intent-e4b.json` and `hidden-intent-12b.json`. Scorer: `eval/score_hidden_intent.py`.
+
+| Q | E4B this run | 12B this run | What that means |
+|---|---|---|---|
+| **E1** | **pass.** `search` speech. “$99 a month.” | **pass.** Slides + look at Pricing. “$99 per month.” | No regression. |
+| **H1** | **pass** (scorer). Leads with “Yes” about speech matching print; also says yellow on **dark blue** at 0s. Looked at red, Pricing, and Q3. | **pass.** Explicit: price is **not** on red; it is on navy Pricing; red is RED ALERT. | 12B is clearer on the trap. E4B still likes to start with Yes. |
+| **M3** | **pass.** Speech → slides → look 10s. “Ship the slide index.” | **pass.** Same path. | No regression. |
+| **M4** | **pass.** Sound 9–12 → look+listen **10–13**. Names Q3 / Ship the slide index. | **partial.** Sound 9–12 → listen **9–12** + look **9–12**. Names **RED ALERT** (the start of the CLAP window). | 12B listened (good) but described the window start, not the tone. Do not put “cut from the middle” back. |
+| **M1** | **pass.** Looks 10, 0, 6, then `search` speech. Yellow $99 matches spoken $99. **No bounce.** | **partial** (scorer). Same path: looks 10, 0, 6, then `search`. Yellow $99; speaker said the number is printed. Did not say the word “match.” | Both opened both books without the keyword bounce. E4B is not *always* skip-speech; historically it was. |
+| **H5** | **partial.** Listen 7–9. “Couldn’t clearly hear any claps.” Not the word zero. | **fail.** Listened 6–9, 7.5–10.5, 12–15, 13.5–16. Invented **five claps**. | 12B did **not** fix counting. Still no clap detector. Do not restore “say zero.” |
+| **H7** | **fail.** Sound 9–12 → **export 9–12 with no listen**, then a second export 10–12.5. Answer talks about “the middle of the search window.” Flag: `dumped_unheard_clap_window`. | **pass.** Sound 9–12 → **listen 10.5–13.5** → look 10.5–13.5 → **export 10.5–13.5**. Flags: `listened_before_export`, `exported_heard_range`. Real `export_url` is the laptop path. The answer text also hallucinated a GCS mp4 URL — ignore that; the cut is the heard range (Q3 + beep), not 9–12 red+Q3. | **This is the A/B.** 12B did the OG path. E4B still dumped the CLAP range. Crutches stay off. |
+| **H8** | **pass.** Skip-ahead blocked 1–2s. Names Pricing, RED ALERT, Q3. | **pass.** Skip-ahead blocked 4–8s. Names Pricing, RED ALERT, Q3 / Ship the slide index. | Skip-ahead is enough. |
+
+Automated tallies (strict scorer): E4B 6 pass / 1 partial / 1 fail. 12B 5 pass / 2 partial / 1 fail. **Do not switch the default brain.** 12B won the leftover that the crutches were faking (H7). It did not win clap count or “what is on screen at the tone.” Next for those is a detector or architecture, not more notes. Plain write-up of the same facts: [why 4B is enough](why-4b-is-enough.md).
+
+Default in `settings.py` remains `google/gemma-4-E4B-it`.
+
+### Verdict
+
+| | |
+|---|---|
+| Status | **Closed** (docs only; GitHub PR stays open as the record) |
+| Default | **E4B** |
+| 12B worker | Optional. Do not overwrite `agentic-video-brain`. |
+| 12B clearly won | H7 listen-then-cut |
+| 12B lost / worse | H5 clap count (invented five); M4 tone+screen this run (RED ALERT) |
+| Next | [E4B thinking](e4b-thinking.md) — same leftover questions, thinking off vs on |
+
+---
+
+## Files
 
 | Piece | Where |
 |---|---|
+| 12B Modal worker | `backend/modal_brain_12b.py` (app `agentic-video-brain-12b`) |
+| Unified audio dummy patch (12B image only) | `backend/modal_patches/patch_gemma4_unified_audio_dummy.py` |
+| E4B Modal worker (unchanged default) | `backend/modal_brain.py` |
+| HF / app constants | `backend/eval/brains.py` |
 | Question list + E4B notes | `backend/eval/hidden_intent.py` |
 | Live runner | `backend/eval/run_hidden_intent_suite.py` |
-| Catalog tests | `backend/tests/test_hidden_intent.py` |
-| OG loop tests | `backend/tests/test_loop_rules.py` (`search_audio` → listen → export heard range; full-window export is **not** recut; print-vs-speech is **not** blocked) |
-| Skip-ahead (kept) | `backend/app/agent/loop.py` `_is_next_step_after_listen` |
-
-Do not implement steps 2–5 in the leftover-crutches PR. That *is* the 12B task.
+| Scorer | `backend/eval/score_hidden_intent.py` |
+| Wait for `/v1/models` | `backend/eval/wait_vllm.py` |
+| Live traces (this A/B) | `backend/eval/results/hidden-intent-e4b.json`, `hidden-intent-12b.json` |
+| Catalog + scorer tests | `backend/tests/test_hidden_intent.py` |
+| OG loop tests | `backend/tests/test_loop_rules.py` |
+| Skip-ahead (kept) | `backend/app/agent/loop.py` |

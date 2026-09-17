@@ -6,7 +6,7 @@ Same 16s tape as [live-query-retest](live-query-retest.md). This time **nobody n
 
 After the [spoken-words-then-stop](live-spoken-words.md) notes, we **reran the failures**. **M3 and H2 now pass** (they leave speech and read the printed “Ship the slide index”). **H7 is partial** (opens the sound book, still exports 9–12s which mixes red + Q3). H5 / H8 / M1 still fail; M4 is still partial. Easy checks E1, E2, H1 still pass.
 
-What those leftovers *are*, and whether a laptop rule can fix them (not a live rerun): [four leftover live issues](live-leftover-issues.md). H7 (CLAP range vs listen-then-export): [sound-window-export](sound-window-export.md). Same questions on 12B: [e4b-vs-12b-plan](e4b-vs-12b-plan.md).
+What those leftovers *are*, and whether a laptop rule can fix them (not a live rerun): [four leftover live issues](live-leftover-issues.md). H7 (CLAP range vs listen-then-export): [sound-window-export](sound-window-export.md). Same questions on 12B: [e4b-vs-12b-plan](e4b-vs-12b-plan.md). Why we still keep 4B: [why-4b-is-enough](why-4b-is-enough.md).
 
 Video: `af12a3ad-c22d-4359-8de9-ec7baff9eb6a` (`live-test-talk.mp4`)
 

@@ -37,4 +37,6 @@ Then:
 31. [Four leftover live issues](live-leftover-issues.md) — walk / beep clip / gold $99 / clap count, and whether there is a laptop fix
 32. [Leftover issues report](live-leftover-report.md) — what broke, what we changed, what is still open
 33. [Sound search returns a range](sound-window-export.md) — H7: CLAP windows vs listen-then-export; recut-from-middle removed
-34. [E4B vs 12B Unified plan](e4b-vs-12b-plan.md) — same eight questions; crutches vs a bigger planner; **not deployed**
+34. [E4B vs 12B Unified A/B](e4b-vs-12b-plan.md) — **closed.** Second Modal worker, same eight questions, E4B stays default
+35. [Why 4B is enough](why-4b-is-enough.md) — leftover problems in plain words, what 12B vs 4B did, clap counting is not arithmetic
+36. [E4B thinking on/off](e4b-thinking.md) — next experiment after the closed 12B A/B
