@@ -103,7 +103,7 @@ That is a **real issue**: CLAP returns a **range**, not a pin. Exporting the ran
 
 **Not a fix:** a list of words for this video (beep → 11s, claps → 0, printed number → gold). That would pass the exam and fail the next file.
 
-**Next task, not this PR:** [run the same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back if 12B fails; write that down.
+**Next task, this PR:** [run the same eight questions on Gemma 4 12B Unified](e4b-vs-12b-plan.md). Do not put the crutches back if 12B fails; write that down. Live 12B column is in the scoreboard at the bottom of [the plan](e4b-vs-12b-plan.md) and below.
 
 ## Live rerun (Modal Gemma, this machine)
 
@@ -157,3 +157,18 @@ Independent chat sessions after the first scoreboard. Same upload `c1d9beb7-5465
 | **H5** how many claps | Sound search, listen 7.5–9 (silence / red). Answers **one** clap. | **Fail.** |
 
 Those H7/M1 “passes” above were **with** recut-from-middle and the print-vs-speech bounce. Both crutches are gone. Re-score on [12B](e4b-vs-12b-plan.md) with `backend/eval/run_hidden_intent_suite.py`.
+
+## 12B live scoreboard
+
+Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Clean loop (skip-ahead on; recut / print-vs-speech / “say zero” off). Worker: `modal_brain_12b.py` serving `google/gemma-4-12B-it` from the official QAT checkpoint. Default FastAPI brain is still E4B.
+
+| Q | 12B (this run) | Verdict |
+|---|---|---|
+| **E1** Pro cost | *pending live* | |
+| **H1** $99 on red? | *pending live* | |
+| **M3** ship this quarter | *pending live* | |
+| **M4** tone + on screen | *pending live* | |
+| **M1** printed number color | *pending live* | |
+| **H5** how many claps | *pending live* | |
+| **H7** clip on the beep | *pending live* | |
+| **H8** walk the tape | *pending live* | |

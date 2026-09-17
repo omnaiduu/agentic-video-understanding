@@ -37,7 +37,7 @@ Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`, **6
 
 ## Chat
 
-The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`.
+The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`. Default chat worker is **E4B** (`modal_brain.py`, app `agentic-video-brain`). The 12B A/B worker is a **second** app (`modal_brain_12b.py`, `agentic-video-brain-12b`) that serves `google/gemma-4-12B-it` from Google's QAT W4A16 checkpoint so it fits an L4. Flip `VLLM_BASE_URL` / `VLLM_MODEL` in `.env` (gitignored); do not overwrite the E4B deploy.
 
 JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `search_slides`, `export_clip`, `export_audio`, `answer`. `search_slides` is our Python (ColQwen query tokens → MaxSim vs unique-slide patches, top 8 times). Scores are not the answer; Gemma `look`s at a hit and reads the real frame. Export re-encodes on the laptop (not stream-copy) and returns `/videos/{id}/exports/{export_id}`. Gemma gets that URL as text, never the clip bytes. Follow-ups send the same `session_id`; last 3 look/listen/search/export windows go into the prompt as text (not old JPEGs/wavs). Not vLLM `tools=`.
 

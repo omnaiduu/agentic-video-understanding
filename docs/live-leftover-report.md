@@ -189,9 +189,9 @@ There was no extra H1 (“confirm $99 is on red”) laptop rule to remove. That 
 ## What else we did
 
 - **Unit tests** on black 12s and ~1s mp4s, not this exam tape. Skip-ahead stays. Listen-then-export is accepted. Full-window export is **not** recut. Print-vs-speech is **not** blocked. Questions for the 12B A/B live in `backend/eval/hidden_intent.py`.
-- **Did not** add Notion logging, a new database, a new UI, React, a clap model, OCR, or a 12B Modal deploy.
+- **Did not** add Notion logging, a new database, a new UI, React, a clap model, or OCR. 12B is a **second** Modal app (`modal_brain_12b.py`); E4B stays the default.
 
-Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, `backend/eval/`, tests in `test_loop_rules.py`, `test_hidden_intent.py`, `test_chat.py`, `test_audio.py`. Docs: [sound windows](sound-window-export.md), [12B plan](e4b-vs-12b-plan.md).
+Files: `backend/modal_brain_12b.py`, `backend/eval/`, tests in `test_hidden_intent.py`. Docs: [12B A/B](e4b-vs-12b-plan.md).
 
 ---
 
@@ -200,8 +200,8 @@ Files: `backend/app/agent/loop.py`, `parts.py`, `schema.py`, `backend/eval/`, te
 | Item | Why it is still open |
 |---|---|
 | Skip in the last 6 seconds | By design. Lets a short file finish. |
-| H7 without recut | E4B exports the CLAP range. 12B A/B not run yet. |
-| M1 without speech bounce | E4B often skips `search`. 12B A/B not run yet. |
+| H7 without recut | E4B exports the CLAP range. 12B live column: [plan](e4b-vs-12b-plan.md). |
+| M1 without speech bounce | E4B often skips `search`. 12B live column: [plan](e4b-vs-12b-plan.md). |
 | Counting a sound that is not there | No classifier. We will not bounce toward zero. |
 | H1 trap (“confirm $99 is on red”) | No laptop rule. Gemma can still say “yes” to a false premise. |
 | Gold vs yellow | Gemma’s color word. We do not OCR. |

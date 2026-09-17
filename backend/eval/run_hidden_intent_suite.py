@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Live hidden-intent A/B runner. Same eight questions E4B already ran.
 
-Does not deploy a model. Point BASE_URL at FastAPI; FastAPI points at whatever
-brain VLLM_MODEL / VLLM_BASE_URL is set to (E4B today, 12B later).
+Point BASE_URL at FastAPI; FastAPI points at whatever brain VLLM_MODEL /
+VLLM_BASE_URL is set to (E4B default, 12B for this A/B). Do not deploy from
+this script.
 
     cd backend
     VIDEO_ID=... BASE_URL=http://127.0.0.1:8000 BRAIN_LABEL=e4b \\
@@ -23,7 +24,16 @@ _BACKEND = Path(__file__).resolve().parents[1]
 if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
+from eval.brains import EXAM_TAPE_ID  # noqa: E402
 from eval.hidden_intent import E4B_OBSERVATIONS, QUESTIONS  # noqa: E402
+from eval.score_hidden_intent import (  # noqa: E402
+    dumped_unheard_clap_window,
+    exported_heard_range,
+    listened_before_export,
+    markdown_table,
+    score_run,
+    searched_speech,
+)
 
 
 def summarize(body: dict) -> dict:
@@ -47,29 +57,15 @@ def summarize(body: dict) -> dict:
     }
 
 
-def listened_before_export(steps: list[dict]) -> bool:
-    seen_listen = False
-    for step in steps:
-        if step.get("do") == "listen" and step.get("ok"):
-            seen_listen = True
-        if step.get("do") in ("export_clip", "export_audio") and step.get("ok"):
-            return seen_listen
-    return False
-
-
-def searched_speech(steps: list[dict]) -> bool:
-    return any(step.get("do") == "search" and step.get("ok") for step in steps)
-
-
 def main() -> None:
-    video_id = os.environ.get("VIDEO_ID", "").strip()
-    if not video_id:
-        raise SystemExit("Set VIDEO_ID to an uploaded tape id.")
+    video_id = os.environ.get("VIDEO_ID", "").strip() or EXAM_TAPE_ID
     base = os.environ.get("BASE_URL", "http://127.0.0.1:8000").rstrip("/")
     label = os.environ.get("BRAIN_LABEL", "unknown")
+    model = os.environ.get("VLLM_MODEL", "")
     out = Path(os.environ.get("OUT", f"/tmp/hidden-intent-{label}.json"))
     results: dict = {
         "brain_label": label,
+        "vllm_model": model,
         "video_id": video_id,
         "base_url": base,
         "questions": {},
@@ -104,10 +100,11 @@ def main() -> None:
             summary["question"] = question
             summary["elapsed_s"] = elapsed
             summary["http"] = response.status_code
-            summary["listened_before_export"] = listened_before_export(
-                summary.get("steps") or []
-            )
-            summary["searched_speech"] = searched_speech(summary.get("steps") or [])
+            steps = summary.get("steps") or []
+            summary["listened_before_export"] = listened_before_export(steps)
+            summary["searched_speech"] = searched_speech(steps)
+            summary["exported_heard_range"] = exported_heard_range(steps)
+            summary["dumped_unheard_clap_window"] = dumped_unheard_clap_window(steps)
             summary["e4b_note"] = E4B_OBSERVATIONS.get(qid)
             results["questions"][qid] = summary
             print(f"http={response.status_code} t={elapsed}s", flush=True)
@@ -116,18 +113,26 @@ def main() -> None:
                 "steps:",
                 [
                     (s["do"], s["ok"], s.get("start_s"), s.get("end_s"))
-                    for s in summary.get("steps") or []
+                    for s in steps
                 ],
                 flush=True,
             )
             print(
                 "listen_before_export=",
                 summary["listened_before_export"],
+                "exported_heard_range=",
+                summary["exported_heard_range"],
+                "dumped_unheard_clap=",
+                summary["dumped_unheard_clap_window"],
                 "searched_speech=",
                 summary["searched_speech"],
                 flush=True,
             )
             out.write_text(json.dumps(results, indent=2))
+    scored = score_run(results)
+    results["score"] = scored
+    out.write_text(json.dumps(results, indent=2))
+    print("\n" + markdown_table(scored), flush=True)
     print("\nWrote", out, flush=True)
 
 
