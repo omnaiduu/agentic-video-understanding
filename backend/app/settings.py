@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     vllm_api_key: str = "EMPTY"
     # Default stays E4B. 12B A/B overrides VLLM_MODEL in a gitignored .env.
     vllm_model: str = "google/gemma-4-E4B-it"
+    # Thinking is a second E4B worker (reasoning-parser). Default off.
+    gemma_thinking: bool = False
+    vllm_thinking_base_url: str = ""
     ingest: str = "fake"
     embedder: str = "fake"
     whisper_model: str = "turbo"

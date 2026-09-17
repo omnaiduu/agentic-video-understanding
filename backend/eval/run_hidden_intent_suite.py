@@ -3,10 +3,13 @@
 
 Point BASE_URL at FastAPI; FastAPI points at whatever brain VLLM_MODEL /
 VLLM_BASE_URL is set to (E4B default, 12B for this A/B). Do not deploy from
-this script.
+this script. THINKING=1 posts ChatIn.thinking=true (E4B thinking worker).
 
     cd backend
     VIDEO_ID=... BASE_URL=http://127.0.0.1:8000 BRAIN_LABEL=e4b \\
+      uv run python eval/run_hidden_intent_suite.py
+
+    THINKING=1 BRAIN_LABEL=e4b-thinking OUT=/tmp/hidden-intent-e4b-thinking.json \\
       uv run python eval/run_hidden_intent_suite.py
 """
 
@@ -43,6 +46,8 @@ def summarize(body: dict) -> dict:
         "answer": (body.get("answer") or "")[:1200],
         "export_url": body.get("export_url"),
         "citations": body.get("citations"),
+        "thinking": body.get("thinking"),
+        "thoughts": body.get("thoughts") or [],
         "steps": [
             {
                 "do": s.get("do"),
@@ -62,22 +67,27 @@ def main() -> None:
     base = os.environ.get("BASE_URL", "http://127.0.0.1:8000").rstrip("/")
     label = os.environ.get("BRAIN_LABEL", "unknown")
     model = os.environ.get("VLLM_MODEL", "")
+    thinking = os.environ.get("THINKING", "").strip().lower() in {"1", "true", "yes"}
     out = Path(os.environ.get("OUT", f"/tmp/hidden-intent-{label}.json"))
     results: dict = {
         "brain_label": label,
         "vllm_model": model,
+        "thinking": thinking,
         "video_id": video_id,
         "base_url": base,
         "questions": {},
     }
     with httpx.Client(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
         for qid, question in QUESTIONS:
-            print(f"\n=== {qid} ({label}) ===", flush=True)
+            print(f"\n=== {qid} ({label}{' thinking' if thinking else ''}) ===", flush=True)
             t0 = time.time()
+            payload = {"message": question}
+            if thinking:
+                payload["thinking"] = True
             try:
                 response = client.post(
                     f"{base}/videos/{video_id}/chat",
-                    json={"message": question},
+                    json=payload,
                 )
             except Exception as exc:
                 results["questions"][qid] = {

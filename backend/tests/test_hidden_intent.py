@@ -8,6 +8,7 @@ from app.settings import Settings
 from eval.brains import (
     E4B_HF_ID,
     E4B_MODAL_APP,
+    E4B_THINKING_MODAL_APP,
     EXAM_TAPE_ID,
     TWELVE_B_HF_ID,
     TWELVE_B_MODAL_APP,
@@ -192,10 +193,14 @@ def test_score_run_covers_every_catalog_question() -> None:
 
 def test_default_vllm_model_stays_e4b() -> None:
     assert Settings.model_fields["vllm_model"].default == E4B_HF_ID
+    assert Settings.model_fields["gemma_thinking"].default is False
+    assert Settings.model_fields["vllm_thinking_base_url"].default == ""
     assert E4B_HF_ID == "google/gemma-4-E4B-it"
     assert TWELVE_B_HF_ID == "google/gemma-4-12B-it"
     assert TWELVE_B_WEIGHTS.endswith("qat-w4a16-ct")
     assert TWELVE_B_MODAL_APP != E4B_MODAL_APP
+    assert E4B_THINKING_MODAL_APP != E4B_MODAL_APP
+    assert E4B_THINKING_MODAL_APP != TWELVE_B_MODAL_APP
 
 
 def test_e4b_modal_file_is_unchanged_app() -> None:
@@ -203,7 +208,24 @@ def test_e4b_modal_file_is_unchanged_app() -> None:
     assert 'MODEL_NAME = "google/gemma-4-E4B-it"' in src
     assert 'app = modal.App("agentic-video-brain")' in src
     assert "agentic-video-brain-12b" not in src
+    assert "agentic-video-brain-e4b-thinking" not in src
     assert "gemma-4-12B-it" not in src
+    assert "--reasoning-parser" not in src
+    assert "--enable-auto-tool-choice" not in src
+
+
+def test_e4b_thinking_modal_file_adds_parser_only() -> None:
+    src = (BACKEND / "modal_brain_thinking.py").read_text()
+    assert 'MODEL_NAME = "google/gemma-4-E4B-it"' in src
+    assert f'app = modal.App("{E4B_THINKING_MODAL_APP}")' in src
+    assert "--reasoning-parser" in src
+    assert "gemma4" in src
+    assert "--enable-auto-tool-choice" not in src
+    assert "--tool-call-parser" not in src
+    assert "agentic-video-brain-12b" not in src
+    assert 'app = modal.App("agentic-video-brain")' not in src
+    e4b = (BACKEND / "modal_brain.py").read_text()
+    assert "--reasoning-parser" not in e4b
 
 
 def test_12b_modal_file_is_a_second_app_on_qat_weights() -> None:

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from app.agent.client import Brain, build_brain
+from app.agent.client import Brain, FakeBrain, UnconfiguredBrain, VllmBrain, build_brain
 from app.agent.loop import LoopError, LoopResult, run_loop
 from app.agent.memory import HISTORY_KINDS, collect_windows, push_windows
 from app.db import get_session
@@ -28,6 +28,7 @@ router = APIRouter()
 class ChatIn(BaseModel):
     message: str = Field(min_length=1)
     session_id: uuid.UUID | None = None
+    thinking: bool | None = None
 
 
 class StepOut(BaseModel):
@@ -38,12 +39,19 @@ class StepOut(BaseModel):
     detail: str = ""
 
 
+class ThoughtOut(BaseModel):
+    do: str
+    text: str
+
+
 class ChatOut(BaseModel):
     answer: str
     citations: list[float]
     steps: list[StepOut]
     session_id: uuid.UUID
     export_url: str | None = None
+    thinking: bool = False
+    thoughts: list[ThoughtOut] = Field(default_factory=list)
 
 
 def get_brain(settings: Settings = Depends(get_settings)) -> Brain:
@@ -51,6 +59,36 @@ def get_brain(settings: Settings = Depends(get_settings)) -> Brain:
         return build_brain(settings)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _want_thinking(payload: ChatIn, settings: Settings) -> bool:
+    if payload.thinking is None:
+        return settings.gemma_thinking
+    return payload.thinking
+
+
+def _brain_for_turn(injected: Brain, thinking: bool, settings: Settings) -> Brain:
+    if not thinking:
+        return injected
+    if isinstance(injected, (FakeBrain, UnconfiguredBrain)):
+        return injected
+    if isinstance(injected, VllmBrain) and injected.thinking:
+        return injected
+    try:
+        return build_brain(settings, thinking=True)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _thoughts(result: LoopResult, thinking: bool) -> list[ThoughtOut]:
+    if not thinking:
+        return []
+    out: list[ThoughtOut] = []
+    for step in result.steps:
+        text = (step.reasoning or "").strip()
+        if text:
+            out.append(ThoughtOut(do=step.do, text=text))
+    return out
 
 
 def _history(session: Session, chat: ChatSession) -> list[tuple[str, str]]:
@@ -103,6 +141,7 @@ def chat(
     payload: ChatIn,
     session: Session = Depends(get_session),
     brain: Brain = Depends(get_brain),
+    settings: Settings = Depends(get_settings),
     embedder: Embedder = Depends(get_embedder),
     visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
     audio_embedder: AudioEmbedder = Depends(get_audio_embedder),
@@ -113,6 +152,9 @@ def chat(
         raise HTTPException(status_code=404, detail="video not found")
     if video.status != VideoStatus.ready.value:
         raise HTTPException(status_code=409, detail="video is not ready")
+
+    want_thinking = _want_thinking(payload, settings)
+    brain = _brain_for_turn(brain, want_thinking, settings)
 
     if payload.session_id is None:
         chat_row = ChatSession(video_id=video.id)
@@ -175,4 +217,6 @@ def chat(
         steps=[StepOut.model_validate(step, from_attributes=True) for step in result.steps],
         session_id=chat_row.id,
         export_url=result.export_url,
+        thinking=want_thinking,
+        thoughts=_thoughts(result, want_thinking),
     )

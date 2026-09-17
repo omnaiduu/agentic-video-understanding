@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from app.agent.client import Brain
+from app.agent.client import Brain, as_turn
 from app.agent.parts import (
     after_look_slide_nudge,
     already_looked_message,
@@ -61,6 +61,7 @@ class Step:
     end_s: float | None = None
     ok: bool = True
     detail: str = ""
+    reasoning: str | None = None
 
 
 @dataclass
@@ -213,14 +214,21 @@ def _is_next_step_after_listen(
     return abs(start_s - prev[1]) < 0.75
 
 
-def _ask(brain: Brain, messages: list[dict[str, Any]]) -> BrainAction:
-    raw = brain.complete(messages)
+def _clean_reasoning(text: str | None) -> str | None:
+    if text is None:
+        return None
+    stripped = text.strip()
+    return stripped or None
+
+
+def _ask(brain: Brain, messages: list[dict[str, Any]]) -> tuple[BrainAction, str | None]:
+    turn = as_turn(brain.complete(messages))
     try:
-        return parse_action(raw)
+        return parse_action(turn.content), _clean_reasoning(turn.reasoning)
     except BrainParseError:
         messages.append({"role": "user", "content": RETRY_PROMPT})
-        raw = brain.complete(messages)
-        return parse_action(raw)
+        turn = as_turn(brain.complete(messages))
+        return parse_action(turn.content), _clean_reasoning(turn.reasoning)
 
 
 def run_loop(
@@ -273,18 +281,22 @@ def run_loop(
     last_listen_window: tuple[float, float] | None = None
     bounced_empty = False
     retried_empty_parse = False
+    turn_reason: str | None = None
+
+    def note(**kwargs: Any) -> Step:
+        return Step(reasoning=turn_reason, **kwargs)
 
     while True:
         if rounds >= MAX_ROUNDS:
             messages.append({"role": "user", "content": FORCE_ANSWER_PROMPT})
             try:
-                action = _ask(brain, messages)
+                action, turn_reason = _ask(brain, messages)
             except (BrainParseError, RuntimeError):
                 return _forced_answer(question, steps, last_export_url)
             if action.do == "answer":
                 text = (action.answer or "").strip()
                 if text:
-                    steps.append(Step(do="answer", detail=text, ok=True))
+                    steps.append(note(do="answer", detail=text, ok=True))
                     return LoopResult(
                         answer=text,
                         citations=list(action.times),
@@ -293,7 +305,7 @@ def run_loop(
                     )
             return _forced_answer(question, steps, last_export_url)
         try:
-            action = _ask(brain, messages)
+            action, turn_reason = _ask(brain, messages)
         except BrainParseError as exc:
             if steps:
                 return _forced_answer(question, steps, last_export_url)
@@ -326,7 +338,7 @@ def run_loop(
                 bounced_empty = True
                 messages.append(empty_move_nudge_message())
                 continue
-            steps.append(Step(do="answer", detail=text, ok=True))
+            steps.append(note(do="answer", detail=text, ok=True))
             return LoopResult(
                 answer=text,
                 citations=list(action.times),
@@ -339,14 +351,14 @@ def run_loop(
             if searched_speech:
                 messages.append(speech_already_searched_message())
                 steps.append(
-                    Step(do="search", ok=False, detail="already searched spoken words")
+                    note(do="search", ok=False, detail="already searched spoken words")
                 )
                 continue
             query = (action.query or question).strip()
             if speech_status != IndexStatus.ready.value:
                 messages.append(transcript_not_ready_message(speech_status))
                 steps.append(
-                    Step(do="search", ok=False, detail=f"transcript {speech_status}")
+                    note(do="search", ok=False, detail=f"transcript {speech_status}")
                 )
                 continue
             if search is None:
@@ -356,7 +368,7 @@ def run_loop(
                         "content": "search is not wired. Use look, listen, or answer.",
                     }
                 )
-                steps.append(Step(do="search", ok=False, detail="search not wired"))
+                steps.append(note(do="search", ok=False, detail="search not wired"))
                 continue
             hits = search(query)[:8]
             searched_speech = True
@@ -364,7 +376,7 @@ def run_loop(
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
             steps.append(
-                Step(
+                note(
                     do="search",
                     start_s=first.t if first is not None else None,
                     end_s=first.t if first is not None else None,
@@ -379,7 +391,7 @@ def run_loop(
             if picture_status != IndexStatus.ready.value:
                 messages.append(visual_not_ready_message(picture_status))
                 steps.append(
-                    Step(
+                    note(
                         do="search_visual",
                         ok=False,
                         detail=f"visual {picture_status}",
@@ -396,7 +408,7 @@ def run_loop(
                     }
                 )
                 steps.append(
-                    Step(do="search_visual", ok=False, detail="search_visual not wired")
+                    note(do="search_visual", ok=False, detail="search_visual not wired")
                 )
                 continue
             hits = search_visual(query)[:8]
@@ -404,7 +416,7 @@ def run_loop(
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
             steps.append(
-                Step(
+                note(
                     do="search_visual",
                     start_s=first.t if first is not None else None,
                     end_s=first.t if first is not None else None,
@@ -419,7 +431,7 @@ def run_loop(
             if sound_status != IndexStatus.ready.value:
                 messages.append(audio_not_ready_message(sound_status))
                 steps.append(
-                    Step(
+                    note(
                         do="search_audio",
                         ok=False,
                         detail=f"audio {sound_status}",
@@ -436,7 +448,7 @@ def run_loop(
                     }
                 )
                 steps.append(
-                    Step(do="search_audio", ok=False, detail="search_audio not wired")
+                    note(do="search_audio", ok=False, detail="search_audio not wired")
                 )
                 continue
             result = search_audio(query)
@@ -445,7 +457,7 @@ def run_loop(
             shown = ",".join(f"{hit.start_s:.2f}" for hit in hits)
             first = hits[0] if hits else None
             steps.append(
-                Step(
+                note(
                     do="search_audio",
                     start_s=first.start_s if first is not None else None,
                     end_s=first.end_s if first is not None else None,
@@ -461,13 +473,13 @@ def run_loop(
                 unused = _unused_slide_times(slide_hit_times, looked_windows)
                 messages.append(slides_already_searched_message(unused))
                 steps.append(
-                    Step(do="search_slides", ok=False, detail="already searched slides")
+                    note(do="search_slides", ok=False, detail="already searched slides")
                 )
                 continue
             if slide_status != IndexStatus.ready.value:
                 messages.append(slides_not_ready_message(slide_status))
                 steps.append(
-                    Step(
+                    note(
                         do="search_slides",
                         ok=False,
                         detail=f"slides {slide_status}",
@@ -484,7 +496,7 @@ def run_loop(
                     }
                 )
                 steps.append(
-                    Step(do="search_slides", ok=False, detail="search_slides not wired")
+                    note(do="search_slides", ok=False, detail="search_slides not wired")
                 )
                 continue
             hits = search_slides(query)[:8]
@@ -494,7 +506,7 @@ def run_loop(
             shown = ",".join(f"{hit.t:.2f}" for hit in hits)
             first = hits[0] if hits else None
             steps.append(
-                Step(
+                note(
                     do="search_slides",
                     start_s=first.t if first is not None else None,
                     end_s=first.t_end if first is not None else None,
@@ -516,7 +528,7 @@ def run_loop(
                     }
                 )
                 steps.append(
-                    Step(do=action.do, ok=False, detail=f"{action.do} not wired")
+                    note(do=action.do, ok=False, detail=f"{action.do} not wired")
                 )
                 continue
             try:
@@ -525,7 +537,7 @@ def run_loop(
             except ScissorsError as exc:
                 messages.append(refuse_message(str(exc)))
                 steps.append(
-                    Step(
+                    note(
                         do=action.do,
                         start_s=action.start_s,
                         end_s=action.end_s,
@@ -539,7 +551,7 @@ def run_loop(
                 export_message(result.kind, result.start_s, result.end_s, result.url)
             )
             steps.append(
-                Step(
+                note(
                     do=action.do,
                     start_s=result.start_s,
                     end_s=result.end_s,
@@ -556,7 +568,7 @@ def run_loop(
                     unused = _unused_slide_times(slide_hit_times, looked_windows)
                     messages.append(already_looked_message(start_s, unused))
                     steps.append(
-                        Step(
+                        note(
                             do="look",
                             start_s=start_s,
                             end_s=end_s,
@@ -575,7 +587,7 @@ def run_loop(
                         skip_ahead_message(looked_windows[-1][1], meta.duration_s)
                     )
                     steps.append(
-                        Step(
+                        note(
                             do="look",
                             start_s=start_s,
                             end_s=end_s,
@@ -589,7 +601,7 @@ def run_loop(
                 messages.append(look_message(frames))
                 looked_windows.append((start_s, end_s))
                 steps.append(
-                    Step(
+                    note(
                         do="look",
                         start_s=start_s,
                         end_s=end_s,
@@ -611,7 +623,7 @@ def run_loop(
                         skip_ahead_message(looked_windows[-1][1], meta.duration_s)
                     )
                     steps.append(
-                        Step(
+                        note(
                             do="listen",
                             start_s=start_s,
                             end_s=end_s,
@@ -625,7 +637,7 @@ def run_loop(
                 messages.append(listen_message(start_s, end_s, wav))
                 last_listen_window = (start_s, end_s)
                 steps.append(
-                    Step(
+                    note(
                         do="listen",
                         start_s=start_s,
                         end_s=end_s,
@@ -636,7 +648,7 @@ def run_loop(
         except ScissorsError as exc:
             messages.append(refuse_message(str(exc)))
             steps.append(
-                Step(
+                note(
                     do=action.do,
                     start_s=action.start_s,
                     end_s=action.end_s,

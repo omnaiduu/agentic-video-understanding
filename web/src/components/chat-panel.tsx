@@ -3,12 +3,19 @@ import { useEffect, useRef, useState } from "react"
 
 import { ChatExport } from "@/components/chat-export"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import {
   postChat,
   type ChatOut,
   type ChatStep,
+  type ChatThought,
 } from "@/lib/api"
 import { humanizeChatError } from "@/lib/chat-errors"
 import { exportFailureNote, exportKindFromSteps } from "@/lib/export"
@@ -22,6 +29,7 @@ type Turn = {
   text: string
   citations?: number[]
   steps?: ChatStep[]
+  thoughts?: ChatThought[]
   exportUrl?: string | null
 }
 
@@ -49,6 +57,7 @@ export function ChatPanel({
   const [draft, setDraft] = useState("")
   const [turns, setTurns] = useState<Turn[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [thinking, setThinking] = useState(false)
   const sessionRef = useRef<string | null>(null)
   const threadRef = useRef<HTMLOListElement>(null)
 
@@ -57,11 +66,12 @@ export function ChatPanel({
     setTurns([])
     setDraft("")
     setError(null)
+    setThinking(false)
   }, [videoId])
 
   const mutation = useMutation({
     mutationFn: (message: string) =>
-      postChat(videoId, message, sessionRef.current),
+      postChat(videoId, message, sessionRef.current, thinking),
     retry: false,
     onSuccess: (data: ChatOut, message: string) => {
       sessionRef.current = data.session_id
@@ -74,6 +84,7 @@ export function ChatPanel({
           text: data.answer,
           citations: data.citations,
           steps: data.steps,
+          thoughts: data.thoughts,
           exportUrl: data.export_url,
         },
       ])
@@ -105,6 +116,23 @@ export function ChatPanel({
     <Card className="flex max-h-[min(36rem,70vh)] flex-col">
       <CardHeader className="shrink-0">
         <CardTitle>Chat</CardTitle>
+        {locked ? null : (
+          <CardAction>
+            <label
+              className="flex cursor-pointer items-center gap-2 text-sm font-normal text-muted-foreground"
+              htmlFor="chat-thinking"
+            >
+              <input
+                id="chat-thinking"
+                type="checkbox"
+                checked={thinking}
+                disabled={mutation.isPending}
+                onChange={(event) => setThinking(event.target.checked)}
+              />
+              Thinking
+            </label>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col space-y-4">
         {locked ? (
@@ -156,18 +184,35 @@ export function ChatPanel({
                         {failedExport}
                       </p>
                     ) : null}
-                    {turn.steps && turn.steps.length > 0 ? (
+                    {(turn.steps && turn.steps.length > 0) ||
+                    (turn.thoughts && turn.thoughts.length > 0) ? (
                       <details className="text-sm text-muted-foreground">
                         <summary className="cursor-pointer select-none">
                           Details
                         </summary>
-                        <ul className="mt-2 list-disc space-y-1 pl-5">
-                          {turn.steps.map((step, stepIndex) => (
-                            <li key={`${step.do}-${stepIndex}`}>
-                              {formatStep(step)}
-                            </li>
-                          ))}
-                        </ul>
+                        {turn.steps && turn.steps.length > 0 ? (
+                          <ul className="mt-2 list-disc space-y-1 pl-5">
+                            {turn.steps.map((step, stepIndex) => (
+                              <li key={`${step.do}-${stepIndex}`}>
+                                {formatStep(step)}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        {turn.thoughts && turn.thoughts.length > 0 ? (
+                          <ul className="mt-2 list-disc space-y-2 pl-5">
+                            {turn.thoughts.map((thought, thoughtIndex) => (
+                              <li key={`${thought.do}-thought-${thoughtIndex}`}>
+                                <span className="font-medium">
+                                  thought ({thought.do}):
+                                </span>{" "}
+                                <span className="whitespace-pre-wrap">
+                                  {thought.text}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                       </details>
                     ) : null}
                   </li>
