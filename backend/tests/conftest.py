@@ -61,6 +61,33 @@ def tiny_mp4(media_dir: Path) -> Path:
 
 
 @pytest.fixture(scope="session")
+def twelve_s_mp4(media_dir: Path) -> Path:
+    path = media_dir / "twelve.mp4"
+    _run_ffmpeg(
+        [
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=black:s=64x64:d=12",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=f=440:d=12",
+            "-shortest",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:a",
+            "aac",
+            str(path),
+        ]
+    )
+    return path
+
+
+@pytest.fixture(scope="session")
 def tiny_audio(media_dir: Path) -> Path:
     path = media_dir / "tiny.wav"
     _run_ffmpeg(["-y", "-f", "lavfi", "-i", "sine=f=440:d=1", str(path)])

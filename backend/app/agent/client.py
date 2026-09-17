@@ -74,6 +74,11 @@ class VllmBrain:
                     continue
                 if isinstance(code, int) and code >= 500:
                     raise RuntimeError(f"brain GPU returned HTTP {code}") from exc
+                msg = str(exc)
+                if code == 400 and "maximum context length" in msg:
+                    raise RuntimeError(
+                        "brain prompt was too long; try a shorter look or listen window"
+                    ) from exc
                 raise
         raise RuntimeError("brain GPU unavailable") from last
 

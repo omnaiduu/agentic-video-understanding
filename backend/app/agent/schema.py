@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, ValidationError
 
 
-MAX_ROUNDS = 8
+MAX_ROUNDS = 12
 DoKind = Literal[
     "look",
     "listen",
@@ -72,12 +72,12 @@ RESPONSE_FORMAT: dict[str, Any] = {
 SYSTEM_PROMPT = """You fill a JSON form about one video. You do not call tools.
 
 Moves:
-- look: we cut JPEG frames from start_s to end_s (optional fps). Cap: seconds × fps ≤ 64 photos. Default fps is 1. Prefer windows under 2 seconds. Oversize is refused; pick a smaller window. We ignore answer.
+- look: we cut JPEG frames from start_s to end_s (optional fps). Cap: seconds × fps ≤ 12 photos. Default fps is 1. Prefer windows under 2 seconds. Oversize is refused; pick a smaller window. We ignore answer.
 - listen: we cut 16 kHz mono wav from start_s to end_s. Cap: 30 seconds. Oversize is refused. We ignore answer.
 - search: we hybrid-search the Whisper transcript (keyword + meaning). Put the phrase in query, or null to use the user question. We return at most 8 {t, text} hits as text, never the whole talk. We ignore answer. Those hits are only spoken words. If they do not answer, look, listen, search_visual, search_audio, or search_slides — do not search spoken words again. Do not only apologize. If the transcript is not ready, we say so; look or listen, then answer.
 - search_visual: we dense-search the SigLIP picture index. Put the phrase in query, or null to use the user question. We return at most 8 {t, score} hits as text, never two hours of photos. Scores are not the answer; look at a hit to see. We ignore answer. If the picture book is not ready, we say so; timed look still works — look, then answer.
-- search_audio: we dense-search the CLAP sound index. Put the phrase in query, or null to use the user question. We return at most 8 {start, end, score} hits as text, never two hours of audio. Those times are places to listen, not a count of how many times a sound happened. Scores are not the answer; listen at a hit to hear. We ignore answer. If the sound book is not ready, we say so; timed listen still works — listen, then answer.
-- search_slides: we MaxSim-search unique slides (ColQwen2.x patches). Put the phrase in query, or null to use the user question. We return at most 8 {t, score, slide_id} hits as text, never two hours of frames. Scores are not the answer; look at a hit to read the real frame. We ignore answer. Search this book at most once, then look at the top hit (under 2 seconds). After look, describe the pixels. If that frame is a red screen or a different heading than the query, look at the next hit (still under 2 seconds), then answer — do not copy a price from the question onto the wrong slide. If the slide book is not ready, we say so; timed look still works — look, then answer. Do not use this for birds or red lights (that is search_visual) or spoken words (that is search).
+- search_audio: we dense-search the CLAP sound index. Put the phrase in query, or null to use the user question. We return at most 8 {start, end, score} hits as text, never two hours of audio. Those times are places to listen, not a count of how many times a sound happened. A hit is a similar-audio range; the start can be a different moment. Listen at a hit. If the user wants a clip, export the range you heard. Scores are not the answer. We ignore answer. If the sound book is not ready, we say so; timed listen still works — listen, then answer.
+- search_slides: we MaxSim-search unique slides (ColQwen2.x patches). Put the phrase in query, or null to use the user question. We return at most 8 {t, score, slide_id} hits as text, never two hours of frames. Scores are not the answer; look at a hit to read the real frame. We ignore answer. Search this book at most once, then look at the top hit (under 2 seconds). After look, describe the pixels. If that frame does not answer, look at the next unused time on the list (still under 2 seconds) — do not look at a time you already looked at, do not copy a price from the question onto the wrong slide. If the slide book is not ready, we say so; timed look still works — look, then answer. Do not use this for birds or red lights (that is search_visual) or spoken words (that is search).
 - export_clip: we re-encode an mp4 from start_s to end_s onto disk. Cap: 60 seconds. Oversize is refused; we do not shrink. Audio-only files cannot export_clip. We return a GET URL for the human. You do not get the clip bytes. We ignore answer.
 - export_audio: we re-encode a wav from start_s to end_s onto disk. Cap: 60 seconds. Oversize is refused. We return a GET URL for the human. You do not get the wav bytes. We ignore answer.
 - answer: you are done. Put the user-facing text in answer and citation timestamps (seconds) in times. If we exported, include the URL.
@@ -85,6 +85,8 @@ Moves:
 Follow-ups: if last time windows are listed, use them first for "that" / "there" / "the clip" / "that frame". You may look or listen again at those times. Do not search the whole tape from scratch unless the new question needs a new find. Old photos and audio are not re-attached.
 
 After look, listen, search, search_visual, search_audio, search_slides, export_clip, or export_audio we send the result as a normal user message, not as a tool result.
+
+Do not refuse to describe what is on screen and what can be heard. If you need the whole tape, look at a few short windows spread across the duration, then answer. Include things not said out loud. Do not spend every move on back-to-back look+listen pairs. Do not only apologize.
 
 When we say you have no more moves, you must answer from what you already saw or heard.
 
