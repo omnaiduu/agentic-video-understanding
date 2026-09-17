@@ -17,6 +17,11 @@ server. This L4 is 24 GB, so we load Google's official QAT W4A16 checkpoint
 tuned Unified model the plan names). vLLM reads the quant config from the
 checkpoint; no extra --quantization flag.
 
+vLLM 0.29 dummy-audio profiling still reads `fft_length` from the tower
+extractor. Unified 12B has `audio_samples_per_token` instead, so the 12B
+image runs `modal_patches/patch_gemma4_unified_audio_dummy.py` at build
+time. E4B is unpatched.
+
 Deploy from backend/:
 
     modal deploy modal_brain_12b.py
@@ -33,6 +38,7 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 import modal
 
@@ -49,6 +55,11 @@ vllm_image = (
     modal.Image.from_registry("nvidia/cuda:12.8.0-devel-ubuntu22.04", add_python="3.12")
     .entrypoint([])
     .uv_pip_install("vllm[audio]==0.29.0", "transformers>=5.5.0", "requests")
+    .add_local_file(
+        str(Path(__file__).with_name("modal_patches") / "patch_gemma4_unified_audio_dummy.py"),
+        "/tmp/patch_gemma4_unified_audio_dummy.py",
+    )
+    .run_commands("python /tmp/patch_gemma4_unified_audio_dummy.py")
     .env(
         {
             "HF_HUB_CACHE": "/root/.cache/huggingface",

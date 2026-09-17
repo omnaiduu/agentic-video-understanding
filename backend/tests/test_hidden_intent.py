@@ -222,3 +222,9 @@ def test_12b_modal_file_is_a_second_app_on_qat_weights() -> None:
     assert "WEIGHTS" in src
     assert "--enable-auto-tool-choice" not in src
     assert "--reasoning-parser" not in src
+    assert "patch_gemma4_unified_audio_dummy.py" in src
+    patch = (BACKEND / "modal_patches/patch_gemma4_unified_audio_dummy.py").read_text()
+    assert "fft_length" in patch
+    assert "audio_samples_per_token" in patch
+    e4b = (BACKEND / "modal_brain.py").read_text()
+    assert "patch_gemma4_unified_audio_dummy" not in e4b

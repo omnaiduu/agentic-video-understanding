@@ -99,7 +99,7 @@ Do not add the recut / print-vs-speech bounces back if 12B fails; record the fai
 
 1. **Id confirmed.** `google/gemma-4-12B-it`. Same gated Gemma access; Modal secret `huggingface`.
 2. **Second app, E4B left up.** `backend/modal_brain_12b.py`, Modal app `agentic-video-brain-12b`. `modal_brain.py` still serves E4B as `agentic-video-brain`.
-3. **Served name** `google/gemma-4-12B-it`. **Weights** `google/gemma-4-12B-it-qat-w4a16-ct` (L4). Same image (`vllm[audio]==0.29.0`), same L4, same HF/vLLM volumes, same `json_schema` from `VllmBrain`.
+3. **Served name** `google/gemma-4-12B-it`. **Weights** `google/gemma-4-12B-it-qat-w4a16-ct` (L4). Same image (`vllm[audio]==0.29.0`), same L4, same HF/vLLM volumes, same `json_schema` from `VllmBrain`. The 12B image applies `modal_patches/patch_gemma4_unified_audio_dummy.py` because vLLM 0.29 dummy-audio profiling still reads tower `fft_length`; Unified 12B does not have that attribute. E4B is unpatched.
 4. **Deploy:** `cd backend && modal deploy modal_brain_12b.py`. Then:
 
    ```bash
@@ -171,6 +171,7 @@ Filled after `GET /v1/models` is 200 and the eight questions return. Until then 
 | Piece | Where |
 |---|---|
 | 12B Modal worker | `backend/modal_brain_12b.py` (app `agentic-video-brain-12b`) |
+| Unified audio dummy patch (12B image only) | `backend/modal_patches/patch_gemma4_unified_audio_dummy.py` |
 | E4B Modal worker (unchanged default) | `backend/modal_brain.py` |
 | HF / app constants | `backend/eval/brains.py` |
 | Question list + E4B notes | `backend/eval/hidden_intent.py` |
