@@ -224,6 +224,26 @@ describe("postChat", () => {
       session_id: "sess-1",
     })
   })
+
+  it("sends thinking only when it is on", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(200, {
+        answer: "ok",
+        citations: [],
+        steps: [],
+        session_id: "sess-1",
+        export_url: null,
+        thinking: true,
+        thoughts: [{ do: "look", text: "check the frame" }],
+      }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    await postChat("vid-1", "clip the beep", null, true)
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      message: "clip the beep",
+      thinking: true,
+    })
+  })
 })
 
 describe("videoFileUrl", () => {

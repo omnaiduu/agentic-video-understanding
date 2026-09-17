@@ -55,7 +55,7 @@ describe("ChatPanel", () => {
     await user.type(screen.getByLabelText(/ask a question/i), "what is at 0.1s?")
     await user.click(screen.getByRole("button", { name: /send/i }))
     expect(await screen.findByText("A dark frame at 0.1s.")).toBeInTheDocument()
-    expect(mockedChat).toHaveBeenCalledWith("vid-1", "what is at 0.1s?", null)
+    expect(mockedChat).toHaveBeenCalledWith("vid-1", "what is at 0.1s?", null, false)
     expect(window.localStorage.getItem(sessionStorageKey("vid-1"))).toBe("sess-1")
     expect(screen.queryByLabelText(/exported clip/i)).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /download/i })).not.toBeInTheDocument()
@@ -75,7 +75,7 @@ describe("ChatPanel", () => {
     await user.type(screen.getByLabelText(/ask a question/i), "and then?")
     await user.click(screen.getByRole("button", { name: /send/i }))
     await waitFor(() => {
-      expect(mockedChat).toHaveBeenCalledWith("vid-1", "and then?", "sess-1")
+      expect(mockedChat).toHaveBeenCalledWith("vid-1", "and then?", "sess-1", false)
     })
   })
 
@@ -251,5 +251,48 @@ describe("ChatPanel", () => {
     expect(
       await screen.findByText(/language model is not available/i),
     ).toBeInTheDocument()
+  })
+
+  it("does not send thinking: true while the checkbox is off", async () => {
+    const user = userEvent.setup()
+    mockedChat.mockResolvedValue(reply)
+    renderWithQuery(
+      <ChatPanel videoId="vid-1" locked={false} onSeek={vi.fn()} />,
+    )
+    expect(screen.getByLabelText(/thinking/i)).not.toBeChecked()
+    await user.type(screen.getByLabelText(/ask a question/i), "hello")
+    await user.click(screen.getByRole("button", { name: /send/i }))
+    await waitFor(() => {
+      expect(mockedChat).toHaveBeenCalledWith("vid-1", "hello", null, false)
+    })
+  })
+
+  it("sends thinking: true after the checkbox is on", async () => {
+    const user = userEvent.setup()
+    mockedChat.mockResolvedValue({
+      ...reply,
+      thinking: true,
+      thoughts: [{ do: "look", text: "I should look first." }],
+    })
+    renderWithQuery(
+      <ChatPanel videoId="vid-1" locked={false} onSeek={vi.fn()} />,
+    )
+    await user.click(screen.getByLabelText(/thinking/i))
+    expect(screen.getByLabelText(/thinking/i)).toBeChecked()
+    await user.type(screen.getByLabelText(/ask a question/i), "clip the beep")
+    await user.click(screen.getByRole("button", { name: /send/i }))
+    await waitFor(() => {
+      expect(mockedChat).toHaveBeenCalledWith(
+        "vid-1",
+        "clip the beep",
+        null,
+        true,
+      )
+    })
+    await user.click(screen.getByText("Details"))
+    expect(
+      await screen.findByText(/I should look first/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/thought \(look\):/i)).toBeInTheDocument()
   })
 })

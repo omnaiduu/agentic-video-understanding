@@ -392,7 +392,8 @@ def test_vllm_brain_retries_503_then_returns(monkeypatch) -> None:
         )
     )
     text = brain.complete([{"role": "user", "content": "hi"}])
-    assert "ok" in text
+    assert "ok" in text.content
+    assert text.reasoning is None
     assert calls["n"] == 3
 
 
@@ -434,9 +435,11 @@ def test_vllm_brain_uses_json_schema_not_tools(monkeypatch) -> None:
         )
     )
     text = brain.complete([{"role": "user", "content": "hi"}])
-    assert "ok" in text
+    assert "ok" in text.content
     assert "tools" not in captured
     assert captured["response_format"] == RESPONSE_FORMAT
+    assert captured["max_tokens"] == 512
+    assert "extra_body" not in captured
 
 
 def test_parse_action_accepts_look() -> None:
@@ -772,3 +775,186 @@ def test_tiny_file_does_not_skip_ahead(tiny_mp4: Path) -> None:
         for step in result.steps
     )
     assert sum(1 for step in result.steps if step.do == "look" and step.ok) == 2
+
+
+def test_chat_returns_empty_thoughts_by_default(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    _override(_look_then_answer())
+    try:
+        body = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?"},
+        ).json()
+    finally:
+        _clear_override()
+    assert body["thinking"] is False
+    assert body["thoughts"] == []
+
+
+def test_chat_returns_thoughts_when_thinking_on(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = FakeBrain(
+        [
+            {
+                "do": "look",
+                "start_s": 0.1,
+                "end_s": 0.5,
+                "fps": 2,
+                "answer": None,
+                "times": [],
+            },
+            {
+                "do": "answer",
+                "start_s": None,
+                "end_s": None,
+                "fps": None,
+                "answer": "A dark frame at 0.1s.",
+                "times": [0.1],
+            },
+        ],
+        reasonings=["I should look at the start first.", "Now I can answer."],
+    )
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?", "thinking": True},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["thinking"] is True
+    assert body["thoughts"] == [
+        {"do": "look", "text": "I should look at the start first."},
+        {"do": "answer", "text": "Now I can answer."},
+    ]
+    dumped = str(brain.calls)
+    assert "I should look at the start first." not in dumped
+    assert "Now I can answer." not in dumped
+
+
+def test_chat_hides_thoughts_when_thinking_off(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = FakeBrain(
+        _look_then_answer().script,
+        reasonings=["secret thought", None],
+    )
+    _override(brain)
+    try:
+        body = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?", "thinking": False},
+        ).json()
+    finally:
+        _clear_override()
+    assert body["thinking"] is False
+    assert body["thoughts"] == []
+
+
+def test_thinking_true_without_thinking_url_503(
+    client, tiny_mp4: Path, monkeypatch
+) -> None:
+    from app.settings import get_settings
+
+    monkeypatch.setenv("BRAIN", "vllm")
+    monkeypatch.setenv("VLLM_BASE_URL", "http://vllm.example/v1")
+    # Empty string, not unset: pydantic would otherwise read a live URL from .env.
+    monkeypatch.setenv("VLLM_THINKING_BASE_URL", "")
+    get_settings.cache_clear()
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what happens at 0:10?", "thinking": True},
+        )
+        assert response.status_code == 503
+        assert "VLLM_THINKING_BASE_URL" in response.json()["detail"]
+    finally:
+        monkeypatch.setenv("BRAIN", "fake")
+        get_settings.cache_clear()
+
+
+def test_vllm_brain_enable_thinking_only_when_on(monkeypatch) -> None:
+    captured: dict = {}
+
+    class FakeResponse:
+        class Choice:
+            class Message:
+                content = (
+                    '{"do":"answer","start_s":null,"end_s":null,'
+                    '"fps":null,"answer":"ok","times":[]}'
+                )
+                reasoning = "consider looking first"
+
+            message = Message()
+
+        choices = [Choice()]
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return FakeResponse()
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs) -> None:
+            captured["base_url"] = kwargs.get("base_url")
+            self.chat = FakeChat()
+
+    monkeypatch.setattr("openai.OpenAI", FakeOpenAI)
+    from app.settings import Settings
+
+    cfg = Settings(
+        database_url="postgresql+psycopg://video:video@127.0.0.1:5432/video_test",
+        vllm_base_url="http://vllm.example/v1",
+        vllm_thinking_base_url="http://vllm-thinking.example/v1",
+        vllm_model="google/gemma-4-E4B-it",
+    )
+    on = VllmBrain(cfg, thinking=True)
+    turn = on.complete([{"role": "user", "content": "hi"}])
+    assert captured["base_url"] == "http://vllm-thinking.example/v1"
+    assert turn.reasoning == "consider looking first"
+    assert "ok" in turn.content
+    assert "tools" not in captured
+    assert captured["response_format"] == RESPONSE_FORMAT
+    assert captured["max_tokens"] == 4096
+    assert captured["extra_body"] == {
+        "chat_template_kwargs": {"enable_thinking": True}
+    }
+
+
+def test_vllm_thinking_brain_requires_thinking_url() -> None:
+    from app.settings import Settings
+
+    try:
+        VllmBrain(
+            Settings(
+                database_url="postgresql+psycopg://video:video@127.0.0.1:5432/video_test",
+                vllm_base_url="http://vllm.example/v1",
+                vllm_thinking_base_url="",
+                vllm_model="google/gemma-4-E4B-it",
+            ),
+            thinking=True,
+        )
+        raise AssertionError("expected RuntimeError")
+    except RuntimeError as exc:
+        assert "VLLM_THINKING_BASE_URL" in str(exc)
+
+
+def test_loop_does_not_echo_reasoning_into_history(tiny_mp4: Path) -> None:
+    brain = FakeBrain(
+        [
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="A dark frame.", times=[0.1]),
+        ],
+        reasonings=["SECRET_THOUGHT", "SECRET_ANSWER_THOUGHT"],
+    )
+    result = run_loop(tiny_mp4, "what is on screen?", brain)
+    assert result.steps[0].reasoning == "SECRET_THOUGHT"
+    dumped = str(brain.calls)
+    assert "SECRET_THOUGHT" not in dumped
+    assert "SECRET_ANSWER_THOUGHT" not in dumped
+    assert result.steps[-1].reasoning == "SECRET_ANSWER_THOUGHT"

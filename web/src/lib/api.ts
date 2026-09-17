@@ -1,5 +1,6 @@
 const FETCH_TIMEOUT_MS = 10_000
 const CHAT_TIMEOUT_MS = 180_000
+const THINKING_CHAT_TIMEOUT_MS = 600_000
 
 export class ApiError extends Error {
   readonly status: number
@@ -158,24 +159,38 @@ export type ChatStep = {
   detail: string
 }
 
+export type ChatThought = {
+  do: string
+  text: string
+}
+
 export type ChatOut = {
   answer: string
   citations: number[]
   steps: ChatStep[]
   session_id: string
   export_url: string | null
+  thinking?: boolean
+  thoughts?: ChatThought[]
 }
 
 export function postChat(
   videoId: string,
   message: string,
   sessionId?: string | null,
+  thinking = false,
 ): Promise<ChatOut> {
-  const body: { message: string; session_id?: string } = { message }
+  const body: { message: string; session_id?: string; thinking?: boolean } = {
+    message,
+  }
   if (sessionId) {
     body.session_id = sessionId
   }
-  return postJson<ChatOut>(`/videos/${videoId}/chat`, body, CHAT_TIMEOUT_MS)
+  if (thinking) {
+    body.thinking = true
+  }
+  const timeout = thinking ? THINKING_CHAT_TIMEOUT_MS : CHAT_TIMEOUT_MS
+  return postJson<ChatOut>(`/videos/${videoId}/chat`, body, timeout)
 }
 
 export function absoluteApiUrl(path: string): string {
