@@ -859,7 +859,8 @@ def test_thinking_true_without_thinking_url_503(
 
     monkeypatch.setenv("BRAIN", "vllm")
     monkeypatch.setenv("VLLM_BASE_URL", "http://vllm.example/v1")
-    monkeypatch.delenv("VLLM_THINKING_BASE_URL", raising=False)
+    # Empty string, not unset: pydantic would otherwise read a live URL from .env.
+    monkeypatch.setenv("VLLM_THINKING_BASE_URL", "")
     get_settings.cache_clear()
     video_id = _upload(client, tiny_mp4).json()["id"]
     try:

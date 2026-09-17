@@ -145,6 +145,9 @@ def configured_env(data_dir: Path) -> None:
     os.environ["DATA_DIR"] = str(data_dir)
     os.environ["MAX_UPLOAD_BYTES"] = str(2 * 1024 * 1024 * 1024)
     os.environ["BRAIN"] = "fake"
+    os.environ["VLLM_BASE_URL"] = ""
+    os.environ["VLLM_THINKING_BASE_URL"] = ""
+    os.environ["GEMMA_THINKING"] = "false"
     os.environ["INGEST"] = "fake"
     os.environ["EMBEDDER"] = "fake"
     os.environ["VISUAL_EMBEDDER"] = "fake"
