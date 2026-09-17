@@ -58,6 +58,7 @@ vllm_image = (
     .add_local_file(
         str(Path(__file__).with_name("modal_patches") / "patch_gemma4_unified_audio_dummy.py"),
         "/tmp/patch_gemma4_unified_audio_dummy.py",
+        copy=True,
     )
     .run_commands("python /tmp/patch_gemma4_unified_audio_dummy.py")
     .env(
