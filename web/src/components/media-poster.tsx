@@ -30,6 +30,13 @@ export function MediaPoster({
         playsInline
         preload="metadata"
         src={`${videoFileUrl(videoId)}#t=0.8`}
+        onLoadedData={(event) => {
+          try {
+            event.currentTarget.currentTime = 0.8
+          } catch {
+            // ignore
+          }
+        }}
       />
     </div>
   )
