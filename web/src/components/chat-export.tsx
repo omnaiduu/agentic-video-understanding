@@ -1,3 +1,5 @@
+import { Download } from "lucide-react"
+
 import { buttonVariants } from "@/components/ui/button"
 import { absoluteApiUrl } from "@/lib/api"
 import {
@@ -15,7 +17,7 @@ export function ChatExport({
   const href = absoluteApiUrl(path)
   const filename = exportFilename(kind)
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-hidden rounded-md border border-border bg-muted p-2">
       {kind === "audio" ? (
         <audio
           aria-label="Exported audio"
@@ -27,7 +29,7 @@ export function ChatExport({
       ) : (
         <video
           aria-label="Exported clip"
-          className="max-h-48 w-full rounded-md bg-black"
+          className="max-h-48 w-full rounded-lg bg-black"
           controls
           playsInline
           preload="metadata"
@@ -39,6 +41,7 @@ export function ChatExport({
         download={filename}
         href={href}
       >
+        <Download data-icon="inline-start" />
         Download
       </a>
     </div>
