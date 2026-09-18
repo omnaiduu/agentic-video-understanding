@@ -295,12 +295,17 @@
   }
 }
 
-/* Video.js — match the studio chrome */
-.video-js {
+/* Video.js — match the studio chrome (loaded after this file, so win on purpose) */
+.video-js,
+.video-js .vjs-tech,
+.video-js video {
   font-family: var(--font-sans);
+  border-radius: 0 !important;
+}
+
+.video-js {
   width: 100%;
   height: 100%;
-  border-radius: 0;
   overflow: hidden;
   background: #05070d;
 }

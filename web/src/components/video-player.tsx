@@ -69,7 +69,7 @@ export function VideoPlayer({
     <div
       data-slot="player"
       className={cn(
-        "aspect-video w-full overflow-hidden bg-black",
+        "aspect-video w-full overflow-hidden rounded-none bg-black",
         className,
       )}
     >
