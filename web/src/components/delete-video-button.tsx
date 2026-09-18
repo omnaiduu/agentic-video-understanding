@@ -57,7 +57,7 @@ export function DeleteVideoButton({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-video-title"
-            className="app-enter w-full max-w-sm rounded-2xl border border-white/10 bg-card p-5 shadow-2xl ring-1 ring-white/8"
+            className="w-full max-w-sm rounded-lg border border-border bg-card p-5 shadow-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <p id="delete-video-title" className="font-medium tracking-tight">

@@ -13,42 +13,124 @@ import { fileURLToPath } from "node:url"
 const PORT = Number(process.env.MOCK_API_PORT || 8000)
 const HOST = process.env.MOCK_API_HOST || "127.0.0.1"
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), ".mock-media")
-const SAMPLE_MP4 = path.join(DIR, "sample.mp4")
+const SRC_DIR = path.join(DIR, "src")
 const SAMPLE_WAV = path.join(DIR, "sample.wav")
 const MAX_UPLOAD = 2 * 1024 * 1024 * 1024
 const BOOKS = ["transcript_status", "visual_status", "audio_status", "slides_status"]
 
 fs.mkdirSync(DIR, { recursive: true })
+fs.mkdirSync(SRC_DIR, { recursive: true })
+
+const BROLL = [
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    file: "broll-flower.mp4",
+    name: "Greenhouse flower.mp4",
+    url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    start: 0,
+    duration: 5,
+    created_at: "2026-04-08T12:00:00Z",
+  },
+  {
+    id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    file: "broll-railway.mp4",
+    name: "Mountain railway.mp4",
+    url: "https://upload.wikimedia.org/wikipedia/commons/transcoded/8/87/Schlossbergbahn.webm/Schlossbergbahn.webm.480p.vp9.webm",
+    start: 0,
+    duration: 10,
+    created_at: "2026-06-12T09:00:00Z",
+  },
+  {
+    id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    file: "broll-meadow.mp4",
+    name: "Meadow light.mp4",
+    url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4",
+    start: 0,
+    duration: 10,
+    created_at: "2026-07-02T15:30:00Z",
+  },
+  {
+    id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+    file: "broll-pass.mp4",
+    name: "Snow pass.mp4",
+    url: "https://media.w3.org/2010/05/sintel/trailer.mp4",
+    start: 8,
+    duration: 10,
+    created_at: "2026-08-19T18:10:00Z",
+  },
+]
+
+function probeDuration(filePath) {
+  const probed = spawnSync(
+    "ffprobe",
+    ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", filePath],
+    { encoding: "utf8" },
+  )
+  const value = Number(probed.stdout)
+  return Number.isFinite(value) ? value : 8
+}
+
+function transcode(src, dest, start, duration) {
+  const common = [
+    "-y",
+    "-ss",
+    String(start),
+    "-i",
+    src,
+    "-t",
+    String(duration),
+    "-vf",
+    "scale=1280:-2",
+    "-c:v",
+    "libx264",
+    "-pix_fmt",
+    "yuv420p",
+    "-preset",
+    "veryfast",
+    "-crf",
+    "23",
+    "-movflags",
+    "+faststart",
+  ]
+  const withAudio = spawnSync(
+    "ffmpeg",
+    [...common, "-c:a", "aac", "-b:a", "128k", "-ac", "2", "-ar", "44100", dest],
+    { stdio: "ignore" },
+  )
+  if (withAudio.status === 0 && fs.existsSync(dest)) {
+    return
+  }
+  spawnSync("ffmpeg", [...common, "-an", dest], { stdio: "ignore" })
+}
+
+function download(url, dest) {
+  const got = spawnSync("curl", ["-fsSL", "--max-time", "90", "-o", dest, url], {
+    stdio: "ignore",
+  })
+  return got.status === 0 && fs.existsSync(dest) && fs.statSync(dest).size > 1000
+}
+
+function ensureClip(clip) {
+  const dest = path.join(DIR, clip.file)
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 1000) {
+    return dest
+  }
+  const src = path.join(SRC_DIR, path.basename(clip.url))
+  if (!fs.existsSync(src) || fs.statSync(src).size < 1000) {
+    if (!download(clip.url, src)) {
+      throw new Error(`could not download B-roll ${clip.name}`)
+    }
+  }
+  transcode(src, dest, clip.start, clip.duration)
+  if (!fs.existsSync(dest) || fs.statSync(dest).size < 1000) {
+    throw new Error(`ffmpeg could not write ${clip.file}`)
+  }
+  return dest
+}
 
 function ensureMedia() {
-  if (!fs.existsSync(SAMPLE_MP4)) {
-    const made = spawnSync(
-      "ffmpeg",
-      [
-        "-y",
-        "-f",
-        "lavfi",
-        "-i",
-        "testsrc=size=1280x720:rate=30",
-        "-f",
-        "lavfi",
-        "-i",
-        "sine=frequency=440:sample_rate=44100",
-        "-t",
-        "8",
-        "-c:v",
-        "libx264",
-        "-pix_fmt",
-        "yuv420p",
-        "-c:a",
-        "aac",
-        SAMPLE_MP4,
-      ],
-      { stdio: "ignore" },
-    )
-    if (made.status !== 0) {
-      throw new Error("ffmpeg could not create the demo mp4")
-    }
+  for (const clip of BROLL) {
+    ensureClip(clip)
   }
   if (!fs.existsSync(SAMPLE_WAV)) {
     spawnSync(
@@ -98,11 +180,11 @@ function makeVideo(partial) {
     id,
     original_filename: partial.original_filename || "video.mp4",
     path: `/data/videos/${id}/original.mp4`,
-    kind: "video",
+    kind: partial.kind || "video",
     duration_s: partial.duration_s ?? 8,
     fps: 30,
-    has_audio: true,
-    has_video: true,
+    has_audio: partial.has_audio ?? true,
+    has_video: partial.has_video ?? true,
     status: partial.status || "ready",
     transcript_status: partial.transcript_status || "ready",
     visual_status: partial.visual_status || "ready",
@@ -110,7 +192,7 @@ function makeVideo(partial) {
     slides_status: partial.slides_status || "ready",
     error_message: null,
     created_at: partial.created_at || new Date().toISOString(),
-    filePath: partial.filePath || SAMPLE_MP4,
+    filePath: partial.filePath,
     startedAt: partial.startedAt || Date.now(),
   }
 }
@@ -118,30 +200,19 @@ function makeVideo(partial) {
 const videos = new Map()
 const exportsStore = new Map()
 
-videos.set(
-  "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-  makeVideo({
-    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-    original_filename: "GTC keynote — pricing.mp4",
-    duration_s: 125,
-    created_at: "2026-04-08T12:00:00Z",
-  }),
-)
-videos.set(
-  "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-  makeVideo({
-    id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-    original_filename: "Warehouse cam 12.mp4",
-    duration_s: 48,
-    status: "processing",
-    transcript_status: "ready",
-    visual_status: "processing",
-    audio_status: "pending",
-    slides_status: "pending",
-    created_at: new Date().toISOString(),
-    startedAt: Date.now() - 1300,
-  }),
-)
+for (const clip of BROLL) {
+  const filePath = path.join(DIR, clip.file)
+  videos.set(
+    clip.id,
+    makeVideo({
+      id: clip.id,
+      original_filename: clip.name,
+      duration_s: probeDuration(filePath),
+      created_at: clip.created_at,
+      filePath,
+    }),
+  )
+}
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -220,7 +291,7 @@ function parseMultipart(buffer, contentType) {
     if (next === -1) {
       break
     }
-    let dataEnd = next - 2
+    const dataEnd = next - 2
     const filename = /filename="([^"]+)"/.exec(headers)?.[1]
     if (filename) {
       return {
@@ -233,9 +304,14 @@ function parseMultipart(buffer, contentType) {
   return null
 }
 
-function chatReply(message, videoId) {
+function audioName(name) {
+  return /\.(mp3|wav|m4a|aac|flac|ogg|opus)$/i.test(name)
+}
+
+function chatReply(message, row) {
   const q = message.toLowerCase()
   const session_id = randomUUID()
+  const videoId = row.id
   if (/ten minutes|600|too long|hour/.test(q)) {
     return {
       answer: "Need a shorter window.",
@@ -276,7 +352,10 @@ function chatReply(message, videoId) {
   }
   if (/clip|export/.test(q)) {
     const exportId = randomUUID()
-    exportsStore.set(`${videoId}:${exportId}`, { filePath: SAMPLE_MP4, type: "video/mp4" })
+    exportsStore.set(`${videoId}:${exportId}`, {
+      filePath: row.filePath,
+      type: "video/mp4",
+    })
     return {
       answer: "Clip is ready.",
       citations: [0, 5],
@@ -340,18 +419,21 @@ const server = http.createServer(async (req, res) => {
         return
       }
       const id = randomUUID()
-      const dest = path.join(DIR, `${id}.bin`)
+      const dest = path.join(DIR, `${id}.mp4`)
       fs.writeFileSync(dest, parsed.data)
+      const isAudio = audioName(parsed.filename)
       const row = makeVideo({
         id,
         original_filename: parsed.filename,
-        duration_s: 8,
+        duration_s: probeDuration(dest),
         status: "processing",
         transcript_status: "pending",
         visual_status: "pending",
         audio_status: "pending",
         slides_status: "pending",
-        filePath: SAMPLE_MP4,
+        has_video: !isAudio,
+        kind: isAudio ? "audio" : "video",
+        filePath: dest,
         startedAt: Date.now(),
       })
       videos.set(id, row)
@@ -383,7 +465,7 @@ const server = http.createServer(async (req, res) => {
         json(res, 404, { detail: "Video not found" })
         return
       }
-      sendFile(req, res, row.filePath, "video/mp4")
+      sendFile(req, res, row.filePath, row.has_video === false ? "audio/mpeg" : "video/mp4")
       return
     }
 
@@ -400,7 +482,7 @@ const server = http.createServer(async (req, res) => {
       }
       const raw = JSON.parse((await readBody(req)).toString("utf8") || "{}")
       await new Promise((resolve) => setTimeout(resolve, 650))
-      json(res, 200, chatReply(String(raw.message || ""), parts[1]))
+      json(res, 200, chatReply(String(raw.message || ""), row))
       return
     }
 

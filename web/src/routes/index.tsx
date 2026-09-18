@@ -23,17 +23,10 @@ function LibraryPage() {
   }
 
   return (
-    <div className="app-enter space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-5">
-        <div className="space-y-2">
-          <p className="text-[11px] font-medium tracking-[0.26em] text-primary/90 uppercase">
-            Ask the cut
-          </p>
-          <h1 className="font-serif text-4xl font-medium tracking-tight text-balance sm:text-[3.25rem]">
-            Library
-          </h1>
-        </div>
-        <p className="max-w-sm text-sm leading-relaxed text-muted-foreground text-pretty">
+    <div className="app-enter space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Library</h1>
+        <p className="max-w-md text-sm text-muted-foreground text-pretty">
           Upload a long video. Indexes build once. Then ask — the model looks at a
           short slice, not the whole file.
         </p>

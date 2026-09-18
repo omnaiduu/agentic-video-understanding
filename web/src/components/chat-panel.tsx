@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
-import { ArrowUp, Lock, Sparkles } from "lucide-react"
+import { ArrowUp, Lock } from "lucide-react"
 
 import { ChatExport } from "@/components/chat-export"
 import { Button } from "@/components/ui/button"
@@ -120,18 +120,13 @@ export function ChatPanel({
 
   return (
     <Card className="flex h-full min-h-[22rem] flex-1 flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent py-0 shadow-none ring-0 md:min-h-0">
-      <CardHeader className="shrink-0 border-b border-white/6 py-3">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium tracking-tight">
-          <span className="size-1.5 rounded-full bg-primary shadow-[0_0_12px_oklch(0.84_0.12_88)]" />
-          Chat
-        </CardTitle>
+      <CardHeader className="shrink-0 border-b border-border py-2.5">
+        <CardTitle className="text-sm font-medium">Chat</CardTitle>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3 pt-3">
         {locked ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-2 text-center">
-            <span className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <Lock className="size-5" />
-            </span>
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-2 text-center">
+            <Lock className="size-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               Chat stays off until the indexes are ready.
             </p>
@@ -144,19 +139,16 @@ export function ChatPanel({
               data-slot="chat-thread"
             >
               {turns.length === 0 && !mutation.isPending ? (
-                <li className="flex h-full min-h-[10rem] flex-col items-center justify-center gap-4 px-2 py-6 text-center">
-                  <span className="grid size-12 place-items-center rounded-2xl bg-primary/12 text-primary ring-1 ring-primary/20">
-                    <Sparkles className="size-5" />
-                  </span>
-                  <p className="max-w-[16rem] text-sm leading-relaxed text-muted-foreground">
+                <li className="flex h-full min-h-[10rem] flex-col items-center justify-center gap-3 px-2 py-6 text-center">
+                  <p className="max-w-[16rem] text-sm text-muted-foreground">
                     Ask about speech, a silent visual, a sound, or a clip.
                   </p>
-                  <div className="flex flex-wrap justify-center gap-2">
+                  <div className="flex flex-wrap justify-center gap-1.5">
                     {SUGGESTIONS.map((hint) => (
                       <button
                         key={hint}
                         type="button"
-                        className="rounded-full border border-white/10 bg-background/50 px-3 py-1.5 text-left text-xs text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
+                        className="rounded-md border border-border bg-background px-2.5 py-1 text-left text-xs text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                         onClick={() => {
                           setDraft(hint)
                           inputRef.current?.focus()
@@ -175,17 +167,17 @@ export function ChatPanel({
                 return (
                   <li
                     key={`${turn.role}-${index}`}
-                    className={cn("app-enter space-y-1.5", mine ? "ml-8" : "mr-3")}
+                    className={cn("space-y-1.5", mine ? "ml-8" : "mr-3")}
                   >
-                    <p className="px-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                    <p className="px-1 text-[11px] font-medium text-muted-foreground">
                       {turn.role === "user" ? "You" : "Answer"}
                     </p>
                     <div
                       className={cn(
-                        "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                        "rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap",
                         mine
-                          ? "rounded-tr-md bg-primary text-primary-foreground shadow-[0_10px_24px_-16px_oklch(0.84_0.12_88)]"
-                          : "rounded-tl-md bg-background/70 ring-1 ring-white/8",
+                          ? "bg-foreground text-background"
+                          : "bg-muted",
                       )}
                     >
                       <p>{turn.text}</p>
@@ -198,7 +190,7 @@ export function ChatPanel({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-7 rounded-full border-primary/25 bg-primary/10 font-mono text-xs text-primary hover:bg-primary/20 hover:text-primary"
+                            className="h-7 font-mono text-xs"
                             onClick={() => onSeek(time)}
                           >
                             {formatDuration(time)}
@@ -234,7 +226,7 @@ export function ChatPanel({
             </ol>
             {mutation.isPending ? (
               <p
-                className="flex items-center gap-2 rounded-xl bg-live/8 px-3 py-2 text-sm text-muted-foreground"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
                 aria-live="polite"
               >
                 <WorkingDots />
@@ -250,7 +242,7 @@ export function ChatPanel({
         )}
       </CardContent>
       {locked ? null : (
-        <CardFooter className="shrink-0 border-white/6 bg-background/35 py-3">
+        <CardFooter className="shrink-0 border-border bg-muted/40 py-3">
           <form
             className="w-full"
             onSubmit={(event) => {
@@ -268,7 +260,7 @@ export function ChatPanel({
                 value={draft}
                 disabled={mutation.isPending}
                 placeholder="Ask about this video"
-                className="max-h-28 min-h-[3.25rem] field-sizing-fixed resize-none rounded-2xl border-white/10 bg-background/80 pr-12 shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]"
+                className="max-h-28 min-h-[3.25rem] field-sizing-fixed resize-none rounded-md bg-background pr-11"
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
@@ -281,7 +273,7 @@ export function ChatPanel({
                 type="submit"
                 size="icon-sm"
                 disabled={mutation.isPending || !draft.trim()}
-                className="absolute right-2 bottom-2 rounded-full"
+                className="absolute right-2 bottom-2"
                 aria-label="Send"
               >
                 <ArrowUp />

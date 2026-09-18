@@ -19,7 +19,7 @@ function toneVariant(tone: IndexTone) {
     return "destructive" as const
   }
   if (tone === "ready") {
-    return "default" as const
+    return "secondary" as const
   }
   if (tone === "building") {
     return "outline" as const
@@ -42,7 +42,7 @@ export function IndexPanel({ video }: { video: Video }) {
 
   if (!building && !failed) {
     return (
-      <ul className="flex gap-2 overflow-x-auto pb-0.5">
+      <ul className="flex flex-wrap gap-1.5">
         {INDEX_BOOKS.map((book) => {
           const raw = bookStatus(video, book.key)
           const tone = indexTone(raw)
@@ -50,12 +50,12 @@ export function IndexPanel({ video }: { video: Video }) {
           return (
             <li
               key={book.key}
-              className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/8 bg-card/70 px-2.5 py-1 text-xs"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs"
             >
               {tone === "ready" ? (
-                <Check className="size-3.5 text-primary" />
+                <Check className="size-3 text-muted-foreground" />
               ) : (
-                <Icon className="size-3.5 text-muted-foreground" />
+                <Icon className="size-3 text-muted-foreground" />
               )}
               <span>{book.label}</span>
               <Badge variant={toneVariant(tone)}>{tone}</Badge>
@@ -67,16 +67,16 @@ export function IndexPanel({ video }: { video: Video }) {
   }
 
   return (
-    <Card className="border-white/5 bg-card/80 shadow-none ring-1 ring-white/6">
-      <CardHeader className="border-b border-white/5 pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium tracking-tight">
+    <Card className="border-border bg-card py-0 shadow-none">
+      <CardHeader className="border-b border-border py-3">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium">
           {building ? <Spinner className="text-live" /> : <Film className="size-4 text-muted-foreground" />}
           Indexes
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="py-3">
         {building ? (
-          <p className="mb-4 text-sm text-muted-foreground">Building indexes…</p>
+          <p className="mb-3 text-sm text-muted-foreground">Building indexes…</p>
         ) : null}
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {INDEX_BOOKS.map((book) => {
@@ -87,18 +87,16 @@ export function IndexPanel({ video }: { video: Video }) {
               <li
                 key={book.key}
                 className={cn(
-                  "flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/5 bg-background/40 px-3 py-2.5 transition-colors",
-                  tone === "building" && "border-live/30 bg-live/5",
-                  tone === "ready" && "border-primary/15",
-                  tone === "error" && "border-destructive/30",
+                  "flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2",
+                  tone === "building" && "border-live/40",
+                  tone === "error" && "border-destructive/40",
                 )}
               >
                 <span className="flex items-center gap-2 text-sm">
                   <span
                     className={cn(
-                      "grid size-7 place-items-center rounded-lg bg-muted text-muted-foreground",
-                      tone === "building" && "index-live bg-live/15 text-live",
-                      tone === "ready" && "bg-primary/15 text-primary",
+                      "grid size-6 place-items-center rounded-md bg-muted text-muted-foreground",
+                      tone === "building" && "index-live text-live",
                     )}
                   >
                     <Icon className="size-3.5" />

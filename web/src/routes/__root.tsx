@@ -15,36 +15,30 @@ interface MyRouterContext {
 }
 
 const FONT_HREF =
-  "https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Outfit:wght@400;500;600;700&display=swap"
+  "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body className="min-h-screen font-sans antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          <header className="sticky top-0 z-30 border-b border-white/5 bg-background/75 backdrop-blur-xl">
-            <div className="mx-auto flex h-14 w-full max-w-[90rem] items-center justify-between px-4 sm:px-6">
+        <div className="flex min-h-screen flex-col">
+          <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-md">
+            <div className="mx-auto flex h-12 w-full max-w-6xl items-center px-4 sm:px-6">
               <Link
                 to="/"
-                className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <AppMark className="transition-transform duration-300 group-hover:scale-105" />
-                <span className="flex flex-col leading-none">
-                  <span className="text-sm font-semibold tracking-tight">
-                    Agentic Video
-                  </span>
-                  <span className="mt-0.5 hidden text-[11px] text-muted-foreground sm:block">
-                    Find the moment. Then look.
-                  </span>
+                <AppMark />
+                <span className="text-sm font-medium tracking-tight">
+                  Agentic Video
                 </span>
               </Link>
             </div>
-            <div className="gold-hairline h-px w-full" />
           </header>
-          <main className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-6 sm:py-8">
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
             {children}
           </main>
         </div>
@@ -74,13 +68,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         name: "theme-color",
-        content: "#141824",
+        content: "#f6f5f2",
       },
     ],
     links: [
       {
         rel: "icon",
-        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e4c36a'/%3E%3Cpath d='M12 8.5v15l12-7.5-12-7.5z' fill='%23231d12'/%3E%3C/svg%3E",
+        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23171717'/%3E%3Cpath d='M12 8.5v15l12-7.5-12-7.5z' fill='%23f6f5f2'/%3E%3C/svg%3E",
       },
       {
         rel: "stylesheet",

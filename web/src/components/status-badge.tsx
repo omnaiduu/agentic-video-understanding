@@ -4,15 +4,15 @@ import { cn } from "@/lib/utils"
 const TONE: Record<string, { label: string; className: string }> = {
   ready: {
     label: "ready",
-    className: "border-primary/20 bg-primary/12 text-primary",
+    className: "border-border bg-background text-muted-foreground",
   },
   processing: {
     label: "processing",
-    className: "border-live/25 bg-live/12 text-live",
+    className: "border-live/30 bg-live/10 text-live",
   },
   uploaded: {
     label: "uploaded",
-    className: "border-white/10 bg-muted text-muted-foreground",
+    className: "border-border bg-muted text-muted-foreground",
   },
   error: {
     label: "error",

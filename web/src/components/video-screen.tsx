@@ -37,16 +37,14 @@ export function VideoScreen({
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading video…</p>
         <Skeleton className="h-8 w-2/3" />
-        <div className="overflow-hidden rounded-3xl border border-white/8">
-          <Skeleton className="aspect-video w-full rounded-none" />
-        </div>
+        <Skeleton className="aspect-video w-full rounded-lg" />
       </div>
     )
   }
   if (isError) {
     const missing = isNotFound(error)
     return (
-      <div className="app-enter space-y-3 rounded-2xl border border-destructive/25 bg-destructive/8 px-4 py-5">
+      <div className="app-enter space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-5">
         <p className="font-medium">
           {missing ? "Video not found." : "Could not load this video."}
         </p>
@@ -70,16 +68,16 @@ export function VideoScreen({
   return (
     <div data-page="watch" className="app-enter flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />
             Library
           </Link>
-          <span className="hidden h-4 w-px bg-white/10 sm:block" />
-          <h1 className="max-w-[min(100%,36rem)] truncate font-serif text-xl font-medium tracking-tight sm:text-2xl">
+          <span className="hidden h-4 w-px bg-border sm:block" />
+          <h1 className="max-w-[min(100%,36rem)] truncate text-lg font-semibold tracking-tight">
             {video.original_filename}
           </h1>
           <span className="font-mono text-xs text-muted-foreground">
@@ -103,12 +101,12 @@ export function VideoScreen({
         </p>
       ) : null}
       <IndexPanel video={video} />
-      <div className="studio-bay relative overflow-hidden rounded-3xl bg-card/90 ring-1 ring-white/10">
+      <div className="relative overflow-hidden rounded-lg border border-border bg-card">
         <div
           className="grid grid-cols-1 md:grid-cols-2"
           data-slot="watch-layout"
         >
-          <div className="w-full border-white/10 max-md:border-b md:border-r">
+          <div className="w-full border-border max-md:border-b md:border-r">
             <VideoPlayer video={video} onReady={handlePlayerReady} />
           </div>
           <div className="flex min-h-[22rem] flex-col md:absolute md:inset-y-0 md:right-0 md:w-1/2 md:min-h-0">
