@@ -119,7 +119,7 @@ export function ChatPanel({
   }
 
   return (
-    <Card className="flex h-full min-h-[22rem] flex-col border-white/5 bg-card/85 shadow-none ring-1 ring-white/8">
+    <Card className="flex h-full min-h-[22rem] flex-col border-white/5 bg-card/85 shadow-none ring-1 ring-white/8 md:min-h-full">
       <CardHeader className="shrink-0 border-b border-white/5 py-3">
         <CardTitle className="flex items-center gap-2 text-sm font-medium tracking-tight">
           <span className="size-1.5 rounded-full bg-primary shadow-[0_0_12px_oklch(0.84_0.12_88)]" />

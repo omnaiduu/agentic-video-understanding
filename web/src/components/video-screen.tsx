@@ -100,15 +100,19 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2"
+        className="grid grid-cols-1 grid-rows-[auto_minmax(22rem,1fr)] items-stretch gap-4 md:grid-cols-2 md:grid-rows-1"
         data-slot="watch-layout"
       >
-        <VideoPlayer video={video} onReady={handlePlayerReady} />
-        <ChatPanel
-          videoId={video.id}
-          locked={locked}
-          onSeek={(seconds) => seekRef.current(seconds)}
-        />
+        <div className="w-full self-start">
+          <VideoPlayer video={video} onReady={handlePlayerReady} />
+        </div>
+        <div className="min-h-[22rem] md:h-full md:min-h-0">
+          <ChatPanel
+            videoId={video.id}
+            locked={locked}
+            onSeek={(seconds) => seekRef.current(seconds)}
+          />
+        </div>
       </div>
     </div>
   )
