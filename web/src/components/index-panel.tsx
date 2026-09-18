@@ -36,6 +36,32 @@ const BOOK_ICON: Record<IndexBookKey, typeof Mic> = {
 
 export function IndexPanel({ video }: { video: Video }) {
   const building = ingestInProgress(video)
+  const failed = INDEX_BOOKS.some(
+    (book) => indexTone(bookStatus(video, book.key)) === "error",
+  )
+
+  if (!building && !failed) {
+    return (
+      <ul className="flex flex-wrap gap-2">
+        {INDEX_BOOKS.map((book) => {
+          const raw = bookStatus(video, book.key)
+          const tone = indexTone(raw)
+          const Icon = BOOK_ICON[book.key]
+          return (
+            <li
+              key={book.key}
+              className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-card/70 px-2.5 py-1 text-xs"
+            >
+              <Icon className="size-3.5 text-muted-foreground" />
+              <span>{book.label}</span>
+              <Badge variant={toneVariant(tone)}>{tone}</Badge>
+            </li>
+          )
+        })}
+      </ul>
+    )
+  }
+
   return (
     <Card className="border-white/5 bg-card/80 shadow-none ring-1 ring-white/6">
       <CardHeader className="border-b border-white/5 pb-3">

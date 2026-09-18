@@ -244,6 +244,8 @@
 /* Video.js — match the studio chrome */
 .video-js {
   font-family: var(--font-sans);
+  width: 100%;
+  height: 100%;
   border-radius: 0;
   overflow: hidden;
   background: #05070d;

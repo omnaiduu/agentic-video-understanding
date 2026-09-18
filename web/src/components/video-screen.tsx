@@ -73,9 +73,9 @@ export function VideoScreen({
         <ArrowLeft className="size-3.5" />
         Library
       </Link>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-2">
-          <h1 className="font-serif text-3xl font-medium tracking-tight text-balance">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 space-y-1.5">
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-balance sm:text-3xl">
             {video.original_filename}
           </h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -100,7 +100,7 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2"
+        className="grid grid-cols-1 items-start gap-4 md:grid-cols-2"
         data-slot="watch-layout"
       >
         <VideoPlayer video={video} onReady={handlePlayerReady} />

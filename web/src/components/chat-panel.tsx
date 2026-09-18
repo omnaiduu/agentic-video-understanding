@@ -118,7 +118,7 @@ export function ChatPanel({
   }
 
   return (
-    <Card className="flex h-[min(36rem,70vh)] flex-col border-white/5 bg-card/80 shadow-none ring-1 ring-white/6 md:h-[min(42rem,calc(100vh-11rem))]">
+    <Card className="flex h-[min(28rem,65vh)] w-full flex-col border-white/5 bg-card/80 shadow-none ring-1 ring-white/6 md:h-[min(32rem,calc(100vh-14rem))]">
       <CardHeader className="shrink-0 border-b border-white/5">
         <CardTitle className="text-sm font-medium tracking-tight">Chat</CardTitle>
       </CardHeader>

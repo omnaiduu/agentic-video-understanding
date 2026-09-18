@@ -37,13 +37,14 @@ export function VideoPlayer({
       }
       containerRef.current.replaceChildren()
       const el = document.createElement("video")
-      el.className = "video-js vjs-big-play-centered vjs-fluid"
+      el.className = "video-js vjs-big-play-centered vjs-fill"
       el.setAttribute("playsinline", "true")
       containerRef.current.appendChild(el)
       player = videojs(el, {
         controls: true,
         preload: "metadata",
-        fluid: true,
+        fill: true,
+        fluid: false,
         playsinline: true,
         audioOnlyMode: audioOnly,
         sources: [{ src, type }],
@@ -64,9 +65,9 @@ export function VideoPlayer({
   return (
     <div
       data-slot="player"
-      className="overflow-hidden rounded-2xl bg-black ring-1 ring-white/8 [&_.video-js]:mx-auto [&_.video-js]:w-full"
+      className="aspect-video w-full overflow-hidden rounded-2xl bg-black ring-1 ring-white/8"
     >
-      <div ref={containerRef} />
+      <div ref={containerRef} className="h-full w-full [&_.video-js]:h-full [&_.video-js]:w-full" />
     </div>
   )
 }
