@@ -1,4 +1,5 @@
 import { useRef, useState } from "react"
+import { FileUp } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress"
@@ -9,6 +10,7 @@ import {
   uploadVideo,
   type Video,
 } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 const ACCEPT = ".mp4,.mp3,.wav,.m4a,.aac,.flac,.ogg,.opus,audio/*,video/mp4"
 
@@ -21,9 +23,12 @@ export function UploadPanel({
   const [busy, setBusy] = useState(false)
   const [percent, setPercent] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [over, setOver] = useState(false)
+  const [name, setName] = useState<string | null>(null)
 
   async function handleFile(file: File) {
     setError(null)
+    setName(file.name)
     setPercent(0)
     setBusy(true)
     try {
@@ -41,6 +46,7 @@ export function UploadPanel({
       }
     } finally {
       setBusy(false)
+      setOver(false)
       if (inputRef.current) {
         inputRef.current.value = ""
       }
@@ -64,25 +70,62 @@ export function UploadPanel({
           }
         }}
       />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          Choose file
-        </Button>
-        <p className="text-sm text-muted-foreground">
-          mp4 or audio, up to 2 GB. The API stores the file; this page does not
-          run models.
-        </p>
+      <div
+        className={cn(
+          "rounded-3xl border border-dashed border-white/12 bg-card/50 p-5 transition-all duration-200 sm:p-6",
+          over && "border-primary/50 bg-primary/5 glow-ring",
+          busy && "border-solid border-white/10",
+        )}
+        onDragEnter={(event) => {
+          event.preventDefault()
+          if (!busy) {
+            setOver(true)
+          }
+        }}
+        onDragOver={(event) => {
+          event.preventDefault()
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(event) => {
+          event.preventDefault()
+          setOver(false)
+          const file = event.dataTransfer.files?.[0]
+          if (file && !busy) {
+            void handleFile(file)
+          }
+        }}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="grid size-11 place-items-center rounded-2xl bg-primary/12 text-primary">
+              <FileUp className="size-5" />
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-medium tracking-tight">
+                {busy ? name || "Uploading" : "Drop a talk, or choose a file"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                mp4 or audio, up to 2 GB. The API stores the file; this page does not
+                run models.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={() => inputRef.current?.click()}
+            className="shrink-0"
+          >
+            Choose file
+          </Button>
+        </div>
+        {percent !== null ? (
+          <Progress value={percent} className="mt-5">
+            <ProgressLabel>Uploading</ProgressLabel>
+            <ProgressValue />
+          </Progress>
+        ) : null}
       </div>
-      {percent !== null ? (
-        <Progress value={percent} className="max-w-md">
-          <ProgressLabel>Uploading</ProgressLabel>
-          <ProgressValue />
-        </Progress>
-      ) : null}
       {error ? (
         <p className="text-sm text-destructive" role="alert">
           {error}

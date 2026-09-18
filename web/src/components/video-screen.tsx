@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react"
+import { ArrowLeft } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 
 import { ChatPanel } from "@/components/chat-panel"
@@ -6,6 +7,7 @@ import { DeleteVideoButton } from "@/components/delete-video-button"
 import { IndexPanel } from "@/components/index-panel"
 import { StatusBadge } from "@/components/status-badge"
 import { buttonVariants } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { VideoPlayer, type SeekFn } from "@/components/video-player"
 import { isNotFound, type Video } from "@/lib/api"
 import { formatDuration } from "@/lib/format"
@@ -31,12 +33,18 @@ export function VideoScreen({
   }, [])
 
   if (isPending) {
-    return <p className="text-muted-foreground">Loading video…</p>
+    return (
+      <div className="space-y-4">
+        <p className="text-muted-foreground">Loading video…</p>
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="aspect-video w-full" />
+      </div>
+    )
   }
   if (isError) {
     const missing = isNotFound(error)
     return (
-      <div className="space-y-3">
+      <div className="app-enter space-y-3 rounded-2xl border border-destructive/25 bg-destructive/8 px-4 py-5">
         <p className="font-medium">
           {missing ? "Video not found." : "Could not load this video."}
         </p>
@@ -57,10 +65,19 @@ export function VideoScreen({
   const locked = chatLocked(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
   return (
-    <div className="space-y-4">
+    <div className="app-enter space-y-5">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-3.5" />
+        Library
+      </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold">{video.original_filename}</h1>
+          <h1 className="font-serif text-3xl font-medium tracking-tight text-balance">
+            {video.original_filename}
+          </h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>{formatDuration(video.duration_s)}</span>
             <StatusBadge status={video.status} />
@@ -83,7 +100,7 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid grid-cols-1 items-start gap-4 md:grid-cols-2"
+        className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2"
         data-slot="watch-layout"
       >
         <VideoPlayer video={video} onReady={handlePlayerReady} />

@@ -64,7 +64,7 @@ export function VideoPlayer({
   return (
     <div
       data-slot="player"
-      className="overflow-hidden rounded-xl bg-black [&_.video-js]:mx-auto [&_.video-js]:w-full"
+      className="overflow-hidden rounded-2xl bg-black ring-1 ring-white/8 [&_.video-js]:mx-auto [&_.video-js]:w-full"
     >
       <div ref={containerRef} />
     </div>
