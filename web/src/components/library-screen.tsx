@@ -1,6 +1,7 @@
 import { AudioLines, Clock3, Film } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 
+import { MediaPoster } from "@/components/media-poster"
 import { StatusBadge } from "@/components/status-badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Video } from "@/lib/api"
@@ -22,10 +23,9 @@ export function LibraryScreen({
     return (
       <div className="space-y-3">
         <p className="text-muted-foreground">Loading library…</p>
-        <div className="space-y-3">
-          <Skeleton className="h-[4.5rem] w-full" />
-          <Skeleton className="h-[4.5rem] w-full" />
-          <Skeleton className="h-[4.5rem] w-full" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Skeleton className="aspect-[16/10] w-full" />
+          <Skeleton className="aspect-[16/10] w-full" />
         </div>
       </div>
     )
@@ -49,7 +49,7 @@ export function LibraryScreen({
     )
   }
   return (
-    <ul className="stagger-in space-y-3">
+    <ul className="stagger-in grid gap-4 sm:grid-cols-2">
       {videos.map((video) => {
         const Icon = video.has_video ? Film : AudioLines
         return (
@@ -61,31 +61,39 @@ export function LibraryScreen({
             >
               <article
                 className={cn(
-                  "group flex items-center gap-4 rounded-2xl border border-white/6 bg-card/80 px-4 py-3.5 ring-1 ring-white/4 transition-all duration-200",
-                  "hover:-translate-y-0.5 hover:border-primary/25 hover:bg-card hover:shadow-[0_20px_40px_-28px_oklch(0.84_0.12_88/0.55)]",
+                  "group overflow-hidden rounded-2xl border border-white/8 bg-card/80 ring-1 ring-white/4 transition-all duration-300",
+                  "hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_28px_60px_-32px_oklch(0.84_0.12_88/0.7)]",
                 )}
               >
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground transition-colors group-hover:bg-primary/15 group-hover:text-primary">
-                  <Icon className="size-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium tracking-tight">
-                    {video.original_filename}
-                  </span>
-                  <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 className="size-3" />
-                      {formatDuration(video.duration_s)}
-                    </span>
-                    {formatAddedOn(video.created_at) ? (
-                      <span>{formatAddedOn(video.created_at)}</span>
-                    ) : null}
+                <div className="relative">
+                  <MediaPoster
+                    seed={video.id}
+                    audioOnly={!video.has_video}
+                    className="aspect-video"
+                  />
+                  <span className="absolute top-3 right-3">
                     <StatusBadge status={video.status} />
                   </span>
-                </span>
-                <span className="hidden text-xs text-muted-foreground transition-colors group-hover:text-foreground sm:inline">
-                  Open
-                </span>
+                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[11px] text-white/90 ring-1 ring-white/10 backdrop-blur-sm">
+                    <Clock3 className="size-3" />
+                    {formatDuration(video.duration_s)}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3 px-3.5 py-3">
+                  <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium tracking-tight">
+                      {video.original_filename}
+                    </span>
+                    {formatAddedOn(video.created_at) ? (
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {formatAddedOn(video.created_at)}
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
               </article>
             </Link>
           </li>

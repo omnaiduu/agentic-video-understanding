@@ -74,7 +74,7 @@ export function IndexPanel({ video }: { video: Video }) {
         {building ? (
           <p className="mb-4 text-sm text-muted-foreground">Building indexes…</p>
         ) : null}
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {INDEX_BOOKS.map((book) => {
             const raw = bookStatus(video, book.key)
             const tone = indexTone(raw)

@@ -191,6 +191,42 @@
       0 0 0 1px oklch(0.84 0.12 88 / 0.12),
       0 18px 50px -28px oklch(0.84 0.12 88 / 0.45);
   }
+
+  .poster-scan {
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent 14px,
+        oklch(1 0 0 / 0.05) 15px,
+        oklch(1 0 0 / 0.05) 16px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 18px,
+        oklch(1 0 0 / 0.035) 19px
+      );
+  }
+
+  .card-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 42%,
+      oklch(1 0 0 / 0.16) 50%,
+      transparent 58%
+    );
+    transform: translateX(-120%);
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+
+  .group:hover .card-shine::after {
+    transform: translateX(120%);
+  }
 }
 
 @keyframes app-enter {

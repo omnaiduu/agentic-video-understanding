@@ -72,8 +72,8 @@ export function UploadPanel({
       />
       <div
         className={cn(
-          "rounded-3xl border border-dashed border-white/12 bg-card/50 p-5 transition-all duration-200 sm:p-6",
-          over && "border-primary/50 bg-primary/5 glow-ring",
+          "relative overflow-hidden rounded-3xl border border-dashed border-white/14 bg-card/40 p-6 transition-all duration-300 sm:p-8",
+          over && "border-primary/60 bg-primary/8 glow-ring",
           busy && "border-solid border-white/10",
         )}
         onDragEnter={(event) => {
@@ -95,16 +95,17 @@ export function UploadPanel({
           }
         }}
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-primary/12 text-primary">
-              <FileUp className="size-5" />
+        <div className="pointer-events-none absolute inset-0 poster-scan opacity-20" />
+        <div className="relative flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <span className="grid size-14 place-items-center rounded-2xl bg-primary/12 text-primary shadow-[0_0_40px_-12px_oklch(0.84_0.12_88)]">
+              <FileUp className="size-6" />
             </span>
-            <div className="space-y-1">
-              <p className="text-sm font-medium tracking-tight">
+            <div className="space-y-1.5">
+              <p className="text-base font-medium tracking-tight">
                 {busy ? name || "Uploading" : "Drop a talk, or choose a file"}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="max-w-md text-sm text-muted-foreground">
                 mp4 or audio, up to 2 GB. The API stores the file; this page does not
                 run models.
               </p>
@@ -112,6 +113,7 @@ export function UploadPanel({
           </div>
           <Button
             type="button"
+            size="lg"
             disabled={busy}
             onClick={() => inputRef.current?.click()}
             className="shrink-0"
@@ -120,7 +122,7 @@ export function UploadPanel({
           </Button>
         </div>
         {percent !== null ? (
-          <Progress value={percent} className="mt-5">
+          <Progress value={percent} className="relative mt-6">
             <ProgressLabel>Uploading</ProgressLabel>
             <ProgressValue />
           </Progress>

@@ -26,7 +26,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="min-h-screen font-sans antialiased">
         <div className="relative flex min-h-screen flex-col">
           <header className="sticky top-0 z-30 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-            <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+            <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
               <Link
                 to="/"
                 className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -43,7 +43,7 @@ function RootDocument({ children }: { children: ReactNode }) {
               </Link>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
             {children}
           </main>
         </div>

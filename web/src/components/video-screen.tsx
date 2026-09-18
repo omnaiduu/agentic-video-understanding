@@ -65,21 +65,21 @@ export function VideoScreen({
   const locked = chatLocked(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
   return (
-    <div className="app-enter space-y-5">
-      <Link
-        to="/"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        Library
-      </Link>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div data-page="watch" className="app-enter flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1.5">
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-balance sm:text-3xl">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            Library
+          </Link>
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-balance sm:text-[1.75rem]">
             {video.original_filename}
           </h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{formatDuration(video.duration_s)}</span>
+            <span className="font-mono text-xs">{formatDuration(video.duration_s)}</span>
             <StatusBadge status={video.status} />
           </div>
         </div>
@@ -100,7 +100,7 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid grid-cols-1 items-start gap-4 md:grid-cols-2"
+        className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2"
         data-slot="watch-layout"
       >
         <VideoPlayer video={video} onReady={handlePlayerReady} />

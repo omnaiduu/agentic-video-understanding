@@ -65,7 +65,7 @@ export function VideoPlayer({
   return (
     <div
       data-slot="player"
-      className="aspect-video w-full overflow-hidden rounded-2xl bg-black ring-1 ring-white/8"
+      className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_-36px_black] ring-1 ring-white/10"
     >
       <div ref={containerRef} className="h-full w-full [&_.video-js]:h-full [&_.video-js]:w-full" />
     </div>
