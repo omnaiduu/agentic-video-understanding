@@ -78,6 +78,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
     links: [
       {
+        rel: "icon",
+        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e4c36a'/%3E%3Cpath d='M12 8.5v15l12-7.5-12-7.5z' fill='%23231d12'/%3E%3C/svg%3E",
+      },
+      {
         rel: "stylesheet",
         href: appCss,
       },
