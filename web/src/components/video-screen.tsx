@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useState } from "react"
+import { useCallback, useRef } from "react"
 import { ArrowLeft } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 
@@ -27,35 +27,10 @@ export function VideoScreen({
   video: Video | undefined
   onDeleted?: () => void
 }) {
-  const [seek, setSeek] = useState<SeekFn>(() => () => undefined)
-  const [playerEl, setPlayerEl] = useState<HTMLDivElement | null>(null)
-  const [chatHeight, setChatHeight] = useState<number | null>(null)
-  const handlePlayerReady = useCallback((next: SeekFn) => {
-    setSeek(() => next)
+  const seekRef = useRef<SeekFn>(() => undefined)
+  const handlePlayerReady = useCallback((seek: SeekFn) => {
+    seekRef.current = seek
   }, [])
-
-  useLayoutEffect(() => {
-    if (!playerEl) {
-      return
-    }
-    const sync = () => {
-      const desktop = window.matchMedia?.("(min-width: 768px)").matches ?? false
-      const next = Math.round(playerEl.getBoundingClientRect().height)
-      setChatHeight(desktop && next > 0 ? next : null)
-    }
-    sync()
-    const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(sync)
-    observer?.observe(playerEl)
-    window.addEventListener("resize", sync)
-    const media = window.matchMedia?.("(min-width: 768px)")
-    media?.addEventListener("change", sync)
-    return () => {
-      observer?.disconnect()
-      window.removeEventListener("resize", sync)
-      media?.removeEventListener("change", sync)
-    }
-  }, [playerEl])
 
   if (isPending) {
     return (
@@ -128,25 +103,19 @@ export function VideoScreen({
         </p>
       ) : null}
       <IndexPanel video={video} />
-      <div className="studio-bay overflow-hidden rounded-3xl bg-card/80">
+      <div className="studio-bay relative overflow-hidden rounded-3xl bg-card/90 ring-1 ring-white/10">
         <div
-          className="grid grid-cols-1 items-stretch md:grid-cols-2"
+          className="grid grid-cols-1 md:grid-cols-2"
           data-slot="watch-layout"
         >
-          <div
-            ref={setPlayerEl}
-            className="w-full self-start border-white/8 max-md:border-b md:border-r"
-          >
+          <div className="w-full border-white/10 max-md:border-b md:border-r">
             <VideoPlayer video={video} onReady={handlePlayerReady} />
           </div>
-          <div
-            className="flex min-h-[22rem] flex-col md:h-full md:min-h-0"
-            style={chatHeight ? { height: chatHeight } : undefined}
-          >
+          <div className="flex min-h-[22rem] flex-col md:absolute md:inset-y-0 md:right-0 md:w-1/2 md:min-h-0">
             <ChatPanel
               videoId={video.id}
               locked={locked}
-              onSeek={(seconds) => seek(seconds)}
+              onSeek={(seconds) => seekRef.current(seconds)}
             />
           </div>
         </div>
