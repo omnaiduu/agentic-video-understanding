@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react"
+import { useCallback, useLayoutEffect, useState } from "react"
 import { ArrowLeft } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 
@@ -27,17 +27,43 @@ export function VideoScreen({
   video: Video | undefined
   onDeleted?: () => void
 }) {
-  const seekRef = useRef<SeekFn>(() => undefined)
-  const handlePlayerReady = useCallback((seek: SeekFn) => {
-    seekRef.current = seek
+  const [seek, setSeek] = useState<SeekFn>(() => () => undefined)
+  const [playerEl, setPlayerEl] = useState<HTMLDivElement | null>(null)
+  const [chatHeight, setChatHeight] = useState<number | null>(null)
+  const handlePlayerReady = useCallback((next: SeekFn) => {
+    setSeek(() => next)
   }, [])
+
+  useLayoutEffect(() => {
+    if (!playerEl) {
+      return
+    }
+    const sync = () => {
+      const desktop = window.matchMedia?.("(min-width: 768px)").matches ?? false
+      setChatHeight(desktop ? Math.round(playerEl.getBoundingClientRect().height) : null)
+    }
+    sync()
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(sync)
+    observer?.observe(playerEl)
+    window.addEventListener("resize", sync)
+    const media = window.matchMedia?.("(min-width: 768px)")
+    media?.addEventListener("change", sync)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener("resize", sync)
+      media?.removeEventListener("change", sync)
+    }
+  }, [playerEl])
 
   if (isPending) {
     return (
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading video…</p>
-        <Skeleton className="h-10 w-2/3" />
-        <Skeleton className="aspect-video w-full" />
+        <Skeleton className="h-8 w-2/3" />
+        <div className="overflow-hidden rounded-3xl border border-white/8">
+          <Skeleton className="aspect-video w-full rounded-none" />
+        </div>
       </div>
     )
   }
@@ -64,10 +90,11 @@ export function VideoScreen({
   }
   const locked = chatLocked(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
+
   return (
     <div data-page="watch" className="app-enter flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
@@ -75,13 +102,14 @@ export function VideoScreen({
             <ArrowLeft className="size-3.5" />
             Library
           </Link>
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-balance sm:text-[1.75rem]">
+          <span className="hidden h-4 w-px bg-white/10 sm:block" />
+          <h1 className="max-w-[min(100%,36rem)] truncate font-serif text-xl font-medium tracking-tight sm:text-2xl">
             {video.original_filename}
           </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span className="font-mono text-xs">{formatDuration(video.duration_s)}</span>
-            <StatusBadge status={video.status} />
-          </div>
+          <span className="font-mono text-xs text-muted-foreground">
+            {formatDuration(video.duration_s)}
+          </span>
+          <StatusBadge status={video.status} />
         </div>
         <DeleteVideoButton
           videoId={video.id}
@@ -99,19 +127,27 @@ export function VideoScreen({
         </p>
       ) : null}
       <IndexPanel video={video} />
-      <div
-        className="grid grid-cols-1 grid-rows-[auto_minmax(22rem,1fr)] items-stretch gap-4 md:grid-cols-2 md:grid-rows-1"
-        data-slot="watch-layout"
-      >
-        <div className="w-full self-start">
-          <VideoPlayer video={video} onReady={handlePlayerReady} />
-        </div>
-        <div className="min-h-[22rem] md:h-full md:min-h-0">
-          <ChatPanel
-            videoId={video.id}
-            locked={locked}
-            onSeek={(seconds) => seekRef.current(seconds)}
-          />
+      <div className="studio-bay overflow-hidden rounded-3xl bg-card/80">
+        <div
+          className="grid grid-cols-1 items-start md:grid-cols-2"
+          data-slot="watch-layout"
+        >
+          <div
+            ref={setPlayerEl}
+            className="w-full border-white/8 max-md:border-b md:border-r"
+          >
+            <VideoPlayer video={video} onReady={handlePlayerReady} />
+          </div>
+          <div
+            className="min-h-[22rem] md:min-h-0"
+            style={chatHeight ? { height: chatHeight } : undefined}
+          >
+            <ChatPanel
+              videoId={video.id}
+              locked={locked}
+              onSeek={(seconds) => seek(seconds)}
+            />
+          </div>
         </div>
       </div>
     </div>

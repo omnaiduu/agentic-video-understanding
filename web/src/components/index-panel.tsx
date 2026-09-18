@@ -1,4 +1,4 @@
-import { Film, ImageIcon, Mic, PanelsTopLeft, Volume2 } from "lucide-react"
+import { Check, Film, ImageIcon, Mic, PanelsTopLeft, Volume2 } from "lucide-react"
 
 import { Spinner } from "@/components/spinner"
 import { Badge } from "@/components/ui/badge"
@@ -42,7 +42,7 @@ export function IndexPanel({ video }: { video: Video }) {
 
   if (!building && !failed) {
     return (
-      <ul className="flex flex-wrap gap-2">
+      <ul className="flex gap-2 overflow-x-auto pb-0.5">
         {INDEX_BOOKS.map((book) => {
           const raw = bookStatus(video, book.key)
           const tone = indexTone(raw)
@@ -50,9 +50,13 @@ export function IndexPanel({ video }: { video: Video }) {
           return (
             <li
               key={book.key}
-              className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-card/70 px-2.5 py-1 text-xs"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/8 bg-card/70 px-2.5 py-1 text-xs"
             >
-              <Icon className="size-3.5 text-muted-foreground" />
+              {tone === "ready" ? (
+                <Check className="size-3.5 text-primary" />
+              ) : (
+                <Icon className="size-3.5 text-muted-foreground" />
+              )}
               <span>{book.label}</span>
               <Badge variant={toneVariant(tone)}>{tone}</Badge>
             </li>

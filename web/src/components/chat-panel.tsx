@@ -4,7 +4,7 @@ import { ArrowUp, Lock, Sparkles } from "lucide-react"
 
 import { ChatExport } from "@/components/chat-export"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import {
   postChat,
@@ -119,8 +119,8 @@ export function ChatPanel({
   }
 
   return (
-    <Card className="flex h-full min-h-[22rem] flex-col border-white/5 bg-card/85 shadow-none ring-1 ring-white/8 md:min-h-full">
-      <CardHeader className="shrink-0 border-b border-white/5 py-3">
+    <Card className="flex h-full min-h-[22rem] flex-col gap-0 rounded-none border-0 bg-transparent py-0 shadow-none ring-0 md:min-h-full">
+      <CardHeader className="shrink-0 border-b border-white/6 py-3">
         <CardTitle className="flex items-center gap-2 text-sm font-medium tracking-tight">
           <span className="size-1.5 rounded-full bg-primary shadow-[0_0_12px_oklch(0.84_0.12_88)]" />
           Chat
@@ -145,10 +145,10 @@ export function ChatPanel({
             >
               {turns.length === 0 && !mutation.isPending ? (
                 <li className="flex h-full min-h-[10rem] flex-col items-center justify-center gap-4 px-2 py-6 text-center">
-                  <span className="grid size-11 place-items-center rounded-2xl bg-primary/12 text-primary">
+                  <span className="grid size-12 place-items-center rounded-2xl bg-primary/12 text-primary ring-1 ring-primary/20">
                     <Sparkles className="size-5" />
                   </span>
-                  <p className="max-w-[16rem] text-sm text-muted-foreground">
+                  <p className="max-w-[16rem] text-sm leading-relaxed text-muted-foreground">
                     Ask about speech, a silent visual, a sound, or a clip.
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
@@ -184,7 +184,7 @@ export function ChatPanel({
                       className={cn(
                         "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
                         mine
-                          ? "rounded-tr-md bg-primary text-primary-foreground"
+                          ? "rounded-tr-md bg-primary text-primary-foreground shadow-[0_10px_24px_-16px_oklch(0.84_0.12_88)]"
                           : "rounded-tl-md bg-background/70 ring-1 ring-white/8",
                       )}
                     >
@@ -246,47 +246,51 @@ export function ChatPanel({
                 {error}
               </p>
             ) : null}
-            <form
-              className="shrink-0"
-              onSubmit={(event) => {
-                event.preventDefault()
-                send()
-              }}
-            >
-              <label className="sr-only" htmlFor="chat-message">
-                Ask a question
-              </label>
-              <div className="relative">
-                <Textarea
-                  ref={inputRef}
-                  id="chat-message"
-                  value={draft}
-                  disabled={mutation.isPending}
-                  placeholder="Ask about this video"
-                  className="min-h-[3.25rem] resize-none rounded-2xl border-white/10 bg-background/70 pr-12 shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]"
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault()
-                      send()
-                    }
-                  }}
-                />
-                <Button
-                  type="submit"
-                  size="icon-sm"
-                  disabled={mutation.isPending || !draft.trim()}
-                  className="absolute right-2 bottom-2 rounded-full"
-                  aria-label="Send"
-                >
-                  <ArrowUp />
-                  <span className="sr-only">Send</span>
-                </Button>
-              </div>
-            </form>
           </>
         )}
       </CardContent>
+      {locked ? null : (
+        <CardFooter className="shrink-0 border-white/6 bg-background/35 py-3">
+          <form
+            className="w-full"
+            onSubmit={(event) => {
+              event.preventDefault()
+              send()
+            }}
+          >
+            <label className="sr-only" htmlFor="chat-message">
+              Ask a question
+            </label>
+            <div className="relative">
+              <Textarea
+                ref={inputRef}
+                id="chat-message"
+                value={draft}
+                disabled={mutation.isPending}
+                placeholder="Ask about this video"
+                className="max-h-28 min-h-[3.25rem] field-sizing-fixed resize-none rounded-2xl border-white/10 bg-background/80 pr-12 shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]"
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault()
+                    send()
+                  }
+                }}
+              />
+              <Button
+                type="submit"
+                size="icon-sm"
+                disabled={mutation.isPending || !draft.trim()}
+                className="absolute right-2 bottom-2 rounded-full"
+                aria-label="Send"
+              >
+                <ArrowUp />
+                <span className="sr-only">Send</span>
+              </Button>
+            </div>
+          </form>
+        </CardFooter>
+      )}
     </Card>
   )
 }

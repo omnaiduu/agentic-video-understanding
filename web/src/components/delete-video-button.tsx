@@ -36,7 +36,8 @@ export function DeleteVideoButton({
           setConfirming(true)
         }}
         type="button"
-        variant="destructive"
+        variant="outline"
+        className="border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
         aria-label="Delete"
       >
         <Trash2 data-icon="inline-start" aria-hidden />
@@ -56,7 +57,7 @@ export function DeleteVideoButton({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-video-title"
-            className="app-enter w-full max-w-sm rounded-2xl border border-white/10 bg-card p-5 shadow-2xl"
+            className="app-enter w-full max-w-sm rounded-2xl border border-white/10 bg-card p-5 shadow-2xl ring-1 ring-white/8"
             onClick={(event) => event.stopPropagation()}
           >
             <p id="delete-video-title" className="font-medium tracking-tight">

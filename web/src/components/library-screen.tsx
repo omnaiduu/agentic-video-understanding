@@ -1,4 +1,4 @@
-import { AudioLines, Clock3, Film } from "lucide-react"
+import { Clock3 } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 
 import { MediaPoster } from "@/components/media-poster"
@@ -24,8 +24,8 @@ export function LibraryScreen({
       <div className="space-y-3">
         <p className="text-muted-foreground">Loading library…</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="aspect-[16/10] w-full" />
-          <Skeleton className="aspect-[16/10] w-full" />
+          <Skeleton className="aspect-video w-full rounded-2xl" />
+          <Skeleton className="aspect-video w-full rounded-2xl" />
         </div>
       </div>
     )
@@ -43,15 +43,17 @@ export function LibraryScreen({
   }
   if (!videos || videos.length === 0) {
     return (
-      <p className="text-muted-foreground">
-        No videos yet. Choose a file above to upload it through FastAPI.
-      </p>
+      <div className="rounded-3xl border border-dashed border-white/10 bg-card/30 px-5 py-10 text-center">
+        <p className="text-muted-foreground">
+          No videos yet. Choose a file above to upload it through FastAPI.
+        </p>
+      </div>
     )
   }
   return (
-    <ul className="stagger-in grid gap-4 sm:grid-cols-2">
+    <ul className="stagger-in grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {videos.map((video) => {
-        const Icon = video.has_video ? Film : AudioLines
+        const added = formatAddedOn(video.created_at)
         return (
           <li key={video.id}>
             <Link
@@ -62,7 +64,7 @@ export function LibraryScreen({
               <article
                 className={cn(
                   "group overflow-hidden rounded-2xl border border-white/8 bg-card/80 ring-1 ring-white/4 transition-all duration-300",
-                  "hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_28px_60px_-32px_oklch(0.84_0.12_88/0.7)]",
+                  "hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_28px_60px_-32px_oklch(0.84_0.12_88/0.7)]",
                 )}
               >
                 <div className="relative">
@@ -74,25 +76,18 @@ export function LibraryScreen({
                   <span className="absolute top-3 right-3">
                     <StatusBadge status={video.status} />
                   </span>
-                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[11px] text-white/90 ring-1 ring-white/10 backdrop-blur-sm">
-                    <Clock3 className="size-3" />
-                    {formatDuration(video.duration_s)}
-                  </span>
-                </div>
-                <div className="flex items-start gap-3 px-3.5 py-3">
-                  <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                    <Icon className="size-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium tracking-tight">
+                  <div className="absolute inset-x-0 bottom-0 space-y-1.5 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3.5 pt-12 pb-3">
+                    <span className="block truncate text-sm font-medium tracking-tight text-white">
                       {video.original_filename}
                     </span>
-                    {formatAddedOn(video.created_at) ? (
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {formatAddedOn(video.created_at)}
+                    <span className="flex flex-wrap items-center gap-2 text-[11px] text-white/75">
+                      <span className="inline-flex items-center gap-1 font-mono">
+                        <Clock3 className="size-3" />
+                        {formatDuration(video.duration_s)}
                       </span>
-                    ) : null}
-                  </span>
+                      {added ? <span>{added}</span> : null}
+                    </span>
+                  </div>
                 </div>
               </article>
             </Link>

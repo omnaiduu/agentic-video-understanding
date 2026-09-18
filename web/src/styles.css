@@ -137,9 +137,10 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
     background-image:
-      radial-gradient(1200px 500px at 12% -10%, oklch(0.4 0.08 250 / 0.28), transparent 55%),
-      radial-gradient(900px 420px at 100% 0%, oklch(0.55 0.1 88 / 0.12), transparent 50%),
-      linear-gradient(180deg, oklch(0.16 0.02 262), oklch(0.13 0.016 262));
+      radial-gradient(1100px 520px at 8% -12%, oklch(0.42 0.09 250 / 0.32), transparent 58%),
+      radial-gradient(820px 380px at 92% -8%, oklch(0.62 0.12 88 / 0.16), transparent 52%),
+      radial-gradient(700px 280px at 70% 110%, oklch(0.4 0.08 210 / 0.1), transparent 55%),
+      linear-gradient(180deg, oklch(0.155 0.02 262), oklch(0.125 0.016 262));
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -190,6 +191,23 @@
     box-shadow:
       0 0 0 1px oklch(0.84 0.12 88 / 0.12),
       0 18px 50px -28px oklch(0.84 0.12 88 / 0.45);
+  }
+
+  .gold-hairline {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(0.84 0.12 88 / 0.45) 40%,
+      oklch(0.78 0.12 210 / 0.35) 62%,
+      transparent 100%
+    );
+  }
+
+  .studio-bay {
+    box-shadow:
+      0 0 0 1px oklch(1 0 0 / 0.06),
+      0 40px 90px -48px rgb(0 0 0 / 0.85),
+      inset 0 1px 0 oklch(1 0 0 / 0.06);
   }
 
   .poster-scan {
@@ -288,15 +306,16 @@
 }
 
 .video-js .vjs-big-play-button {
-  background: oklch(0.84 0.12 88 / 0.92);
+  background: oklch(0.84 0.12 88 / 0.94);
   border: 0;
   border-radius: 999px;
-  width: 3.4rem;
-  height: 3.4rem;
-  line-height: 3.4rem;
-  margin-left: -1.7rem;
-  margin-top: -1.7rem;
+  width: 3.6rem;
+  height: 3.6rem;
+  line-height: 3.6rem;
+  margin-left: -1.8rem;
+  margin-top: -1.8rem;
   color: oklch(0.18 0.03 70);
+  box-shadow: 0 10px 30px -12px oklch(0.84 0.12 88 / 0.8);
   transition: transform 180ms ease, background-color 180ms ease;
 }
 

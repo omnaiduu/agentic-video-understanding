@@ -2,15 +2,18 @@ import { useEffect, useRef } from "react"
 
 import type { Video } from "@/lib/api"
 import { mediaType, videoFileUrl } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 export type SeekFn = (seconds: number) => void
 
 export function VideoPlayer({
   video,
   onReady,
+  className,
 }: {
   video: Video
   onReady?: (seek: SeekFn) => void
+  className?: string
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const onReadyRef = useRef(onReady)
@@ -65,7 +68,10 @@ export function VideoPlayer({
   return (
     <div
       data-slot="player"
-      className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_-36px_black] ring-1 ring-white/10"
+      className={cn(
+        "aspect-video w-full overflow-hidden bg-black",
+        className,
+      )}
     >
       <div ref={containerRef} className="h-full w-full [&_.video-js]:h-full [&_.video-js]:w-full" />
     </div>

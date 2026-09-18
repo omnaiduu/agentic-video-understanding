@@ -17,7 +17,7 @@ export function ChatExport({
   const href = absoluteApiUrl(path)
   const filename = exportFilename(kind)
   return (
-    <div className="space-y-2 overflow-hidden rounded-xl border border-white/10 bg-black/30 p-2 ring-1 ring-white/5">
+    <div className="space-y-2 overflow-hidden rounded-xl border border-white/10 bg-black/40 p-2 ring-1 ring-white/8">
       {kind === "audio" ? (
         <audio
           aria-label="Exported audio"

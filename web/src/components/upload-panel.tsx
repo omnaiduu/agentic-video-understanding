@@ -72,7 +72,7 @@ export function UploadPanel({
       />
       <div
         className={cn(
-          "relative overflow-hidden rounded-3xl border border-dashed border-white/14 bg-card/40 p-6 transition-all duration-300 sm:p-8",
+          "relative overflow-hidden rounded-3xl border border-dashed border-white/14 bg-card/45 p-6 transition-all duration-300 sm:p-8",
           over && "border-primary/60 bg-primary/8 glow-ring",
           busy && "border-solid border-white/10",
         )}
