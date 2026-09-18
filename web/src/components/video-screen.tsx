@@ -40,7 +40,8 @@ export function VideoScreen({
     }
     const sync = () => {
       const desktop = window.matchMedia?.("(min-width: 768px)").matches ?? false
-      setChatHeight(desktop ? Math.round(playerEl.getBoundingClientRect().height) : null)
+      const next = Math.round(playerEl.getBoundingClientRect().height)
+      setChatHeight(desktop && next > 0 ? next : null)
     }
     sync()
     const observer =
@@ -129,17 +130,17 @@ export function VideoScreen({
       <IndexPanel video={video} />
       <div className="studio-bay overflow-hidden rounded-3xl bg-card/80">
         <div
-          className="grid grid-cols-1 items-start md:grid-cols-2"
+          className="grid grid-cols-1 items-stretch md:grid-cols-2"
           data-slot="watch-layout"
         >
           <div
             ref={setPlayerEl}
-            className="w-full border-white/8 max-md:border-b md:border-r"
+            className="w-full self-start border-white/8 max-md:border-b md:border-r"
           >
             <VideoPlayer video={video} onReady={handlePlayerReady} />
           </div>
           <div
-            className="min-h-[22rem] md:min-h-0"
+            className="flex min-h-[22rem] flex-col md:h-full md:min-h-0"
             style={chatHeight ? { height: chatHeight } : undefined}
           >
             <ChatPanel
