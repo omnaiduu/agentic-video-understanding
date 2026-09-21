@@ -22,7 +22,7 @@ export function LibraryScreen({
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading library…</p>
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-          <Skeleton className="h-[min(36rem,52vh)] w-full rounded-2xl xl:[&:only-child]:col-span-2" />
+          <Skeleton className="aspect-video w-full rounded-2xl xl:[&:only-child]:col-span-2" />
         </div>
       </div>
     )
@@ -64,7 +64,7 @@ export function LibraryScreen({
                     videoId={video.id}
                     audioOnly={!video.has_video}
                     durationS={video.duration_s}
-                    className="h-[min(36rem,52vh)] w-full"
+                    className="aspect-video w-full"
                   />
                   {video.status !== "ready" ? (
                     <span className="absolute top-4 left-4">

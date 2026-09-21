@@ -78,7 +78,7 @@ export function MediaPoster({
     >
       <video
         ref={videoRef}
-        className="h-full w-full object-cover brightness-110 contrast-110 transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.04]"
+        className="h-full w-full object-contain transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.02]"
         muted
         loop
         playsInline
@@ -86,7 +86,7 @@ export function MediaPoster({
         src={`${videoFileUrl(videoId)}#t=${still}`}
         onLoadedData={(event) => snapToStill(event.currentTarget)}
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
       <span className="pointer-events-none absolute top-1/2 left-1/2 grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_30px_oklch(0.84_0.13_85/0.35)] transition-transform duration-200 group-hover:scale-105">
         <Play className="size-7 translate-x-px fill-current" />
       </span>

@@ -66,7 +66,7 @@ export function VideoScreen({
   const indexesBuilding = ingestInProgress(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
   return (
-    <div data-page="watch" className="app-enter flex min-h-0 flex-1 flex-col gap-3">
+    <div data-page="watch" className="app-enter flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
           <Link
@@ -102,13 +102,13 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid min-h-[28rem] grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:items-stretch"
+        className="grid grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:items-stretch"
         data-slot="watch-layout"
       >
-        <div className="min-h-0 min-w-0 border-border max-md:border-b md:h-full md:border-r">
+        <div className="min-w-0 border-border max-md:border-b md:border-r">
           <VideoPlayer video={video} onReady={handlePlayerReady} />
         </div>
-        <div className="flex min-h-[26rem] min-w-0 flex-col md:h-full md:min-h-0">
+        <div className="flex min-h-[22rem] min-w-0 flex-col md:min-h-0">
           <ChatPanel
             videoId={video.id}
             locked={locked}
