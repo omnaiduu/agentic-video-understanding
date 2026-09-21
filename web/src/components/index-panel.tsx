@@ -58,7 +58,9 @@ export function IndexPanel({ video }: { video: Video }) {
                 <Icon className="size-3 text-muted-foreground" />
               )}
               <span>{book.label}</span>
-              <Badge variant={toneVariant(tone)}>{tone}</Badge>
+              {tone === "ready" ? null : (
+                <Badge variant={toneVariant(tone)}>{tone}</Badge>
+              )}
             </li>
           )
         })}

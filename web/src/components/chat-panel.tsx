@@ -135,15 +135,15 @@ export function ChatPanel({
           <>
             <ol
               ref={threadRef}
-              className="thin-scroll min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
+              className="thin-scroll min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 pb-1"
               data-slot="chat-thread"
             >
               {turns.length === 0 && !mutation.isPending ? (
-                <li className="flex h-full min-h-[10rem] flex-col items-center justify-center gap-3 px-2 py-6 text-center">
-                  <p className="max-w-[16rem] text-sm text-muted-foreground">
+                <li className="flex flex-col gap-3 pt-1">
+                  <p className="text-sm text-muted-foreground">
                     Ask about speech, a silent visual, a sound, or a clip.
                   </p>
-                  <div className="flex flex-wrap justify-center gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
                     {SUGGESTIONS.map((hint) => (
                       <button
                         key={hint}

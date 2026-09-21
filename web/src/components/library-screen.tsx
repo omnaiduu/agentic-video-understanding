@@ -66,9 +66,11 @@ export function LibraryScreen({
                     audioOnly={!video.has_video}
                     className="aspect-video"
                   />
-                  <span className="absolute top-2 right-2">
-                    <StatusBadge status={video.status} />
-                  </span>
+                  {video.status !== "ready" ? (
+                    <span className="absolute top-2 right-2">
+                      <StatusBadge status={video.status} />
+                    </span>
+                  ) : null}
                   <span className="absolute right-2 bottom-2 rounded-sm bg-black/72 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-white">
                     {formatDuration(video.duration_s)}
                   </span>
