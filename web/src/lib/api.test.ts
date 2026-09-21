@@ -43,6 +43,11 @@ describe("getApiBaseUrl", () => {
     vi.stubEnv("VITE_API_URL", "")
     expect(getApiBaseUrl()).toBe("http://127.0.0.1:8000")
   })
+
+  it("uses same-origin when VITE_API_URL is /", () => {
+    vi.stubEnv("VITE_API_URL", "/")
+    expect(getApiBaseUrl()).toBe("")
+  })
 })
 
 describe("listVideos", () => {
