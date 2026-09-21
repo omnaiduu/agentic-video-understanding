@@ -154,6 +154,7 @@ def configured_env(data_dir: Path) -> None:
     os.environ["AUDIO_EMBEDDER"] = "fake"
     os.environ["SLIDE_EMBEDDER"] = "fake"
     os.environ["INGEST_SECRET"] = "test-ingest-secret"
+    os.environ["UI_ORIGIN"] = ""
 
     from app.db import reset_engine
     from app.settings import get_settings

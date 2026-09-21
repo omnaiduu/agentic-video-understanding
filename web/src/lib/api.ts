@@ -62,10 +62,10 @@ function isLoopbackApiUrl(raw: string): boolean {
 export function getApiBaseUrl(): string {
   const explicit = readExplicitApiUrl()
   if (typeof window !== "undefined") {
-    if (!explicit || isLoopbackApiUrl(explicit)) {
-      return ""
+    if (explicit && !isLoopbackApiUrl(explicit)) {
+      return explicit.replace(/\/$/, "")
     }
-    return explicit.replace(/\/$/, "")
+    return window.location.origin
   }
   if (!explicit || isLoopbackApiUrl(explicit)) {
     return "http://127.0.0.1:8000"

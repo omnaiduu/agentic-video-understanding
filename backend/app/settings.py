@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     ingest_secret: str = ""
     public_base_url: str = ""
     modal_ingest_app: str = "agentic-video-ingest"
+    # When set, HTML navigations are proxied to the Vite UI so API and website
+    # share one origin (the FastAPI port). Tests leave this empty.
+    ui_origin: str = ""
 
 
 @lru_cache

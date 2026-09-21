@@ -158,12 +158,12 @@ describe("ChatPanel", () => {
     expect(player.tagName).toBe("VIDEO")
     expect(player).toHaveAttribute(
       "src",
-      "/videos/vid/exports/exp-1",
+      `${window.location.origin}/videos/vid/exports/exp-1`,
     )
     const download = screen.getByRole("link", { name: /download/i })
     expect(download).toHaveAttribute(
       "href",
-      "/videos/vid/exports/exp-1",
+      `${window.location.origin}/videos/vid/exports/exp-1`,
     )
     expect(screen.getByRole("link", { name: /download/i })).toHaveAttribute(
       "download",
