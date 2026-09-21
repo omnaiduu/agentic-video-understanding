@@ -4,6 +4,8 @@
 Point BASE_URL at FastAPI; FastAPI points at whatever brain VLLM_MODEL /
 VLLM_BASE_URL is set to (E4B default, 12B for this A/B). Do not deploy from
 this script. THINKING=1 posts ChatIn.thinking=true (E4B thinking worker).
+PICKER=logit|shadow is read from FastAPI's env, not from this script; the
+chat JSON includes the first-hop picker decision when that env is set.
 
     cd backend
     VIDEO_ID=... BASE_URL=http://127.0.0.1:8000 BRAIN_LABEL=e4b \\
@@ -48,6 +50,7 @@ def summarize(body: dict) -> dict:
         "citations": body.get("citations"),
         "thinking": body.get("thinking"),
         "thoughts": body.get("thoughts") or [],
+        "picker": body.get("picker"),
         "steps": [
             {
                 "do": s.get("do"),
@@ -68,11 +71,13 @@ def main() -> None:
     label = os.environ.get("BRAIN_LABEL", "unknown")
     model = os.environ.get("VLLM_MODEL", "")
     thinking = os.environ.get("THINKING", "").strip().lower() in {"1", "true", "yes"}
+    picker = os.environ.get("PICKER", "").strip()
     out = Path(os.environ.get("OUT", f"/tmp/hidden-intent-{label}.json"))
     results: dict = {
         "brain_label": label,
         "vllm_model": model,
         "thinking": thinking,
+        "picker": picker,
         "video_id": video_id,
         "base_url": base,
         "questions": {},
@@ -127,6 +132,8 @@ def main() -> None:
                 ],
                 flush=True,
             )
+            if summary.get("picker"):
+                print("picker:", summary["picker"], flush=True)
             print(
                 "listen_before_export=",
                 summary["listened_before_export"],

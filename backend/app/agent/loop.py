@@ -8,6 +8,15 @@ from pathlib import Path
 from typing import Any
 
 from app.agent.client import Brain, as_turn
+from app.agent.picker import (
+    DEFAULT_MIN_P,
+    Picker,
+    PickerDecision,
+    as_search_do,
+    decide_picker,
+    picker_allowed,
+    routing_options,
+)
 from app.agent.parts import (
     after_look_slide_nudge,
     already_looked_message,
@@ -70,6 +79,7 @@ class LoopResult:
     citations: list[float]
     steps: list[Step] = field(default_factory=list)
     export_url: str | None = None
+    picker: PickerDecision | None = None
 
 
 SearchFn = Callable[[str], list[TranscriptHit]]
@@ -102,6 +112,7 @@ def _forced_answer(
     question: str,
     steps: list[Step],
     export_url: str | None,
+    picker: PickerDecision | None = None,
 ) -> LoopResult:
     bits: list[str] = []
     for step in steps:
@@ -129,6 +140,7 @@ def _forced_answer(
         citations=_citations_from_steps(steps),
         steps=steps,
         export_url=export_url,
+        picker=picker,
     )
 
 
@@ -231,6 +243,34 @@ def _ask(brain: Brain, messages: list[dict[str, Any]]) -> tuple[BrainAction, str
         return parse_action(turn.content), _clean_reasoning(turn.reasoning)
 
 
+def _score_picker(
+    picker: Picker,
+    question: str,
+    *,
+    context: str,
+    speech_status: str,
+    picture_status: str,
+    sound_status: str,
+    slide_status: str,
+    min_p: float,
+) -> PickerDecision:
+    options = routing_options(
+        transcript_status=speech_status,
+        visual_status=picture_status,
+        audio_status=sound_status,
+        slides_status=slide_status,
+    )
+    try:
+        raw = picker.score(question, options, context=context)
+    except Exception:
+        return PickerDecision(used=False, reason="error")
+    return decide_picker(
+        raw,
+        min_p=min_p,
+        shadow=bool(getattr(picker, "shadow", False)),
+    )
+
+
 def run_loop(
     path: str | Path,
     question: str,
@@ -248,6 +288,8 @@ def run_loop(
     slides_status: str | None = None,
     history: list[tuple[str, str]] | None = None,
     last_times: list[dict] | None = None,
+    picker: Picker | None = None,
+    picker_min_p: float = DEFAULT_MIN_P,
 ) -> LoopResult:
     meta: VideoMeta = get_meta(path)
     speech_status = transcript_status or IndexStatus.pending.value
@@ -282,6 +324,9 @@ def run_loop(
     bounced_empty = False
     retried_empty_parse = False
     turn_reason: str | None = None
+    picker_tried = False
+    picker_decision: PickerDecision | None = None
+    thinking_brain = bool(getattr(brain, "thinking", False))
 
     def note(**kwargs: Any) -> Step:
         return Step(reasoning=turn_reason, **kwargs)
@@ -292,7 +337,9 @@ def run_loop(
             try:
                 action, turn_reason = _ask(brain, messages)
             except (BrainParseError, RuntimeError):
-                return _forced_answer(question, steps, last_export_url)
+                return _forced_answer(
+                    question, steps, last_export_url, picker_decision
+                )
             if action.do == "answer":
                 text = (action.answer or "").strip()
                 if text:
@@ -302,24 +349,56 @@ def run_loop(
                         citations=list(action.times),
                         steps=steps,
                         export_url=last_export_url,
+                        picker=picker_decision,
                     )
-            return _forced_answer(question, steps, last_export_url)
-        try:
-            action, turn_reason = _ask(brain, messages)
-        except BrainParseError as exc:
-            if steps:
-                return _forced_answer(question, steps, last_export_url)
-            if not retried_empty_parse:
-                retried_empty_parse = True
-                messages.append(parse_again_message())
-                continue
-            raise LoopError(
-                "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
-            ) from exc
-        except RuntimeError as exc:
-            if steps:
-                return _forced_answer(question, steps, last_export_url)
-            raise
+            return _forced_answer(question, steps, last_export_url, picker_decision)
+        action: BrainAction | None = None
+        if picker_allowed(
+            picker=picker,
+            steps=steps,
+            last_times=last_times,
+            force_answer=False,
+            messages=messages,
+            thinking_brain=thinking_brain,
+            already_tried=picker_tried,
+        ):
+            assert picker is not None
+            picker_tried = True
+            picker_decision = _score_picker(
+                picker,
+                question,
+                context=opening,
+                speech_status=speech_status,
+                picture_status=picture_status,
+                sound_status=sound_status,
+                slide_status=slide_status,
+                min_p=picker_min_p,
+            )
+            chosen = as_search_do(picker_decision.do) if picker_decision.used else None
+            if chosen is not None:
+                action = BrainAction(do=chosen, query=question)
+                turn_reason = f"picker {chosen} p={picker_decision.p_max:.2f}"
+        if action is None:
+            try:
+                action, turn_reason = _ask(brain, messages)
+            except BrainParseError as exc:
+                if steps:
+                    return _forced_answer(
+                        question, steps, last_export_url, picker_decision
+                    )
+                if not retried_empty_parse:
+                    retried_empty_parse = True
+                    messages.append(parse_again_message())
+                    continue
+                raise LoopError(
+                    "model did not return look/listen/search/search_visual/search_audio/search_slides/export/answer JSON"
+                ) from exc
+            except RuntimeError as exc:
+                if steps:
+                    return _forced_answer(
+                        question, steps, last_export_url, picker_decision
+                    )
+                raise
         messages.append(
             {"role": "assistant", "content": action.model_dump_json()},
         )
@@ -328,7 +407,9 @@ def run_loop(
             text = (action.answer or "").strip()
             if not text:
                 if steps:
-                    return _forced_answer(question, steps, last_export_url)
+                    return _forced_answer(
+                        question, steps, last_export_url, picker_decision
+                    )
                 raise LoopError("answer JSON had an empty answer")
             if (
                 not bounced_empty
@@ -344,6 +425,7 @@ def run_loop(
                 citations=list(action.times),
                 steps=steps,
                 export_url=last_export_url,
+                picker=picker_decision,
             )
 
         rounds += 1

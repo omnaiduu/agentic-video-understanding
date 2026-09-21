@@ -37,7 +37,7 @@ Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`, **6
 
 ## Chat
 
-The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`. Default chat worker is **E4B** (`modal_brain.py`, app `agentic-video-brain`). Thinking is a **second** E4B app (`modal_brain_thinking.py`, `agentic-video-brain-e4b-thinking`) with `--reasoning-parser gemma4`; do not add that flag to the default worker. The 12B A/B worker is a third app (`modal_brain_12b.py`, `agentic-video-brain-12b`) that serves `google/gemma-4-12B-it` from Google's QAT W4A16 checkpoint so it fits an L4. Flip `VLLM_BASE_URL` / `VLLM_MODEL` in `.env` (gitignored); set `VLLM_THINKING_BASE_URL` for the thinking replica. Do not overwrite the E4B deploy.
+The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`. Default chat worker is **E4B** (`modal_brain.py`, app `agentic-video-brain`). Thinking is a **second** E4B app (`modal_brain_thinking.py`, `agentic-video-brain-e4b-thinking`) with `--reasoning-parser gemma4`; do not add that flag to the default worker. An optional **System One picker** (`PICKER=off` by default) may score which search book to open on the first text hop from letter logprobs; it never looks, listens, or writes the answer. The 12B A/B worker is a third app (`modal_brain_12b.py`, `agentic-video-brain-12b`) that serves `google/gemma-4-12B-it` from Google's QAT W4A16 checkpoint so it fits an L4. Flip `VLLM_BASE_URL` / `VLLM_MODEL` in `.env` (gitignored); set `VLLM_THINKING_BASE_URL` for the thinking replica. Do not overwrite the E4B deploy.
 
 JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `search_slides`, `export_clip`, `export_audio`, `answer`. `search_slides` is our Python (ColQwen query tokens → MaxSim vs unique-slide patches, top 8 times). Scores are not the answer; Gemma `look`s at a hit and reads the real frame. Export re-encodes on the laptop (not stream-copy) and returns `/videos/{id}/exports/{export_id}`. Gemma gets that URL as text, never the clip bytes. Follow-ups send the same `session_id`; last 3 look/listen/search/export windows go into the prompt as text (not old JPEGs/wavs). Not vLLM `tools=`.
 
@@ -53,7 +53,7 @@ Real sound ingest: same `modal_ingest.py` app, function `embed_audio` (not the c
 | GET | `/videos` | List |
 | GET | `/videos/{id}` | Metadata, including `transcript_status`, `visual_status`, `audio_status`, and `slides_status` |
 | GET | `/videos/{id}/file` | Stored bytes. Range-friendly. |
-| POST | `/videos/{id}/chat` | `{ "message", "session_id"?, "thinking"? }` → `{ answer, citations, steps, session_id, export_url?, thinking, thoughts }`. Omit `session_id` for a new thread. `thinking: true` needs `VLLM_THINKING_BASE_URL`. |
+| POST | `/videos/{id}/chat` | `{ "message", "session_id"?, "thinking"? }` → `{ answer, citations, steps, session_id, export_url?, thinking, thoughts, picker? }`. Omit `session_id` for a new thread. `thinking: true` needs `VLLM_THINKING_BASE_URL`. `picker` is null unless `PICKER=logit` or `shadow` (or a test FakePicker). |
 | GET | `/videos/{id}/exports/{export_id}` | Exported mp4 or wav. Range-friendly. |
 | POST | `/internal/videos/{id}/transcript` | Whisper segments. Bearer `INGEST_SECRET`. |
 | GET | `/internal/videos/{id}/audio` | Full wav for the ingest worker. |

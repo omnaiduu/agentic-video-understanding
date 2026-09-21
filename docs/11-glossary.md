@@ -21,6 +21,8 @@
 | **Hybrid search** | Keyword (Postgres FTS) + meaning (E5) + RRF. Speech only. |
 | **ffmpeg** | Cut/decode video and audio |
 | **JSON action** | What Gemma writes (`look`, `search`, …). We run the function. |
+| **Picker / System One** | Optional first-hop router. Scores letters A/B/C/… from logprobs instead of decoding JSON. Default **off**. Never look / listen / answer. |
+| **Softmax** | Turn letter logits into probabilities that add to 1. Winner needs `p_max ≥ 0.55` or we keep JSON. |
 | **Export** | Write a clip/audio to disk and return a GET URL |
 | **Agentic Vision** | Zoom/crop **inside one still** (Google). Not the video timeline |
 | **search_notes** | Search VLM **captions** from ingest. **We don’t do this** |

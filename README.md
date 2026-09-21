@@ -56,6 +56,8 @@ Useful env vars in `backend/.env`:
 | `VLLM_MODEL` | Default `google/gemma-4-E4B-it`. For the 12B A/B only: `google/gemma-4-12B-it` against `modal_brain_12b.py` (do not commit) |
 | `GEMMA_THINKING` | Default `false`. Server-side default for Watch thinking; the checkbox still overrides |
 | `VLLM_THINKING_BASE_URL` | E4B thinking worker (`modal_brain_thinking.py`). Empty → `thinking: true` returns 503 |
+| `PICKER` | Default `off`. Optional System One first-hop router: `off` · `logit` · `shadow` (`fake` is tests-only) |
+| `PICKER_MIN_P` | Default `0.55`. Below this confidence the JSON brain still chooses the first move |
 | `INGEST` / `EMBEDDER` / `VISUAL_EMBEDDER` / `AUDIO_EMBEDDER` / `SLIDE_EMBEDDER` | `fake` unless you wire Modal or local models |
 
 Chat needs a real brain (`BRAIN=vllm` + `VLLM_BASE_URL`) or a test FakeBrain. `BRAIN=fake` with no script returns **503**.

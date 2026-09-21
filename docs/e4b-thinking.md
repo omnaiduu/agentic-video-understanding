@@ -81,3 +81,5 @@ That is the planner 12B used. It still exported the **whole similar-audio window
 - A second L4 is real cost. Off-path json_schema on the original worker stayed intact (thinking-off E1 still $99).
 
 Use the Watch checkbox when you want to *see why* a move happened, or to try listen-then-cut. Do not switch `GEMMA_THINKING` on in `.env`.
+
+Next experiment: [System One picker](system-one-picker.md) — skip JSON decode on the first search-routing hop only. Default off.
