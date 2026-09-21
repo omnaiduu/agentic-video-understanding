@@ -39,9 +39,9 @@ describe("getApiBaseUrl", () => {
     expect(getApiBaseUrl()).toBe("http://api.example:9000")
   })
 
-  it("defaults to local FastAPI", () => {
+  it("defaults to same-origin in the browser", () => {
     vi.stubEnv("VITE_API_URL", "")
-    expect(getApiBaseUrl()).toBe("http://127.0.0.1:8000")
+    expect(getApiBaseUrl()).toBe("")
   })
 
   it("uses same-origin when VITE_API_URL is /", () => {
@@ -49,7 +49,13 @@ describe("getApiBaseUrl", () => {
     expect(getApiBaseUrl()).toBe("")
   })
 
+  it("ignores a loopback VITE_API_URL in the browser", () => {
+    vi.stubEnv("VITE_API_URL", "http://127.0.0.1:8000")
+    expect(getApiBaseUrl()).toBe("")
+  })
+
   it("uses same-origin when the page is on a public host", () => {
+    vi.stubEnv("VITE_API_URL", "http://127.0.0.1:8000")
     vi.stubGlobal("window", {
       location: { hostname: "pair-efficiency-judge-granted.trycloudflare.com" },
     })
@@ -148,6 +154,7 @@ describe("uploadVideo", () => {
         }
         onload: (() => void) | null = null
         open() {}
+        setRequestHeader() {}
         send() {
           this.upload.onprogress?.({
             lengthComputable: true,
@@ -176,6 +183,7 @@ describe("uploadVideo", () => {
         upload = { onprogress: null }
         onload: (() => void) | null = null
         open() {}
+        setRequestHeader() {}
         send() {
           this.onload?.()
         }
@@ -211,9 +219,10 @@ describe("postChat", () => {
     vi.stubGlobal("fetch", fetchMock)
     await expect(postChat("vid-1", "what is at 0.1s?")).resolves.toEqual(body)
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/videos/vid-1/chat",
+      "/videos/vid-1/chat",
       expect.objectContaining({
         method: "POST",
+        headers: expect.objectContaining({ Accept: "application/json" }),
         body: JSON.stringify({ message: "what is at 0.1s?" }),
       }),
     )
@@ -260,14 +269,14 @@ describe("postChat", () => {
 
 describe("videoFileUrl", () => {
   it("points at the FastAPI file route", () => {
-    expect(videoFileUrl("vid-1")).toBe("http://127.0.0.1:8000/videos/vid-1/file")
+    expect(videoFileUrl("vid-1")).toBe("/videos/vid-1/file")
   })
 })
 
 describe("absoluteApiUrl", () => {
   it("prefixes a relative export path", () => {
     expect(absoluteApiUrl("/videos/vid/exports/exp-1")).toBe(
-      "http://127.0.0.1:8000/videos/vid/exports/exp-1",
+      "/videos/vid/exports/exp-1",
     )
   })
 })
@@ -286,7 +295,7 @@ describe("deleteVideo", () => {
     vi.stubGlobal("fetch", fetchMock)
     await expect(deleteVideo("vid-1")).resolves.toBeUndefined()
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/videos/vid-1",
+      "/videos/vid-1",
       expect.objectContaining({ method: "DELETE" }),
     )
   })

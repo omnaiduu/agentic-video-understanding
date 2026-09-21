@@ -38,24 +38,42 @@ export const videoKeys = {
   detail: (id: string) => ["videos", id] as const,
 }
 
-export function getApiBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname
-    if (host !== "" && host !== "localhost" && host !== "127.0.0.1") {
-      return ""
-    }
-  }
-  const vite = import.meta.env.VITE_API_URL as string | undefined
+function readExplicitApiUrl(): string {
+  const vite = (import.meta.env.VITE_API_URL as string | undefined) ?? ""
   const node =
     typeof process !== "undefined"
-      ? process.env.VITE_API_URL || process.env.API_URL
-      : undefined
-  const raw = (vite || node || "http://127.0.0.1:8000").trim()
-  if (raw === "/" || raw === "same-origin") {
-    return ""
-  }
-  return raw.replace(/\/$/, "")
+      ? process.env.VITE_API_URL || process.env.API_URL || ""
+      : ""
+  return (vite || node).trim()
 }
+
+function isLoopbackApiUrl(raw: string): boolean {
+  if (!raw || raw === "/" || raw === "same-origin") {
+    return true
+  }
+  try {
+    const url = new URL(raw)
+    return url.hostname === "localhost" || url.hostname === "127.0.0.1"
+  } catch {
+    return false
+  }
+}
+
+export function getApiBaseUrl(): string {
+  const explicit = readExplicitApiUrl()
+  if (typeof window !== "undefined") {
+    if (!explicit || isLoopbackApiUrl(explicit)) {
+      return ""
+    }
+    return explicit.replace(/\/$/, "")
+  }
+  if (!explicit || isLoopbackApiUrl(explicit)) {
+    return "http://127.0.0.1:8000"
+  }
+  return explicit.replace(/\/$/, "")
+}
+
+const JSON_ACCEPT = { Accept: "application/json" }
 
 function detailFromBody(text: string, fallback: string): string {
   try {
@@ -85,6 +103,7 @@ async function getJson<T>(path: string): Promise<T> {
   let response: Response
   try {
     response = await fetch(url, {
+      headers: JSON_ACCEPT,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
   } catch (error) {
@@ -109,7 +128,7 @@ async function postJson<T>(
   try {
     response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...JSON_ACCEPT, "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
     })
@@ -220,6 +239,7 @@ async function sendNoContent(method: string, path: string): Promise<void> {
   try {
     response = await fetch(url, {
       method,
+      headers: JSON_ACCEPT,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
   } catch (error) {
@@ -262,6 +282,7 @@ export function uploadVideo(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open("POST", `${getApiBaseUrl()}/videos`)
+    xhr.setRequestHeader("Accept", "application/json")
     xhr.upload.onprogress = (event) => {
       if (!onProgress || !event.lengthComputable || event.total === 0) {
         return

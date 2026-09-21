@@ -18,10 +18,16 @@ const config = defineConfig({
       '/videos': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-        timeout: 600_000,
-        proxyTimeout: 600_000,
+        timeout: 3_600_000,
+        proxyTimeout: 3_600_000,
         bypass(req) {
-          const accept = req.headers.accept ?? ''
+          if (req.method && req.method.toUpperCase() !== 'GET') {
+            return
+          }
+          const accept = String(req.headers.accept ?? '')
+          if (accept.includes('application/json')) {
+            return
+          }
           if (accept.includes('text/html')) {
             return req.url
           }
