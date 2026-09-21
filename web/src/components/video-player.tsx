@@ -2,15 +2,18 @@ import { useEffect, useRef } from "react"
 
 import type { Video } from "@/lib/api"
 import { mediaType, videoFileUrl } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 export type SeekFn = (seconds: number) => void
 
 export function VideoPlayer({
   video,
   onReady,
+  className,
 }: {
   video: Video
   onReady?: (seek: SeekFn) => void
+  className?: string
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const onReadyRef = useRef(onReady)
@@ -37,13 +40,14 @@ export function VideoPlayer({
       }
       containerRef.current.replaceChildren()
       const el = document.createElement("video")
-      el.className = "video-js vjs-big-play-centered vjs-fluid"
+      el.className = "video-js vjs-big-play-centered vjs-fill"
       el.setAttribute("playsinline", "true")
       containerRef.current.appendChild(el)
       player = videojs(el, {
         controls: true,
         preload: "metadata",
-        fluid: true,
+        fill: true,
+        fluid: false,
         playsinline: true,
         audioOnlyMode: audioOnly,
         sources: [{ src, type }],
@@ -64,9 +68,15 @@ export function VideoPlayer({
   return (
     <div
       data-slot="player"
-      className="overflow-hidden rounded-xl bg-black [&_.video-js]:mx-auto [&_.video-js]:w-full"
+      className={cn(
+        "aspect-video w-full overflow-hidden rounded-none bg-black",
+        className,
+      )}
     >
-      <div ref={containerRef} />
+      <div
+        ref={containerRef}
+        className="h-full w-full [&_.video-js]:h-full [&_.video-js]:w-full"
+      />
     </div>
   )
 }

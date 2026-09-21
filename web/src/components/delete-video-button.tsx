@@ -28,7 +28,7 @@ export function DeleteVideoButton({
 
   if (confirming) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-3">
         <p className="text-sm text-muted-foreground">
           Delete this video? This cannot be undone.
         </p>
@@ -71,7 +71,7 @@ export function DeleteVideoButton({
           setConfirming(true)
         }}
         type="button"
-        variant="destructive"
+        variant="ghost"
       >
         Delete
       </Button>

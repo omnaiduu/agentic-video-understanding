@@ -11,3 +11,17 @@ export function formatDuration(seconds: number | null | undefined): string {
   const rest = Math.round(seconds % 60)
   return `${minutes}m ${rest}s`
 }
+
+export function formatAddedOn(iso: string | null | undefined): string {
+  if (!iso) {
+    return ""
+  }
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) {
+    return ""
+  }
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  })
+}

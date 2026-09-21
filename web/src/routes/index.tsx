@@ -23,11 +23,22 @@ function LibraryPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Library</h1>
-        <UploadPanel onUploaded={handleUploaded} />
+    <div className="app-enter space-y-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-xl space-y-2">
+          <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
+            Studio
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-pretty sm:text-4xl">
+            Library
+          </h1>
+          <p className="text-sm text-muted-foreground text-pretty">
+            Upload a long video. Indexes build once. Then ask — the model looks at a
+            short slice, not the whole file.
+          </p>
+        </div>
       </div>
+      <UploadPanel onUploaded={handleUploaded} />
       <LibraryScreen
         isPending={query.isPending}
         isError={query.isError}

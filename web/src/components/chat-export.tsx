@@ -15,7 +15,7 @@ export function ChatExport({
   const href = absoluteApiUrl(path)
   const filename = exportFilename(kind)
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-hidden rounded-xl border border-border bg-background/70 p-2">
       {kind === "audio" ? (
         <audio
           aria-label="Exported audio"
@@ -27,7 +27,7 @@ export function ChatExport({
       ) : (
         <video
           aria-label="Exported clip"
-          className="max-h-48 w-full rounded-md bg-black"
+          className="max-h-48 w-full rounded-lg bg-black"
           controls
           playsInline
           preload="metadata"
