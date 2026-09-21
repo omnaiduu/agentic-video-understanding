@@ -91,6 +91,8 @@ Calibration (ECE) is **not** measured here. The 0.55 cutoff is a safety rail, no
 
 Black mp4s. FakePicker / mocked OpenAI. No Modal GPU in this pass.
 
+`uv run pytest`: **199 passed** (including **21** picker tests).
+
 - Softmax is a distribution; SentencePiece `▁A` counts as `A`.
 - Only **ready** books appear, plus abstain.
 - Commit / low confidence / abstain / look / shadow / GPU error all behave.
@@ -100,6 +102,7 @@ Black mp4s. FakePicker / mocked OpenAI. No Modal GPU in this pass.
 - `POST /videos/{id}/chat` returns `picker: null` by default, and a used decision when a FakePicker is injected.
 - `PICKER=logit` with no URL is 503.
 - Picker source does not name leftover-suite answers.
+- Abstain still goes through the existing “do not answer with no move” bounce; JSON must look/search/listen first unless last times exist.
 
 ## What we did not prove
 

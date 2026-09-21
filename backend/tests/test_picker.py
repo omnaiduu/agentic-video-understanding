@@ -346,7 +346,10 @@ def test_low_confidence_falls_back_to_json_brain(tiny_mp4: Path) -> None:
 
 def test_abstain_and_look_never_replace_the_json_form(tiny_mp4: Path) -> None:
     brain = FakeBrain(
-        [_act("answer", answer="Timed look is Gemma's job.", times=[0.1])]
+        [
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="Timed look is Gemma's job.", times=[0.1]),
+        ]
     )
     picker = FakePicker(["abstain"], p_max=0.95)
     result = run_loop(
@@ -362,7 +365,7 @@ def test_abstain_and_look_never_replace_the_json_form(tiny_mp4: Path) -> None:
     assert result.picker is not None
     assert result.picker.used is False
     assert result.picker.reason == "abstain"
-    assert result.steps[0].do == "answer"
+    assert result.steps[0].do == "look"
     assert len(brain.calls) >= 1
 
     brain2 = FakeBrain(
@@ -436,7 +439,6 @@ def test_picker_is_not_used_on_follow_up_or_second_hop(tiny_mp4: Path) -> None:
 
     brain2 = FakeBrain(
         [
-            _act("search"),
             _act("look", start_s=0.1, end_s=0.3, fps=1),
             _act("answer", answer="Second hop is JSON."),
         ]
@@ -525,7 +527,10 @@ def test_picker_gpu_error_falls_back(tiny_mp4: Path) -> None:
             raise RuntimeError("picker GPU unavailable")
 
     brain = FakeBrain(
-        [_act("answer", answer="JSON after picker error.", times=[0.0])]
+        [
+            _act("look", start_s=0.1, end_s=0.3, fps=1),
+            _act("answer", answer="JSON after picker error.", times=[0.0]),
+        ]
     )
     result = run_loop(
         tiny_mp4,
