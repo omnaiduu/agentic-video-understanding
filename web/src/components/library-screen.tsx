@@ -22,7 +22,6 @@ export function LibraryScreen({
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading library…</p>
         <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
-          <Skeleton className="aspect-video w-full rounded-2xl sm:col-span-2" />
           <Skeleton className="aspect-video w-full rounded-2xl" />
           <Skeleton className="aspect-video w-full rounded-2xl" />
         </div>
@@ -51,11 +50,10 @@ export function LibraryScreen({
   }
   return (
     <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
-      {videos.map((video, index) => {
+      {videos.map((video) => {
         const added = formatAddedOn(video.created_at)
-        const featured = index === 0
         return (
-          <li key={video.id} className={featured ? "sm:col-span-2" : undefined}>
+          <li key={video.id}>
             <Link
               to="/videos/$videoId"
               params={{ videoId: video.id }}
@@ -74,7 +72,7 @@ export function LibraryScreen({
                       <StatusBadge status={video.status} />
                     </span>
                   ) : null}
-                  <span className="absolute right-3 bottom-3 rounded-md bg-black/80 px-2 py-1 font-mono text-[11px] font-medium tabular-nums text-white shadow-sm">
+                  <span className="absolute right-3 bottom-3 rounded-md bg-black/80 px-2 py-1 font-mono text-[11px] font-medium tabular-nums text-white shadow-sm ring-1 ring-white/20 backdrop-blur-md">
                     {formatDuration(video.duration_s)}
                   </span>
                 </div>
