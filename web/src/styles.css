@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "video.js/dist/video-js.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -193,16 +194,16 @@
 }
 
 .video-js .vjs-big-play-button {
-  background: oklch(0.84 0.13 85);
-  border: 0;
-  border-radius: 999px;
-  width: 3.25rem;
-  height: 3.25rem;
-  line-height: 3.25rem;
-  margin-left: -1.625rem;
-  margin-top: -1.625rem;
-  color: oklch(0.16 0.02 70);
-  font-size: 2.1rem;
+  background: oklch(0.84 0.13 85) !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  width: 3.25rem !important;
+  height: 3.25rem !important;
+  line-height: 3.25rem !important;
+  margin-left: -1.625rem !important;
+  margin-top: -1.625rem !important;
+  color: oklch(0.16 0.02 70) !important;
+  font-size: 2.1rem !important;
   transition:
     transform 160ms ease,
     background-color 160ms ease;

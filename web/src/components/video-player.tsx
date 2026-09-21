@@ -34,7 +34,6 @@ export function VideoPlayer({
 
     void (async () => {
       const videojs = (await import("video.js")).default
-      await import("video.js/dist/video-js.css")
       if (disposed || !containerRef.current) {
         return
       }
@@ -69,7 +68,7 @@ export function VideoPlayer({
     <div
       data-slot="player"
       className={cn(
-        "aspect-video w-full overflow-hidden rounded-none bg-black",
+        "aspect-video w-full overflow-hidden rounded-none bg-black md:aspect-auto md:h-full",
         className,
       )}
     >

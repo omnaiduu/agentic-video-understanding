@@ -21,8 +21,8 @@ export function LibraryScreen({
     return (
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading library…</p>
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-          <Skeleton className="aspect-video w-full rounded-2xl" />
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
+          <Skeleton className="aspect-video w-full rounded-2xl sm:col-span-2" />
           <Skeleton className="aspect-video w-full rounded-2xl" />
           <Skeleton className="aspect-video w-full rounded-2xl" />
         </div>
@@ -50,21 +50,23 @@ export function LibraryScreen({
     )
   }
   return (
-    <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-      {videos.map((video) => {
+    <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
+      {videos.map((video, index) => {
         const added = formatAddedOn(video.created_at)
+        const featured = index === 0
         return (
-          <li key={video.id}>
+          <li key={video.id} className={featured ? "sm:col-span-2" : undefined}>
             <Link
               to="/videos/$videoId"
               params={{ videoId: video.id }}
               className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <article>
-                <div className="relative overflow-hidden rounded-2xl border border-border bg-muted shadow-[0_20px_50px_-28px_oklch(0_0_0/0.8)] transition-[border-color,transform] duration-300 group-hover:border-primary/40">
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-muted shadow-[0_24px_60px_-28px_oklch(0_0_0/0.9)] transition-[border-color,transform] duration-300 group-hover:border-primary/45">
                   <MediaPoster
                     videoId={video.id}
                     audioOnly={!video.has_video}
+                    durationS={video.duration_s}
                     className="aspect-video"
                   />
                   {video.status !== "ready" ? (
@@ -72,16 +74,16 @@ export function LibraryScreen({
                       <StatusBadge status={video.status} />
                     </span>
                   ) : null}
-                  <span className="absolute right-3 bottom-3 rounded-md bg-black/75 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-white">
+                  <span className="absolute right-3 bottom-3 rounded-md bg-black/80 px-2 py-1 font-mono text-[11px] font-medium tabular-nums text-white shadow-sm">
                     {formatDuration(video.duration_s)}
                   </span>
                 </div>
-                <div className="mt-3 min-w-0 px-0.5">
+                <div className="mt-3 flex min-w-0 items-baseline justify-between gap-3 px-0.5">
                   <p className="truncate text-[15px] font-medium tracking-tight">
                     {video.original_filename}
                   </p>
                   {added ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{added}</p>
+                    <p className="shrink-0 text-xs text-muted-foreground">{added}</p>
                   ) : null}
                 </div>
               </article>

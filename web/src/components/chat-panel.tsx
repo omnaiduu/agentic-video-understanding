@@ -133,7 +133,7 @@ export function ChatPanel({
   }
 
   return (
-    <Card className="flex h-full min-h-[28rem] flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent py-0 shadow-none ring-0 md:min-h-[min(36rem,70vh)]">
+    <Card className="flex h-full min-h-[22rem] flex-1 flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent py-0 shadow-none ring-0 md:min-h-0">
       <CardHeader className="shrink-0 border-b border-border py-3">
         <CardTitle className="text-sm font-medium tracking-tight">Chat</CardTitle>
         {locked ? null : (
@@ -177,7 +177,7 @@ export function ChatPanel({
               data-slot="chat-thread"
             >
               {turns.length === 0 && !mutation.isPending ? (
-                <li className="flex flex-col gap-3 pt-1">
+                <li className="flex h-full min-h-[10rem] flex-col items-start justify-center gap-3">
                   <p className="text-sm text-muted-foreground">
                     Ask about speech, a silent visual, a sound, or a clip.
                   </p>
@@ -186,7 +186,7 @@ export function ChatPanel({
                       <button
                         key={hint}
                         type="button"
-                        className="rounded-full border border-border bg-background/70 px-2.5 py-1 text-left text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                        className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
                         onClick={() => {
                           setDraft(hint)
                           inputRef.current?.focus()

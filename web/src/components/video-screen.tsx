@@ -66,9 +66,9 @@ export function VideoScreen({
   const indexesBuilding = ingestInProgress(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
   return (
-    <div data-page="watch" className="app-enter space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-3">
+    <div data-page="watch" className="app-enter space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -76,17 +76,14 @@ export function VideoScreen({
             <ArrowLeft className="size-3.5" />
             Library
           </Link>
-          <div className="space-y-2">
-            <h1 className="max-w-[min(100%,46rem)] truncate text-2xl font-semibold tracking-tight">
-              {video.original_filename}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span className="font-mono text-xs tabular-nums">
-                {formatDuration(video.duration_s)}
-              </span>
-              <StatusBadge status={video.status} />
-            </div>
-          </div>
+          <span className="hidden h-4 w-px bg-border sm:block" />
+          <h1 className="max-w-[min(100%,36rem)] truncate text-xl font-semibold tracking-tight sm:text-2xl">
+            {video.original_filename}
+          </h1>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {formatDuration(video.duration_s)}
+          </span>
+          <StatusBadge status={video.status} />
         </div>
         <DeleteVideoButton
           videoId={video.id}
@@ -105,18 +102,20 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2"
+        className="grid grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:min-h-[min(38rem,calc(100dvh-12rem))] md:items-stretch"
         data-slot="watch-layout"
       >
-        <div className="border-border max-md:border-b md:border-r">
+        <div className="min-h-0 border-border max-md:border-b md:h-full md:border-r">
           <VideoPlayer video={video} onReady={handlePlayerReady} />
         </div>
-        <ChatPanel
-          videoId={video.id}
-          locked={locked}
-          indexesBuilding={indexesBuilding}
-          onSeek={(seconds) => seekRef.current(seconds)}
-        />
+        <div className="flex min-h-[22rem] min-w-0 flex-col md:h-full md:min-h-0">
+          <ChatPanel
+            videoId={video.id}
+            locked={locked}
+            indexesBuilding={indexesBuilding}
+            onSeek={(seconds) => seekRef.current(seconds)}
+          />
+        </div>
       </div>
     </div>
   )

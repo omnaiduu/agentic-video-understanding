@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import { AudioLines } from "lucide-react"
+import { AudioLines, Play } from "lucide-react"
 
 import { videoFileUrl } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -11,16 +11,26 @@ function prefersReducedMotion() {
   )
 }
 
+export function posterTime(durationS: number | null | undefined): number {
+  if (durationS == null || !Number.isFinite(durationS) || durationS <= 1) {
+    return 0.4
+  }
+  return Math.min(12, Math.max(1, durationS * 0.12))
+}
+
 export function MediaPoster({
   videoId,
   audioOnly,
+  durationS,
   className,
 }: {
   videoId: string
   audioOnly?: boolean
+  durationS?: number | null
   className?: string
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const still = posterTime(durationS)
 
   if (audioOnly) {
     return (
@@ -37,10 +47,10 @@ export function MediaPoster({
   }
 
   function snapToStill(node: HTMLVideoElement) {
-    const duration = Number.isFinite(node.duration) ? node.duration : 1
-    const still = Math.min(0.8, Math.max(0, duration - 0.05))
+    const duration = Number.isFinite(node.duration) ? node.duration : still
+    const target = Math.min(still, Math.max(0, duration - 0.05))
     try {
-      node.currentTime = still
+      node.currentTime = target
     } catch {
       // ignore
     }
@@ -68,15 +78,18 @@ export function MediaPoster({
     >
       <video
         ref={videoRef}
-        className="h-full w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.04]"
+        className="h-full w-full object-cover brightness-110 contrast-110 transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.04]"
         muted
         loop
         playsInline
         preload="metadata"
-        src={`${videoFileUrl(videoId)}#t=0.8`}
+        src={`${videoFileUrl(videoId)}#t=${still}`}
         onLoadedData={(event) => snapToStill(event.currentTarget)}
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
+      <span className="pointer-events-none absolute top-1/2 left-1/2 grid size-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground opacity-90 shadow-lg transition-transform duration-200 group-hover:scale-105">
+        <Play className="size-5 translate-x-px fill-current" />
+      </span>
     </div>
   )
 }

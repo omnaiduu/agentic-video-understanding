@@ -71,7 +71,8 @@ export function DeleteVideoButton({
           setConfirming(true)
         }}
         type="button"
-        variant="ghost"
+        variant="outline"
+        className="text-destructive hover:bg-destructive/10"
       >
         Delete
       </Button>

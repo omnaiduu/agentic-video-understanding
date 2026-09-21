@@ -72,7 +72,7 @@ export function UploadPanel({
       />
       <div
         className={cn(
-          "rounded-2xl border border-dashed border-border/90 bg-card/70 px-5 py-5 shadow-[inset_0_1px_0_oklch(1_0_0/0.04)] transition-colors",
+          "rounded-2xl border border-dashed border-foreground/18 bg-card/70 px-5 py-5 shadow-[inset_0_1px_0_oklch(1_0_0/0.04)] transition-colors",
           over && "border-primary bg-primary/8",
           busy && "border-solid border-primary/40",
         )}
