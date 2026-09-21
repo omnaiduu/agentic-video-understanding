@@ -21,9 +21,8 @@ export function LibraryScreen({
     return (
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading library…</p>
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
-          <Skeleton className="aspect-video w-full rounded-2xl" />
-          <Skeleton className="aspect-video w-full rounded-2xl" />
+        <div className="grid gap-x-6 gap-y-8 grid-cols-1 2xl:grid-cols-2">
+          <Skeleton className="aspect-video max-h-[min(38rem,56vh)] w-full rounded-2xl" />
         </div>
       </div>
     )
@@ -49,7 +48,7 @@ export function LibraryScreen({
     )
   }
   return (
-    <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
+    <ul className="grid grid-cols-1 gap-x-8 gap-y-10 2xl:grid-cols-2">
       {videos.map((video) => {
         const added = formatAddedOn(video.created_at)
         return (
@@ -65,23 +64,23 @@ export function LibraryScreen({
                     videoId={video.id}
                     audioOnly={!video.has_video}
                     durationS={video.duration_s}
-                    className="aspect-video"
+                    className="aspect-video max-h-[min(38rem,56vh)] w-full"
                   />
                   {video.status !== "ready" ? (
-                    <span className="absolute top-3 left-3">
+                    <span className="absolute top-4 left-4">
                       <StatusBadge status={video.status} />
                     </span>
                   ) : null}
-                  <span className="absolute right-3 bottom-3 rounded-md bg-black/80 px-2 py-1 font-mono text-[11px] font-medium tabular-nums text-white shadow-sm ring-1 ring-white/20 backdrop-blur-md">
+                  <span className="absolute right-4 bottom-4 rounded-md bg-black/80 px-2.5 py-1.5 font-mono text-sm font-medium tabular-nums text-white shadow-sm ring-1 ring-white/20 backdrop-blur-md">
                     {formatDuration(video.duration_s)}
                   </span>
                 </div>
-                <div className="mt-3 flex min-w-0 items-baseline justify-between gap-3 px-0.5">
-                  <p className="truncate text-[15px] font-medium tracking-tight">
+                <div className="mt-4 flex min-w-0 items-baseline justify-between gap-3 px-0.5">
+                  <p className="truncate text-xl font-medium tracking-tight">
                     {video.original_filename}
                   </p>
                   {added ? (
-                    <p className="shrink-0 text-xs text-muted-foreground">{added}</p>
+                    <p className="shrink-0 text-sm text-muted-foreground">{added}</p>
                   ) : null}
                 </div>
               </article>

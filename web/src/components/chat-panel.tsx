@@ -132,13 +132,13 @@ export function ChatPanel({
   }
 
   return (
-    <Card className="flex h-full min-h-[22rem] flex-1 flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent py-0 shadow-none ring-0 md:min-h-0">
-      <CardHeader className="shrink-0 border-b border-border py-3">
-        <CardTitle className="text-sm font-medium tracking-tight">Chat</CardTitle>
+    <Card className="flex h-full min-h-[26rem] flex-1 flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent py-0 shadow-none ring-0 md:min-h-0">
+      <CardHeader className="shrink-0 border-b border-border py-4">
+        <CardTitle className="text-base font-medium tracking-tight">Chat</CardTitle>
         {locked ? null : (
           <CardAction>
             <label
-              className="flex cursor-pointer items-center gap-2 text-xs font-normal text-muted-foreground"
+              className="flex cursor-pointer items-center gap-2 text-sm font-normal text-muted-foreground"
               htmlFor="chat-thinking"
             >
               <input
@@ -158,7 +158,7 @@ export function ChatPanel({
         {locked ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-2 text-center">
             <Lock className="size-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Chat stays off until the video is ready.
             </p>
           </div>
@@ -177,7 +177,7 @@ export function ChatPanel({
             >
               {turns.length === 0 && !mutation.isPending ? (
                 <li className="pt-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     Ask about speech, a silent visual, a sound, or a clip.
                   </p>
                 </li>
@@ -196,7 +196,7 @@ export function ChatPanel({
                     </p>
                     <p
                       className={cn(
-                        "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap",
+                        "rounded-2xl px-4 py-3 text-base whitespace-pre-wrap",
                         mine
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted/70 text-foreground",
@@ -287,7 +287,7 @@ export function ChatPanel({
                 <button
                   key={hint}
                   type="button"
-                  className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  className="rounded-full border border-border bg-background/70 px-3.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
                   onClick={() => {
                     setDraft(hint)
                     inputRef.current?.focus()
@@ -315,7 +315,7 @@ export function ChatPanel({
                 value={draft}
                 disabled={mutation.isPending}
                 placeholder="Ask about this video"
-                className="max-h-28 min-h-[3.4rem] field-sizing-fixed resize-none rounded-xl bg-background pr-12"
+                className="max-h-36 min-h-[4.25rem] field-sizing-fixed resize-none rounded-xl bg-background pr-14 text-base md:text-base"
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
@@ -326,9 +326,9 @@ export function ChatPanel({
               />
               <Button
                 type="submit"
-                size="icon-sm"
+                size="icon-lg"
                 disabled={mutation.isPending || !draft.trim()}
-                className="absolute right-2 bottom-2"
+                className="absolute right-2.5 bottom-2.5"
                 aria-label="Send"
               >
                 <ArrowUp />

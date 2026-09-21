@@ -197,13 +197,13 @@
   background: oklch(0.84 0.13 85) !important;
   border: 0 !important;
   border-radius: 999px !important;
-  width: 3.25rem !important;
-  height: 3.25rem !important;
-  line-height: 3.25rem !important;
-  margin-left: -1.625rem !important;
-  margin-top: -1.625rem !important;
+  width: 4.75rem !important;
+  height: 4.75rem !important;
+  line-height: 4.75rem !important;
+  margin-left: -2.375rem !important;
+  margin-top: -2.375rem !important;
   color: oklch(0.16 0.02 70) !important;
-  font-size: 2.1rem !important;
+  font-size: 2.75rem !important;
   transition:
     transform 160ms ease,
     background-color 160ms ease;
@@ -217,7 +217,7 @@
 
 .video-js .vjs-control-bar {
   background: linear-gradient(transparent, rgb(0 0 0 / 0.78));
-  height: 3.1rem;
+  height: 3.5rem;
 }
 
 .video-js .vjs-play-progress,
@@ -250,6 +250,7 @@
 
 @media (min-width: 768px) {
   [data-slot="watch-layout"].grid.md\:grid-cols-2 {
-    grid-template-columns: minmax(0, 1.7fr) minmax(22rem, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 24%);
+    min-height: calc(100dvh - 9.25rem);
   }
 }

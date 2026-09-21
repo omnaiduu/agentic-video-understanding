@@ -72,7 +72,7 @@ export function UploadPanel({
       />
       <div
         className={cn(
-          "rounded-2xl border border-dashed border-foreground/18 bg-card/70 px-5 py-5 shadow-[inset_0_1px_0_oklch(1_0_0/0.04)] transition-colors",
+          "rounded-2xl border border-dashed border-foreground/18 bg-card/70 px-6 py-8 shadow-[inset_0_1px_0_oklch(1_0_0/0.04)] transition-colors",
           over && "border-primary bg-primary/8",
           busy && "border-solid border-primary/40",
         )}
@@ -97,14 +97,14 @@ export function UploadPanel({
       >
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-muted text-primary">
-              <Upload className="size-4" />
+            <span className="mt-0.5 grid size-12 shrink-0 place-items-center rounded-xl bg-muted text-primary">
+              <Upload className="size-5" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-medium">
+              <p className="text-base font-medium">
                 {busy ? name || "Uploading" : "Drop a file here"}
               </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 mp4 or audio, up to 2 GB. The API stores the file; this page does not
                 run models.
               </p>
@@ -114,6 +114,7 @@ export function UploadPanel({
             type="button"
             disabled={busy}
             onClick={() => inputRef.current?.click()}
+            size="lg"
             className="shrink-0"
           >
             Choose file

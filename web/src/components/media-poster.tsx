@@ -87,8 +87,8 @@ export function MediaPoster({
         onLoadedData={(event) => snapToStill(event.currentTarget)}
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
-      <span className="pointer-events-none absolute top-1/2 left-1/2 grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_30px_oklch(0.84_0.13_85/0.35)] transition-transform duration-200 group-hover:scale-105">
-        <Play className="size-4 translate-x-px fill-current" />
+      <span className="pointer-events-none absolute top-1/2 left-1/2 grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_30px_oklch(0.84_0.13_85/0.35)] transition-transform duration-200 group-hover:scale-105">
+        <Play className="size-7 translate-x-px fill-current" />
       </span>
     </div>
   )

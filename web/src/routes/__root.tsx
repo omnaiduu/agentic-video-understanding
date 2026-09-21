@@ -30,19 +30,19 @@ function RootDocument({ children }: { children: ReactNode }) {
         />
         <div className="relative z-10 flex min-h-screen flex-col">
           <header className="sticky top-0 z-30 border-b border-border/70 bg-background/75 backdrop-blur-xl">
-            <div className="mx-auto flex h-14 w-full max-w-[90rem] items-center px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex h-16 w-full items-center px-5 sm:px-6 lg:px-8">
               <Link
                 to="/"
-                className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <AppMark />
-                <span className="text-sm font-semibold tracking-tight">
+                <AppMark className="size-9 rounded-xl" />
+                <span className="text-base font-semibold tracking-tight">
                   Agentic Video
                 </span>
               </Link>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <main className="mx-auto flex w-full flex-1 flex-col px-5 py-4 sm:px-6 lg:px-8">
             {children}
           </main>
         </div>

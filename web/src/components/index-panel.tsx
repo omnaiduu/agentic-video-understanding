@@ -47,12 +47,12 @@ export function IndexPanel({ video }: { video: Video }) {
           return (
             <li
               key={book.key}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm"
             >
               {tone === "ready" ? (
-                <Check className="size-3.5 text-live" />
+                <Check className="size-4 text-live" />
               ) : (
-                <Icon className="size-3.5 text-muted-foreground" />
+                <Icon className="size-4 text-muted-foreground" />
               )}
               <span>{book.label}</span>
               {tone === "ready" ? (

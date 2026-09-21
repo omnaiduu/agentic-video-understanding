@@ -53,7 +53,7 @@ export function VideoScreen({
             ? "It may have been deleted, or the link is wrong."
             : error?.message || "The API is unreachable. Start FastAPI on port 8000 and retry."}
         </p>
-        <Link to="/" className={buttonVariants({ variant: "outline" })}>
+        <Link to="/" className={buttonVariants({ variant: "outline", size: "lg" })}>
           Back to library
         </Link>
       </div>
@@ -66,21 +66,21 @@ export function VideoScreen({
   const indexesBuilding = ingestInProgress(video)
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
   return (
-    <div data-page="watch" className="app-enter space-y-4">
+    <div data-page="watch" className="app-enter flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1.5 text-base text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="size-3.5" />
+            <ArrowLeft className="size-4" />
             Library
           </Link>
-          <span className="hidden h-4 w-px bg-border sm:block" />
-          <h1 className="max-w-[min(100%,36rem)] truncate text-xl font-semibold tracking-tight sm:text-2xl">
+          <span className="hidden h-5 w-px bg-border sm:block" />
+          <h1 className="max-w-[min(100%,42rem)] truncate text-2xl font-semibold tracking-tight sm:text-3xl">
             {video.original_filename}
           </h1>
-          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+          <span className="font-mono text-sm tabular-nums text-muted-foreground">
             {formatDuration(video.duration_s)}
           </span>
           <StatusBadge status={video.status} />
@@ -102,13 +102,13 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:items-stretch"
+        className="grid min-h-[28rem] flex-1 grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:items-stretch"
         data-slot="watch-layout"
       >
-        <div className="min-w-0 border-border max-md:border-b md:border-r">
+        <div className="min-h-0 min-w-0 border-border max-md:border-b md:h-full md:border-r">
           <VideoPlayer video={video} onReady={handlePlayerReady} />
         </div>
-        <div className="flex min-h-[22rem] min-w-0 flex-col md:min-h-0">
+        <div className="flex min-h-[26rem] min-w-0 flex-col md:h-full md:min-h-0">
           <ChatPanel
             videoId={video.id}
             locked={locked}
