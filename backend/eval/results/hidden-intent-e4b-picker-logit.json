@@ -1,0 +1,1014 @@
+{
+  "brain_label": "e4b-picker-logit",
+  "vllm_model": "google/gemma-4-E4B-it",
+  "thinking": false,
+  "picker": "logit",
+  "video_id": "0bdc0566-21f9-4051-a8f7-6d91f46ae3c3",
+  "base_url": "http://127.0.0.1:8000",
+  "questions": {
+    "E1": {
+      "http": 200,
+      "answer": "The Pro plan costs $99 per month.",
+      "export_url": null,
+      "citations": [],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "A",
+        "do": "search",
+        "p_max": 0.9866366751108494,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 0.9866366751108494,
+          "search_visual": 3.488500857378052e-05,
+          "search_audio": 8.820311467439781e-06,
+          "search_slides": 0.01241992333997743,
+          "abstain": 0.000899696229131994
+        }
+      },
+      "steps": [
+        {
+          "do": "search",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 0.0,
+          "detail": "How much does Pro cost?: 0.00,3.12"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "detail": "0.00,1.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The Pro plan costs $99 per month."
+        }
+      ],
+      "error": null,
+      "question": "How much does Pro cost?",
+      "elapsed_s": 12.3,
+      "listened_before_export": false,
+      "searched_speech": true,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass",
+        "what_happened": "Opened spoken words. Answered $99 a month.",
+        "fragile_crutch_we_removed": "none",
+        "what_12b_should_try_without_a_bounce": "Same question. Speech or a look at Pricing is enough."
+      }
+    },
+    "H1": {
+      "http": 200,
+      "answer": "Yes, the $99 price is visible on the screen at the 0.0s mark, displayed under the heading \"Pricing\" for \"Pro per month\". There is also a \"Red Alert\" screen at 6.0s, but it does not display a price. The Q3 Roadmap slide at 10.0s does not mention pricing.",
+      "export_url": null,
+      "citations": [
+        0.0
+      ],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "D",
+        "do": "search_slides",
+        "p_max": 0.9975046012904747,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 0.0007084022611637799,
+          "search_visual": 0.0008027249263867791,
+          "search_audio": 7.46650134014724e-05,
+          "search_slides": 0.9975046012904747,
+          "abstain": 0.0009096065085733607
+        }
+      },
+      "steps": [
+        {
+          "do": "search_slides",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 10.0,
+          "detail": "I think the $99 price is on the red emergency screen \u2014 can you confirm?: 6.00,0.00,10.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "detail": "6.00,7.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "detail": "0.00,1.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 12.0,
+          "detail": "10.00,11.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "Yes, the $99 price is visible on the screen at the 0.0s mark, displayed under the heading \"Pricing\" for \"Pro per month\". There is also a \"Red Alert\" screen at 6.0s, but it does not display a price. The Q3 Roadmap slide at 10.0s does not men"
+        }
+      ],
+      "error": null,
+      "question": "I think the $99 price is on the red emergency screen \u2014 can you confirm?",
+      "elapsed_s": 21.4,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "unstable",
+        "what_happened": "Sometimes looked at Pricing, red, and Q3 and said the price is not on red. Sometimes led with Yes (the trap) even after seeing $99 on navy.",
+        "fragile_crutch_we_removed": "none \u2014 there was never an H1 laptop rule",
+        "what_12b_should_try_without_a_bounce": "Reject the false premise from the pixels. Do not add a 'say no' bounce."
+      }
+    },
+    "M3": {
+      "http": 200,
+      "answer": "We are supposed to ship the slide index this quarter.",
+      "export_url": null,
+      "citations": [
+        10.0
+      ],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "A",
+        "do": "search",
+        "p_max": 0.9998065003988184,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 0.9998065003988184,
+          "search_visual": 2.4296132631201617e-05,
+          "search_audio": 5.092746063233224e-06,
+          "search_slides": 0.000139814589856103,
+          "abstain": 2.4296132631201617e-05
+        }
+      },
+      "steps": [
+        {
+          "do": "search",
+          "ok": true,
+          "start_s": 3.12,
+          "end_s": 3.12,
+          "detail": "What are we supposed to ship this quarter?: 3.12,0.00"
+        },
+        {
+          "do": "search_slides",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 16.0,
+          "detail": "What are we supposed to ship this quarter?: 10.00,6.00,0.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 11.0,
+          "detail": "10.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 7.0,
+          "detail": "6.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 1.0,
+          "detail": "0.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "We are supposed to ship the slide index this quarter."
+        }
+      ],
+      "error": null,
+      "question": "What are we supposed to ship this quarter?",
+      "elapsed_s": 20.7,
+      "listened_before_export": false,
+      "searched_speech": true,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass",
+        "what_happened": "Speech missed the never-spoken heading, then slides + look at Q3.",
+        "fragile_crutch_we_removed": "none",
+        "what_12b_should_try_without_a_bounce": "Still leave speech when it does not answer; look at the printed slide."
+      }
+    },
+    "M4": {
+      "http": 200,
+      "answer": "The notification tone plays between 9.0s and 12.0s. At that moment, the screen shows a red background with the text \"RED ALERT\" in white.",
+      "export_url": null,
+      "citations": [],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "C",
+        "do": "search_audio",
+        "p_max": 0.9992123310542986,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 5.1404340426277335e-05,
+          "search_visual": 0.0001088229895363927,
+          "search_audio": 0.9992123310542986,
+          "search_slides": 7.479287399434484e-05,
+          "abstain": 0.0005526487417444654
+        }
+      },
+      "steps": [
+        {
+          "do": "search_audio",
+          "ok": true,
+          "start_s": 10.5,
+          "end_s": 13.5,
+          "detail": "When does the notification tone play, and what is on screen at that moment?: 10.50,9.00,6.00,7.50,12.00,13.50,15.00,0.00"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "audio"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "detail": "9.00,10.00,11.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The notification tone plays between 9.0s and 12.0s. At that moment, the screen shows a red background with the text \"RED ALERT\" in white."
+        }
+      ],
+      "error": null,
+      "question": "When does the notification tone play, and what is on screen at that moment?",
+      "elapsed_s": 9.8,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass_with_hint",
+        "what_happened": "Sound hit 9\u201312s. Then look+listen near the middle (10.5\u201312.5). Named Q3 / Ship the slide index. The observe note used to say 'cut from the middle'.",
+        "fragile_crutch_we_removed": "Prompt that told it to look/export at the middle of a CLAP window.",
+        "what_12b_should_try_without_a_bounce": "Listen inside the 9\u201312s hit, then say what is on screen at the tone."
+      }
+    },
+    "M1": {
+      "http": 200,
+      "answer": "The video does not clearly show a number printed on the slide that matches what they said in relation to the slides reviewed. The visible slides show a 'Q3 Roadmap' (no number printed), a 'RED ALERT' screen (no number printed), and a 'Pricing' slide showing a price of \"$99\" in yellow text on a dark blue background. Since the content did not directly address the question about a spoken number matching a printed number on the slide, I cannot definitively confirm the color or match without further audio context.",
+      "export_url": null,
+      "citations": [],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "D",
+        "do": "search_slides",
+        "p_max": 0.9990822025440055,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 0.00010880877222936614,
+          "search_visual": 0.0007095226607395835,
+          "search_audio": 1.4725666008289345e-05,
+          "search_slides": 0.9990822025440055,
+          "abstain": 8.474035701726848e-05
+        }
+      },
+      "steps": [
+        {
+          "do": "search_slides",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 16.0,
+          "detail": "They said a number is also printed on the slide. What color is that number, and does it match what they said?: 10.00,6.00,0.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 11.0,
+          "detail": "10.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 7.0,
+          "detail": "6.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 1.0,
+          "detail": "0.00"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The video does not clearly show a number printed on the slide that matches what they said in relation to the slides reviewed. The visible slides show a 'Q3 Roadmap' (no number printed), a 'RED ALERT' screen (no number printed), and a 'Prici"
+        }
+      ],
+      "error": null,
+      "question": "They said a number is also printed on the slide. What color is that number, and does it match what they said?",
+      "elapsed_s": 24.4,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "fail_without_bounce",
+        "what_happened": "Looked at Q3, Pricing, and red. Named yellow $99. Then answered without searching speech: cannot confirm a match. With a bounce that blocked answer until search, E4B passed (yellow 99 matches spoken $99).",
+        "fragile_crutch_we_removed": "Keyword bounce on 'printed' + 'they said': block answer until a forced speech search, then a 'compare the lines' note.",
+        "what_12b_should_try_without_a_bounce": "Open both books on its own: look at the printed number, search speech, then say whether they match."
+      }
+    },
+    "H5": {
+      "http": 200,
+      "answer": "I have listened to several segments identified as potential clapping sounds in the recording. While the audio contains sounds that match the description of claps, it is not possible to give an exact count from the provided audio snippets alone, as the audio is not explicitly counting.",
+      "export_url": null,
+      "citations": [],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "C",
+        "do": "search_audio",
+        "p_max": 0.9998243909737016,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 7.887937382162832e-06,
+          "search_visual": 1.7775741290063433e-05,
+          "search_audio": 0.9998243909737016,
+          "search_slides": 1.0128312083938445e-05,
+          "abstain": 0.00013981703554236807
+        }
+      },
+      "steps": [
+        {
+          "do": "search_audio",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 9.0,
+          "detail": "How many claps are in this recording?: 6.00,7.50,12.00,13.50,15.00,10.50,9.00,3.00"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 9.0,
+          "detail": "audio"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 15.0,
+          "detail": "audio"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 13.5,
+          "end_s": 16.0,
+          "detail": "audio"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "I have listened to several segments identified as potential clapping sounds in the recording. While the audio contains sounds that match the description of claps, it is not possible to give an exact count from the provided audio snippets al"
+        }
+      ],
+      "error": null,
+      "question": "How many claps are in this recording?",
+      "elapsed_s": 14.3,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "fail",
+        "what_happened": "Sound search is not a clap detector. E4B treated hit rows as a count, or listened to silence/tone and said one clap. An 'if unsure, say zero' bounce was exam-shaped and was already removed.",
+        "fragile_crutch_we_removed": "unsure \u2192 zero bounce (already gone)",
+        "what_12b_should_try_without_a_bounce": "Listen at a hit. If the wav is not claps, say zero. Still no laptop clap counter."
+      }
+    },
+    "H7": {
+      "http": 200,
+      "answer": "Here is a three-second clip of what is on screen when the beep occurs: /videos/0bdc0566-21f9-4051-a8f7-6d91f46ae3c3/exports/4bd0c095-3d05-442b-82d8-72ef78358ee8.",
+      "export_url": "/videos/0bdc0566-21f9-4051-a8f7-6d91f46ae3c3/exports/4bd0c095-3d05-442b-82d8-72ef78358ee8",
+      "citations": [],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "C",
+        "do": "search_audio",
+        "p_max": 0.9354671572635294,
+        "used": true,
+        "reason": "commit",
+        "probs": {
+          "search": 0.0012411595458677773,
+          "search_visual": 0.059802415929664336,
+          "search_audio": 0.9354671572635294,
+          "search_slides": 0.00011544582118783037,
+          "abstain": 0.00337382143975086
+        }
+      },
+      "steps": [
+        {
+          "do": "search_audio",
+          "ok": true,
+          "start_s": 10.5,
+          "end_s": 13.5,
+          "detail": "Make a three-second clip of whatever is on screen when the beep happens.: 10.50,9.00,6.00,7.50,12.00,13.50,15.00,3.00"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 15.0,
+          "detail": "12.00,13.00,14.00"
+        },
+        {
+          "do": "export_clip",
+          "ok": true,
+          "start_s": 12.0,
+          "end_s": 15.0,
+          "detail": "/videos/0bdc0566-21f9-4051-a8f7-6d91f46ae3c3/exports/4bd0c095-3d05-442b-82d8-72ef78358ee8"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "Here is a three-second clip of what is on screen when the beep occurs: /videos/0bdc0566-21f9-4051-a8f7-6d91f46ae3c3/exports/4bd0c095-3d05-442b-82d8-72ef78358ee8."
+        }
+      ],
+      "error": null,
+      "question": "Make a three-second clip of whatever is on screen when the beep happens.",
+      "elapsed_s": 14.7,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "fail_without_recut",
+        "what_happened": "search_audio returned a similar-audio RANGE (often 9\u201312s). E4B exported that whole range without listening. The start of the window is the previous slide. Recut-from-middle then extra-export-cap made a later live pass (9\u201312 then 10.5\u201312.5). Without that crutch, exporting the range is the bug.",
+        "fragile_crutch_we_removed": "Laptop recut-from-middle (~2s from the hit midpoint), bounce answers until that recut, and block further exports.",
+        "what_12b_should_try_without_a_bounce": "search_audio \u2192 listen at a hit \u2192 export only the range it heard. If it still dumps the whole CLAP window, that is a 12B fail, not a reason to put the recut bounce back."
+      }
+    },
+    "H8": {
+      "http": 200,
+      "answer": "The video starts with a 'Pricing' slide showing a 'Pro' plan for $99 per month. It transitions to a 'Red Alert' slide with a plain red background. Following that, a 'Q3 Roadmap' slide is shown with the task 'Ship the slide index'. The video concludes with this roadmap slide.",
+      "export_url": null,
+      "citations": [],
+      "thinking": false,
+      "thoughts": [],
+      "picker": {
+        "letter": "E",
+        "do": null,
+        "p_max": 0.7931615542097958,
+        "used": false,
+        "reason": "abstain",
+        "probs": {
+          "search": 0.023951400713085633,
+          "search_visual": 0.17697826461440924,
+          "search_audio": 0.00471631043790062,
+          "search_slides": 0.0011924700248084996,
+          "abstain": 0.7931615542097958
+        }
+      },
+      "steps": [
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "detail": "0.00,1.00"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "detail": "audio"
+        },
+        {
+          "do": "look",
+          "ok": false,
+          "start_s": 2.0,
+          "end_s": 4.0,
+          "detail": "skip ahead"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "detail": "6.00,7.00"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "detail": "audio"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 12.0,
+          "detail": "10.00,11.00"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 10.0,
+          "end_s": 12.0,
+          "detail": "audio"
+        },
+        {
+          "do": "look",
+          "ok": true,
+          "start_s": 14.0,
+          "end_s": 16.0,
+          "detail": "14.00,15.00"
+        },
+        {
+          "do": "listen",
+          "ok": true,
+          "start_s": 14.0,
+          "end_s": 16.0,
+          "detail": "audio"
+        },
+        {
+          "do": "answer",
+          "ok": true,
+          "start_s": null,
+          "end_s": null,
+          "detail": "The video starts with a 'Pricing' slide showing a 'Pro' plan for $99 per month. It transitions to a 'Red Alert' slide with a plain red background. Following that, a 'Q3 Roadmap' slide is shown with the task 'Ship the slide index'. The video"
+        }
+      ],
+      "error": null,
+      "question": "Walk through the whole tape in order, including things nobody said out loud.",
+      "elapsed_s": 36.7,
+      "listened_before_export": false,
+      "searched_speech": false,
+      "exported_heard_range": false,
+      "dumped_unheard_clap_window": false,
+      "e4b_note": {
+        "verdict": "pass_with_skip",
+        "what_happened": "2s look+listen crawl burned 12 moves by ~9s until skip-ahead blocked the next 2s step when >6s remained (look-only too). Then it named Pricing, RED ALERT, and Q3.",
+        "fragile_crutch_we_removed": "none \u2014 skip-ahead stays; it is loop hygiene, not a prompt guess",
+        "what_12b_should_try_without_a_bounce": "Search then jump, or skip 2s crawls. Same skip-ahead rule is still on."
+      }
+    }
+  },
+  "score": {
+    "brain_label": "e4b-picker-logit",
+    "video_id": "0bdc0566-21f9-4051-a8f7-6d91f46ae3c3",
+    "vllm_model": "google/gemma-4-E4B-it",
+    "questions": {
+      "E1": {
+        "qid": "E1",
+        "verdict": "pass",
+        "reason": "HTTP 200 and names $99.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": true,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The Pro plan costs $99 per month.",
+        "steps": [
+          [
+            "search",
+            true,
+            0.0,
+            0.0
+          ],
+          [
+            "look",
+            true,
+            0.0,
+            2.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H1": {
+        "qid": "H1",
+        "verdict": "pass",
+        "reason": "Rejects the false premise from the pixels.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "Yes, the $99 price is visible on the screen at the 0.0s mark, displayed under the heading \"Pricing\" for \"Pro per month\". There is also a \"Red Alert\" screen at 6.0s, but it does not display a price. The Q3 Roadmap slide at 10.0s does not mention pricing.",
+        "steps": [
+          [
+            "search_slides",
+            true,
+            6.0,
+            10.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            8.0
+          ],
+          [
+            "look",
+            true,
+            0.0,
+            2.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            12.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "M3": {
+        "qid": "M3",
+        "verdict": "pass",
+        "reason": "HTTP 200 and names what to ship.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": true,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "We are supposed to ship the slide index this quarter.",
+        "steps": [
+          [
+            "search",
+            true,
+            3.12,
+            3.12
+          ],
+          [
+            "search_slides",
+            true,
+            10.0,
+            16.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            11.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            7.0
+          ],
+          [
+            "look",
+            true,
+            0.0,
+            1.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "M4": {
+        "qid": "M4",
+        "verdict": "partial",
+        "reason": "Looked or listened after sound search but did not name the slide.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The notification tone plays between 9.0s and 12.0s. At that moment, the screen shows a red background with the text \"RED ALERT\" in white.",
+        "steps": [
+          [
+            "search_audio",
+            true,
+            10.5,
+            13.5
+          ],
+          [
+            "listen",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "look",
+            true,
+            9.0,
+            12.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "M1": {
+        "qid": "M1",
+        "verdict": "fail",
+        "reason": "Answered without searching spoken words.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The video does not clearly show a number printed on the slide that matches what they said in relation to the slides reviewed. The visible slides show a 'Q3 Roadmap' (no number printed), a 'RED ALERT' screen (no number printed), and a 'Pricing' slide showing a price of \"$99\" in yellow text on a dark blue background. Since the content did not directly address the question about a spoken number match",
+        "steps": [
+          [
+            "search_slides",
+            true,
+            10.0,
+            16.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            11.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            7.0
+          ],
+          [
+            "look",
+            true,
+            0.0,
+            1.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H5": {
+        "qid": "H5",
+        "verdict": "partial",
+        "reason": "Listened and did not invent a count, but did not say zero.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": false,
+          "exported": false
+        },
+        "answer": "I have listened to several segments identified as potential clapping sounds in the recording. While the audio contains sounds that match the description of claps, it is not possible to give an exact count from the provided audio snippets alone, as the audio is not explicitly counting.",
+        "steps": [
+          [
+            "search_audio",
+            true,
+            6.0,
+            9.0
+          ],
+          [
+            "listen",
+            true,
+            6.0,
+            9.0
+          ],
+          [
+            "listen",
+            true,
+            12.0,
+            15.0
+          ],
+          [
+            "listen",
+            true,
+            13.5,
+            16.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H7": {
+        "qid": "H7",
+        "verdict": "fail",
+        "reason": "Exported without listening first.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": true
+        },
+        "answer": "Here is a three-second clip of what is on screen when the beep occurs: /videos/0bdc0566-21f9-4051-a8f7-6d91f46ae3c3/exports/4bd0c095-3d05-442b-82d8-72ef78358ee8.",
+        "steps": [
+          [
+            "search_audio",
+            true,
+            10.5,
+            13.5
+          ],
+          [
+            "look",
+            true,
+            12.0,
+            15.0
+          ],
+          [
+            "export_clip",
+            true,
+            12.0,
+            15.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      },
+      "H8": {
+        "qid": "H8",
+        "verdict": "pass",
+        "reason": "Walk names Pricing, RED ALERT, and Q3.",
+        "flags": {
+          "http_ok": true,
+          "listened_before_export": false,
+          "exported_heard_range": false,
+          "dumped_unheard_clap_window": false,
+          "searched_speech": false,
+          "looked": true,
+          "exported": false
+        },
+        "answer": "The video starts with a 'Pricing' slide showing a 'Pro' plan for $99 per month. It transitions to a 'Red Alert' slide with a plain red background. Following that, a 'Q3 Roadmap' slide is shown with the task 'Ship the slide index'. The video concludes with this roadmap slide.",
+        "steps": [
+          [
+            "look",
+            true,
+            0.0,
+            2.0
+          ],
+          [
+            "listen",
+            true,
+            0.0,
+            2.0
+          ],
+          [
+            "look",
+            false,
+            2.0,
+            4.0
+          ],
+          [
+            "look",
+            true,
+            6.0,
+            8.0
+          ],
+          [
+            "listen",
+            true,
+            6.0,
+            8.0
+          ],
+          [
+            "look",
+            true,
+            10.0,
+            12.0
+          ],
+          [
+            "listen",
+            true,
+            10.0,
+            12.0
+          ],
+          [
+            "look",
+            true,
+            14.0,
+            16.0
+          ],
+          [
+            "listen",
+            true,
+            14.0,
+            16.0
+          ],
+          [
+            "answer",
+            true,
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    "tallies": {
+      "pass": 4,
+      "partial": 2,
+      "fail": 2
+    },
+    "order": [
+      "E1",
+      "H1",
+      "M3",
+      "M4",
+      "M1",
+      "H5",
+      "H7",
+      "H8"
+    ]
+  }
+}

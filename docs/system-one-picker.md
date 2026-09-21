@@ -4,7 +4,7 @@ The [thinking experiment is closed](e4b-thinking.md). Default brain stays **Gemm
 
 The picker only chooses **which phone book to open**. Gemma still **looks**, **listens**, and **writes** the answer. Ingest is unchanged.
 
-**Verdict:** picker **stays off** as default. Wiring and fallbacks are tested without a GPU. A live `PICKER=logit` pass on the leftover suite is still outstanding.
+**Verdict:** picker **stays off** as default. Live `PICKER=shadow` then `PICKER=logit` on the leftover suite did **not** fix H7 / M1 / H5. Committing the sound book on H7 **regressed** listen-then-export. Keep the wiring; do not turn it on in `.env`.
 
 Related: [E4B thinking](e4b-thinking.md) · [hidden-intent questions](live-intent-questions.md) · [architecture](05-architecture.md)
 
@@ -104,18 +104,37 @@ Black mp4s. FakePicker / mocked OpenAI. No Modal GPU in this pass.
 - Picker source does not name leftover-suite answers.
 - Abstain still goes through the existing “do not answer with no move” bounce; JSON must look/search/listen first unless last times exist.
 
-## What we did not prove
+## Live leftover suite (E4B)
 
-No live E4B logit pass on the eight leftover questions. This environment has no Modal GPU. Do not claim H7 / H5 / E1 routing quality until `PICKER=shadow` then `PICKER=logit` run against the exam tape.
+Same eight questions as thinking / 12B. Fresh exam tape `0bdc0566-21f9-4051-a8f7-6d91f46ae3c3` (same 16s recipe). All four indexes `ready`. Crutches still off. Hugging Face token loaded CLAP for query embed; Modal E4B served letters + JSON.
 
-Expected live risks (not measured):
+Traces: `backend/eval/results/hidden-intent-e4b-picker-shadow.json` and `hidden-intent-e4b-picker-logit.json`. Compare to `hidden-intent-e4b-off.json` (older upload, same recipe).
 
-- A confident **wrong** book (speech for a slide-only heading).
-- Letters missing from `top_logprobs=20` (treated as a very low logit).
-- First-token not a letter (`The` / `{`) even though we score the distribution, not the sampled string.
+Letters were **peaked**, not confused. Typical `p_max` 0.93–1.00. H8 correctly **abstained** (`p≈0.79–0.81` on “none of these”) so the walk still began with `look`.
+
+| Q | Shadow (score only; JSON acts) | Logit (commit if confident) | vs leftover |
+|---|---|---|---|
+| **E1** Pro cost | **pass.** Picker `search` 0.99, JSON `search`. $99. | **pass.** Committed `search`. $99. | Already a pass. Unchanged. |
+| **H1** $99 on red? | **pass.** Picker wanted `search_slides` 0.997; JSON opened **speech** first. | **pass.** Committed **slides**. Named Pricing $99; red has no price. | Trap wording. Not worse. |
+| **M3** ship this quarter | **pass.** Picker `search` 1.00, JSON `search`. | **pass.** Committed `search`. | Already a pass. |
+| **M4** tone + screen | **partial.** Picker `search_audio` 0.999. Named **RED ALERT** (window start), not Q3. | **partial.** Same first book, same miss. | Same 12B/thinking miss. Picker does not listen. |
+| **M1** printed color vs speech | **fail.** Picker `search_slides` 0.999 **agreed** with JSON. Looks; **no speech search.** Yellow $99; “cannot confirm.” | **fail.** Committed slides. `p(search)` ≈ 0.0001. | **Did not fix.** One letter cannot open two books. |
+| **H5** claps | **partial.** Picker `search_audio` 1.00. Listened; pointed at hit ranges; did not say zero. | **partial.** Same. Still treats CLAP rows as clap-like. | **Did not fix.** Not a clap detector. |
+| **H7** clip the beep | **pass.** Picker wanted `search_audio` 0.93; JSON **looked 10.5–13.5, listened, exported that range.** | **fail.** Committed `search_audio` 0.94 → look 12–15 → **export 12–15, no listen.** | **Regressed.** The leftover is hop 2 (listen before cut). Forcing the sound book first brought back dump-the-window. |
+| **H8** walk | **pass.** Picker abstain 0.81. Skip-ahead. Names Pricing, RED ALERT, Q3. | **pass.** Abstain 0.79. Same walk. | Already kept. |
+
+Automated tallies: shadow **5 pass / 2 partial / 1 fail**. logit **4 pass / 2 partial / 2 fail**.
+
+Shadow first-hop **agree** with JSON on 6/8 (E1, M3, M4, M1, H5, H8-as-look). Disagree on H1 (slides vs speech) and H7 (audio vs look). Those two are the only commits that change behavior; H7 is the one that hurt.
+
+Wall time for eight chats: shadow ~257s, logit ~154s. That gap is mostly JSON hop variance (M3 50s vs 21s, H8 70s vs 37s), not a measured decode saving. E1 was 18s shadow vs 12s logit. Do not advertise a production token win from this.
 
 ## Why default stays off
 
-Same rule as thinking: do not pay a new path on every chat until the leftover suite says it helps. JSON schema already constrains the form. The picker only saves the **first routing hop**, and only when the question is a book choice. Look/listen/answer still decode.
+Same rule as thinking: do not pay a new path on every chat unless the leftover suite says it helps. The picker is **calibrated enough to pick a book**. The leftover bugs are **not** “wrong first book”:
 
-Start with **shadow** so we can compare `picker.do` to the JSON first move without changing answers.
+- **H7** is listen-then-export after a **range** hit. The picker is forbidden to listen or export.
+- **M1** needs **two** books. The menu is one letter.
+- **H5** needs an ear that does not trust CLAP row labels. Scoring “sounds” first is what JSON already did.
+
+A confident first hop can still be the **failing** hop (M1 slides, H7 audio). Leave `PICKER=off`.
