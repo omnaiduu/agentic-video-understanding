@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from pathlib import Path
 
@@ -237,6 +238,34 @@ def test_chat_stores_text_not_jpegs(client, tiny_mp4: Path) -> None:
         chat = session.get(ChatSession, body["session_id"])
         assert chat is not None
         assert str(chat.video_id) == video_id
+
+
+def test_chat_appends_question_to_debug_jsonl(
+    client, tiny_mp4: Path, data_dir: Path
+) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    _override(_look_then_answer())
+    try:
+        body = client.post(
+            f"/videos/{video_id}/chat",
+            json={"message": "what is in the opening shot?", "thinking": False},
+        ).json()
+    finally:
+        _clear_override()
+    log_path = data_dir / "debug-questions.jsonl"
+    assert log_path.is_file()
+    rows = [
+        json.loads(line)
+        for line in log_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert rows
+    last = rows[-1]
+    assert last["question"] == "what is in the opening shot?"
+    assert last["video_id"] == video_id
+    assert last["session_id"] == body["session_id"]
+    assert last["thinking"] is False
+    assert last["ts"]
 
 
 def test_delete_video_removes_sessions(client, tiny_mp4: Path) -> None:

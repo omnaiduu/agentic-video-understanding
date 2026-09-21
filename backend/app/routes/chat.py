@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 import uuid
+from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -100,6 +103,30 @@ def _history(session: Session, chat: ChatSession) -> list[tuple[str, str]]:
     return [(row.role, row.content) for row in rows if row.kind in HISTORY_KINDS]
 
 
+def _log_debug_question(
+    data_dir: Path,
+    *,
+    video_id: uuid.UUID,
+    session_id: uuid.UUID,
+    question: str,
+    thinking: bool,
+) -> None:
+    path = data_dir / "debug-questions.jsonl"
+    record = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "video_id": str(video_id),
+        "session_id": str(session_id),
+        "question": question,
+        "thinking": thinking,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        return
+
+
 def _save_turn(
     session: Session,
     chat: ChatSession,
@@ -168,6 +195,13 @@ def chat(
 
     history = _history(session, chat_row)
     last_times = list(chat_row.last_times or [])
+    _log_debug_question(
+        settings.data_dir,
+        video_id=video.id,
+        session_id=chat_row.id,
+        question=payload.message,
+        thinking=want_thinking,
+    )
 
     def _search(query: str):
         return search_transcript(session, video.id, query, embedder)
