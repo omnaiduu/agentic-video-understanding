@@ -66,7 +66,7 @@ export function VideoScreen({
   const ingestFailed = video.status === "error" || Boolean(video.error_message)
 
   return (
-    <div data-page="watch" className="app-enter flex flex-col gap-4">
+    <div data-page="watch" className="app-enter flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <Link
@@ -77,10 +77,10 @@ export function VideoScreen({
             Library
           </Link>
           <span className="hidden h-4 w-px bg-border sm:block" />
-          <h1 className="max-w-[min(100%,36rem)] truncate text-lg font-semibold tracking-tight">
+          <h1 className="max-w-[min(100%,42rem)] truncate text-lg font-semibold tracking-tight">
             {video.original_filename}
           </h1>
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {formatDuration(video.duration_s)}
           </span>
           <StatusBadge status={video.status} />

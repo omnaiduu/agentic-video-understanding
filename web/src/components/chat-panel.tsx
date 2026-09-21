@@ -28,7 +28,7 @@ type Turn = {
 }
 
 const SUGGESTIONS = [
-  "What did they say about pricing?",
+  "What is in the opening shot?",
   "Clip the first 5 seconds",
   "Was there a bird or a red light?",
 ]

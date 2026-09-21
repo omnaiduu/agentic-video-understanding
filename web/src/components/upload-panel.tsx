@@ -71,7 +71,7 @@ export function UploadPanel({
       />
       <div
         className={cn(
-          "rounded-lg border border-dashed border-border bg-card px-4 py-3 transition-colors",
+          "rounded-lg border border-dashed border-border/80 bg-card px-4 py-3.5 transition-colors",
           over && "border-foreground bg-muted",
           busy && "border-solid",
         )}
