@@ -247,3 +247,9 @@
   background: oklch(0.4 0.01 70);
   border-radius: 99px;
 }
+
+@media (min-width: 768px) {
+  [data-slot="watch-layout"].grid.md\:grid-cols-2 {
+    grid-template-columns: minmax(0, 1.7fr) minmax(22rem, 1fr);
+  }
+}

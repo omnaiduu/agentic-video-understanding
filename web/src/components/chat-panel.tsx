@@ -8,7 +8,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -177,25 +176,10 @@ export function ChatPanel({
               data-slot="chat-thread"
             >
               {turns.length === 0 && !mutation.isPending ? (
-                <li className="flex h-full min-h-[10rem] flex-col items-start justify-center gap-3">
+                <li className="pt-1">
                   <p className="text-sm text-muted-foreground">
                     Ask about speech, a silent visual, a sound, or a clip.
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {SUGGESTIONS.map((hint) => (
-                      <button
-                        key={hint}
-                        type="button"
-                        className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-                        onClick={() => {
-                          setDraft(hint)
-                          inputRef.current?.focus()
-                        }}
-                      >
-                        {hint}
-                      </button>
-                    ))}
-                  </div>
                 </li>
               ) : null}
               {turns.map((turn, index) => {
@@ -296,7 +280,24 @@ export function ChatPanel({
         )}
       </CardContent>
       {locked ? null : (
-        <CardFooter className="shrink-0 border-t border-border bg-muted/25 py-3">
+        <div className="shrink-0 space-y-2.5 border-t border-border bg-muted/25 px-(--card-spacing) py-3">
+          {turns.length === 0 && !mutation.isPending ? (
+            <div className="flex flex-wrap gap-1.5">
+              {SUGGESTIONS.map((hint) => (
+                <button
+                  key={hint}
+                  type="button"
+                  className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  onClick={() => {
+                    setDraft(hint)
+                    inputRef.current?.focus()
+                  }}
+                >
+                  {hint}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <form
             className="w-full"
             onSubmit={(event) => {
@@ -335,7 +336,7 @@ export function ChatPanel({
               </Button>
             </div>
           </form>
-        </CardFooter>
+        </div>
       )}
     </Card>
   )
