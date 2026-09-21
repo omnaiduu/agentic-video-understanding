@@ -48,6 +48,13 @@ describe("getApiBaseUrl", () => {
     vi.stubEnv("VITE_API_URL", "/")
     expect(getApiBaseUrl()).toBe("")
   })
+
+  it("uses same-origin when the page is on a public host", () => {
+    vi.stubGlobal("window", {
+      location: { hostname: "pair-efficiency-judge-granted.trycloudflare.com" },
+    })
+    expect(getApiBaseUrl()).toBe("")
+  })
 })
 
 describe("listVideos", () => {

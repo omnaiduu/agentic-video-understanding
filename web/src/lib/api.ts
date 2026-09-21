@@ -39,12 +39,21 @@ export const videoKeys = {
 }
 
 export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname
+    if (host !== "" && host !== "localhost" && host !== "127.0.0.1") {
+      return ""
+    }
+  }
   const vite = import.meta.env.VITE_API_URL as string | undefined
   const node =
     typeof process !== "undefined"
       ? process.env.VITE_API_URL || process.env.API_URL
       : undefined
   const raw = (vite || node || "http://127.0.0.1:8000").trim()
+  if (raw === "/" || raw === "same-origin") {
+    return ""
+  }
   return raw.replace(/\/$/, "")
 }
 
