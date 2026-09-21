@@ -112,6 +112,29 @@ class ClapEmbedder:
         return [[float(x) for x in row.tolist()] for row in matrix]
 
 
+class ModalAudioEmbedder:
+    """Text-tower vectors via Modal embed_audio_query. Wav chunks stay on ingest."""
+
+    def __init__(self, app_name: str, model_name: str) -> None:
+        self._app = app_name
+        self._model = model_name
+
+    def embed_query(self, text: str) -> list[float]:
+        import modal
+
+        phrase = (text or "").strip()
+        if not phrase:
+            return [0.0] * AUDIO_DIM
+        fn = modal.Function.from_name(self._app, "embed_audio_query")
+        values = [float(x) for x in fn.remote(phrase, self._model)]
+        if len(values) != AUDIO_DIM:
+            raise ValueError(f"audio embedding must have {AUDIO_DIM} dimensions")
+        return values
+
+    def embed_wavs(self, wavs: list[bytes]) -> list[list[float]]:
+        raise RuntimeError("sounds are embedded on Modal ingest, not the laptop")
+
+
 @lru_cache
 def _clap(model_name: str) -> ClapEmbedder:
     return ClapEmbedder(model_name)
@@ -119,10 +142,12 @@ def _clap(model_name: str) -> ClapEmbedder:
 
 def build_audio_embedder(settings: Settings | None = None) -> AudioEmbedder:
     cfg = settings or get_settings()
-    if cfg.audio_embedder == "clap":
-        return _clap(cfg.clap_model)
     if cfg.audio_embedder == "fake":
         return FakeAudioEmbedder()
+    if cfg.audio_embedder in ("clap", "modal"):
+        if cfg.ingest == "modal" or cfg.audio_embedder == "modal":
+            return ModalAudioEmbedder(cfg.modal_ingest_app, cfg.clap_model)
+        return _clap(cfg.clap_model)
     raise RuntimeError(f"unknown AUDIO_EMBEDDER={cfg.audio_embedder}")
 
 

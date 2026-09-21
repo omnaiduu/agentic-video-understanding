@@ -73,6 +73,31 @@ class E5Embedder:
         return [[float(x) for x in row.tolist()] for row in matrix]
 
 
+class ModalE5Embedder:
+    """Query/passage vectors via Modal embed_text_query. Laptop must not load E5."""
+
+    def __init__(self, app_name: str, model_name: str) -> None:
+        self._app = app_name
+        self._model = model_name
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed("query: " + (text or "").strip())
+
+    def embed_passages(self, texts: list[str]) -> list[list[float]]:
+        return [self._embed("passage: " + text) for text in texts]
+
+    def _embed(self, prefixed: str) -> list[float]:
+        import modal
+
+        if not prefixed.strip():
+            return [0.0] * EMBED_DIM
+        fn = modal.Function.from_name(self._app, "embed_text_query")
+        values = [float(x) for x in fn.remote(prefixed, self._model)]
+        if len(values) != EMBED_DIM:
+            raise ValueError(f"embedding must have {EMBED_DIM} dimensions")
+        return values
+
+
 @lru_cache
 def _e5(model_name: str) -> E5Embedder:
     return E5Embedder(model_name)
@@ -80,10 +105,12 @@ def _e5(model_name: str) -> E5Embedder:
 
 def build_embedder(settings: Settings | None = None) -> Embedder:
     cfg = settings or get_settings()
-    if cfg.embedder == "e5":
-        return _e5(cfg.embed_model)
     if cfg.embedder == "fake":
         return FakeEmbedder()
+    if cfg.embedder == "e5":
+        if cfg.ingest == "modal":
+            return ModalE5Embedder(cfg.modal_ingest_app, cfg.embed_model)
+        return _e5(cfg.embed_model)
     raise RuntimeError(f"unknown EMBEDDER={cfg.embedder}")
 
 

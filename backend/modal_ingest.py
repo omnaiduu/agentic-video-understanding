@@ -529,3 +529,89 @@ def embed_slide_query(
     with torch.no_grad():
         matrix = model(**batch)
     return [[float(x) for x in token.tolist()] for token in matrix[0]]
+
+
+@app.function(
+    image=ingest_image,
+    timeout=10 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+def embed_text_query(
+    text: str,
+    embed_model: str = EMBED_NAME,
+) -> list[float]:
+    """E5 vector for laptop search. Caller already prefixes query:/passage:."""
+    from sentence_transformers import SentenceTransformer
+
+    phrase = (text or "").strip()
+    if not phrase:
+        return [0.0] * 384
+    model = SentenceTransformer(embed_model)
+    vector = model.encode(phrase, normalize_embeddings=True)
+    return [float(x) for x in vector.tolist()]
+
+
+@app.function(
+    image=siglip_image,
+    gpu="L4",
+    timeout=10 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+def embed_visual_query(
+    query: str,
+    siglip_model: str = SIGLIP_NAME,
+) -> list[float]:
+    """SigLIP text-tower vector. Laptop search must not load SigLIP."""
+    import torch
+    from transformers import AutoModel, AutoProcessor
+
+    phrase = (query or "").strip()
+    if not phrase:
+        return [0.0] * 1152
+    model = AutoModel.from_pretrained(siglip_model).eval()
+    processor = AutoProcessor.from_pretrained(siglip_model)
+    inputs = processor(text=[phrase], return_tensors="pt")
+    model, inputs = _to_device(model, inputs)
+    with torch.no_grad():
+        vector = _feature_tensor(model.get_text_features(**inputs))
+        vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
+    return [float(x) for x in vector[0].tolist()]
+
+
+@app.function(
+    image=clap_image,
+    gpu="L4",
+    timeout=10 * MINUTES,
+    scaledown_window=IDLE_WINDOW,
+    min_containers=0,
+    max_containers=1,
+    secrets=[hf_secret],
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+def embed_audio_query(
+    query: str,
+    clap_model: str = CLAP_NAME,
+) -> list[float]:
+    """CLAP text-tower vector. Laptop search must not load CLAP."""
+    import torch
+    from transformers import ClapModel, ClapProcessor
+
+    phrase = (query or "").strip()
+    if not phrase:
+        return [0.0] * 512
+    model = ClapModel.from_pretrained(clap_model).eval()
+    processor = ClapProcessor.from_pretrained(clap_model)
+    inputs = processor(text=[phrase], return_tensors="pt", padding=True)
+    model, inputs = _to_device(model, inputs)
+    with torch.no_grad():
+        vector = _feature_tensor(model.get_text_features(**inputs))
+        vector = vector / vector.norm(p=2, dim=-1, keepdim=True)
+    return [float(x) for x in vector[0].tolist()]

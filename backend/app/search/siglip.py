@@ -93,6 +93,29 @@ class SiglipEmbedder:
         return [[float(x) for x in row.tolist()] for row in matrix]
 
 
+class ModalVisualEmbedder:
+    """Text-tower vectors via Modal embed_visual_query. Images stay on ingest."""
+
+    def __init__(self, app_name: str, model_name: str) -> None:
+        self._app = app_name
+        self._model = model_name
+
+    def embed_query(self, text: str) -> list[float]:
+        import modal
+
+        phrase = (text or "").strip()
+        if not phrase:
+            return [0.0] * VISUAL_DIM
+        fn = modal.Function.from_name(self._app, "embed_visual_query")
+        values = [float(x) for x in fn.remote(phrase, self._model)]
+        if len(values) != VISUAL_DIM:
+            raise ValueError(f"visual embedding must have {VISUAL_DIM} dimensions")
+        return values
+
+    def embed_images(self, jpegs: list[bytes]) -> list[list[float]]:
+        raise RuntimeError("pictures are embedded on Modal ingest, not the laptop")
+
+
 @lru_cache
 def _siglip(model_name: str) -> SiglipEmbedder:
     return SiglipEmbedder(model_name)
@@ -100,10 +123,12 @@ def _siglip(model_name: str) -> SiglipEmbedder:
 
 def build_visual_embedder(settings: Settings | None = None) -> VisualEmbedder:
     cfg = settings or get_settings()
-    if cfg.visual_embedder == "siglip":
-        return _siglip(cfg.siglip_model)
     if cfg.visual_embedder == "fake":
         return FakeVisualEmbedder()
+    if cfg.visual_embedder in ("siglip", "modal"):
+        if cfg.ingest == "modal" or cfg.visual_embedder == "modal":
+            return ModalVisualEmbedder(cfg.modal_ingest_app, cfg.siglip_model)
+        return _siglip(cfg.siglip_model)
     raise RuntimeError(f"unknown VISUAL_EMBEDDER={cfg.visual_embedder}")
 
 
