@@ -21,8 +21,8 @@ export function LibraryScreen({
     return (
       <div className="space-y-4">
         <p className="text-muted-foreground">Loading library…</p>
-        <div className="grid gap-x-6 gap-y-8 grid-cols-1 2xl:grid-cols-2">
-          <Skeleton className="aspect-video max-h-[min(38rem,56vh)] w-full rounded-2xl" />
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+          <Skeleton className="h-[min(36rem,52vh)] w-full rounded-2xl xl:[&:only-child]:col-span-2" />
         </div>
       </div>
     )
@@ -48,11 +48,11 @@ export function LibraryScreen({
     )
   }
   return (
-    <ul className="grid grid-cols-1 gap-x-8 gap-y-10 2xl:grid-cols-2">
+    <ul className="grid grid-cols-1 gap-x-8 gap-y-10 xl:grid-cols-2">
       {videos.map((video) => {
         const added = formatAddedOn(video.created_at)
         return (
-          <li key={video.id}>
+          <li key={video.id} className="xl:[&:only-child]:col-span-2">
             <Link
               to="/videos/$videoId"
               params={{ videoId: video.id }}
@@ -64,7 +64,7 @@ export function LibraryScreen({
                     videoId={video.id}
                     audioOnly={!video.has_video}
                     durationS={video.duration_s}
-                    className="aspect-video max-h-[min(38rem,56vh)] w-full"
+                    className="h-[min(36rem,52vh)] w-full"
                   />
                   {video.status !== "ready" ? (
                     <span className="absolute top-4 left-4">

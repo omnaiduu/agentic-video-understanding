@@ -102,7 +102,7 @@ export function VideoScreen({
       ) : null}
       <IndexPanel video={video} />
       <div
-        className="grid min-h-[28rem] flex-1 grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:items-stretch"
+        className="grid min-h-[28rem] grid-cols-1 items-start overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_oklch(0_0_0/0.85)] md:grid-cols-2 md:items-stretch"
         data-slot="watch-layout"
       >
         <div className="min-h-0 min-w-0 border-border max-md:border-b md:h-full md:border-r">
