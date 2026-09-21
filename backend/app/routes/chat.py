@@ -9,7 +9,6 @@ from sqlmodel import Session, select
 from app.agent.client import Brain, FakeBrain, UnconfiguredBrain, VllmBrain, build_brain
 from app.agent.loop import LoopError, LoopResult, run_loop
 from app.agent.memory import HISTORY_KINDS, collect_windows, push_windows
-from app.agent.picker import Picker, PickerDecision, build_picker
 from app.db import get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
 from app.search.audio import search_audio
@@ -45,15 +44,6 @@ class ThoughtOut(BaseModel):
     text: str
 
 
-class PickerOut(BaseModel):
-    letter: str = ""
-    do: str | None = None
-    p_max: float = 0.0
-    used: bool = False
-    reason: str = ""
-    probs: dict[str, float] = Field(default_factory=dict)
-
-
 class ChatOut(BaseModel):
     answer: str
     citations: list[float]
@@ -62,19 +52,11 @@ class ChatOut(BaseModel):
     export_url: str | None = None
     thinking: bool = False
     thoughts: list[ThoughtOut] = Field(default_factory=list)
-    picker: PickerOut | None = None
 
 
 def get_brain(settings: Settings = Depends(get_settings)) -> Brain:
     try:
         return build_brain(settings)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-
-
-def get_picker(settings: Settings = Depends(get_settings)) -> Picker | None:
-    try:
-        return build_picker(settings)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -107,19 +89,6 @@ def _thoughts(result: LoopResult, thinking: bool) -> list[ThoughtOut]:
         if text:
             out.append(ThoughtOut(do=step.do, text=text))
     return out
-
-
-def _picker_out(decision: PickerDecision | None) -> PickerOut | None:
-    if decision is None:
-        return None
-    return PickerOut(
-        letter=decision.letter,
-        do=decision.do,
-        p_max=decision.p_max,
-        used=decision.used,
-        reason=decision.reason,
-        probs=dict(decision.probs),
-    )
 
 
 def _history(session: Session, chat: ChatSession) -> list[tuple[str, str]]:
@@ -172,7 +141,6 @@ def chat(
     payload: ChatIn,
     session: Session = Depends(get_session),
     brain: Brain = Depends(get_brain),
-    picker: Picker | None = Depends(get_picker),
     settings: Settings = Depends(get_settings),
     embedder: Embedder = Depends(get_embedder),
     visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
@@ -187,8 +155,6 @@ def chat(
 
     want_thinking = _want_thinking(payload, settings)
     brain = _brain_for_turn(brain, want_thinking, settings)
-    if want_thinking:
-        picker = None
 
     if payload.session_id is None:
         chat_row = ChatSession(video_id=video.id)
@@ -238,8 +204,6 @@ def chat(
             slides_status=video.slides_status,
             history=history,
             last_times=last_times,
-            picker=picker,
-            picker_min_p=settings.picker_min_p,
         )
     except LoopError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -255,5 +219,4 @@ def chat(
         export_url=result.export_url,
         thinking=want_thinking,
         thoughts=_thoughts(result, want_thinking),
-        picker=_picker_out(result.picker),
     )

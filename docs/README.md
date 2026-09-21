@@ -40,4 +40,4 @@ Then:
 34. [E4B vs 12B Unified A/B](e4b-vs-12b-plan.md) — **closed.** Second Modal worker, same eight questions, E4B stays default
 35. [Why 4B is enough](why-4b-is-enough.md) — leftover problems in plain words, what 12B vs 4B did, clap counting is not arithmetic
 36. [E4B thinking on/off](e4b-thinking.md) — next experiment after the closed 12B A/B
-37. [System One picker](system-one-picker.md) — optional first-hop search routing from letter logprobs; default off
+37. [System One picker](system-one-picker.md) — **closed.** Letter logprobs for first-hop search; live leftover failed; architecture reverted

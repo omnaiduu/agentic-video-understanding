@@ -195,8 +195,6 @@ def test_default_vllm_model_stays_e4b() -> None:
     assert Settings.model_fields["vllm_model"].default == E4B_HF_ID
     assert Settings.model_fields["gemma_thinking"].default is False
     assert Settings.model_fields["vllm_thinking_base_url"].default == ""
-    assert Settings.model_fields["picker"].default == "off"
-    assert Settings.model_fields["picker_min_p"].default == 0.55
     assert E4B_HF_ID == "google/gemma-4-E4B-it"
     assert TWELVE_B_HF_ID == "google/gemma-4-12B-it"
     assert TWELVE_B_WEIGHTS.endswith("qat-w4a16-ct")

@@ -28,9 +28,6 @@ class Settings(BaseSettings):
     # Thinking is a second E4B worker (reasoning-parser). Default off.
     gemma_thinking: bool = False
     vllm_thinking_base_url: str = ""
-    # System One first-hop router. off | fake | logit | shadow. Default off.
-    picker: str = "off"
-    picker_min_p: float = Field(default=0.55, ge=0.0, le=1.0)
     ingest: str = "fake"
     embedder: str = "fake"
     whisper_model: str = "turbo"

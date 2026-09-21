@@ -15,7 +15,6 @@
   user ──► FastAPI ──► our state machine
                       │
                       ├─ Gemma E4B fills JSON (vLLM json_schema)
-                      ├─ optional first-hop picker (letter logprobs → which search book)
                       ├─ we run look / listen / search_* / export_*
                       ├─ photos/wav attached as normal content parts
                       └─► answer + timestamps + optional export_url

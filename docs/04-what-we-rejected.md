@@ -19,6 +19,7 @@
 | **Node as the ML API** | Whisper/SigLIP/Gemma live in **Python**. FastAPI is the API. (An earlier PR tried Node-on-laptop. Not this app.) |
 | **Native Gemma `tools=` / OpenAI function calling** | Tool messages often drop image/audio. E4B is weak at multi-step tools. We own JSON + multimodal parts. |
 | **Gemma 12B as the default brain** | We own the loop, so E4B is enough. 12B is an env switch later. |
+| **System One / Jev-style letter picker on hop 1** | Closed-set logprobs pick a **book**, not a time, and cannot look / listen / cut. Live leftover: letters were peaked, **H7 regressed** when we obeyed `search_audio`, M1/H5 unfixed. Extra GPU call is not cheaper than JSON `search`. **Reverted.** Record: [system-one-picker.md](system-one-picker.md). |
 | **SQLite + FAISS as the store** | One **Postgres + pgvector** for rows, keyword search, and vectors. |
 | **Vite SPA / Next.js as the UI kit** | **TanStack Start** + shadcn + Query. Browser still talks only to FastAPI. |
 | **WhisperX + three-speed form driver + Node API** | Other draft PRs. Not merged. Speech is faster-whisper turbo + hybrid FTS/E5. API is FastAPI. |

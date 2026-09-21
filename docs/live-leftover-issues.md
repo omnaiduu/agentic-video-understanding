@@ -173,16 +173,18 @@ Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`. Clean loop (skip-ahead on; rec
 | **H7** clip on the beep | Sound 9–12 → **listen 10.5–13.5** → export **10.5–13.5**. Q3 + beep, not 9–12. | **Pass.** OG listen-then-export. E4B on the same loop **exported 9–12 with no listen.** |
 | **H8** walk the tape | Looks 0–4, **skip 4–8**, then 8–16. Names Pricing $99, RED ALERT, Q3. | **Pass.** |
 
-## System One picker (live)
+## System One picker (closed)
 
-Letter logprobs on the first hop only. Same leftover questions, crutches off, new upload of the same 16s recipe (`0bdc0566-21f9-4051-a8f7-6d91f46ae3c3`). Full table: [System One picker](system-one-picker.md).
+We tried scoring letters A–E from vLLM logprobs to choose the **first search book**. Wiring is **gone**. Chat is JSON-only again. Full record: [System One picker](system-one-picker.md).
 
-| Leftover | Did the picker fix it? |
+Same leftover questions, crutches off, tape `0bdc0566-21f9-4051-a8f7-6d91f46ae3c3`.
+
+| Leftover | Did letter routing fix it? |
 |---|---|
-| **H8** walk | Already a pass. Picker **abstained**; skip-ahead still ran. |
-| **H7** beep clip | **No.** Shadow JSON luckily looked, listened, then exported (pass). `PICKER=logit` committed `search_audio` and **exported without listening** (fail). |
-| **M1** printed vs speech | **No.** Picker and JSON both opened **slides** first. Still no speech search. One letter cannot open two books. |
+| **H8** walk | Already a pass (skip-ahead). Picker abstained. |
+| **H7** beep clip | **No. Obeying it regressed.** Shadow JSON looked, listened, then exported (pass). Logit committed `search_audio` and **exported without listening** (fail). |
+| **M1** printed vs speech | **No.** Picker and JSON both opened **slides**. Still no speech search. One letter cannot open two books. |
 | **H5** clap count | **No.** Committed `search_audio` (what JSON already did). Still not zero. |
-| **M4** tone + screen | **No.** Correct first book (sounds). Still named RED ALERT, not Q3. Picker cannot look/listen. |
+| **M4** tone + screen | **No.** Correct first book (sounds). Still named RED ALERT, not Q3. |
 
-Default stays **off**. Do not restore recut-from-middle or the print-vs-speech bounce because of this.
+Do not restore recut-from-middle or the print-vs-speech bounce because of this. Do not put `PICKER=` back in `.env`.

@@ -21,7 +21,6 @@ Locked. Short. This file matches the **13 build phases**. Do not follow older SQ
 - vLLM **JSON schema** (`response_format`), not native function calling.
 - Caps: **64 photos or 30 seconds of sound** per look/listen. **8** rounds max. Export **60s**, reject oversize.
 - Tests use a FakeBrain. No GPU in CI.
-- Optional **System One picker** (`PICKER=off` default): on the first text hop only, score which search book to open from letter logprobs. Never look / listen / answer. Fallback if `p_max` < 0.55. Note: [system-one-picker.md](system-one-picker.md).
 
 ## Indexes (ingest once, cache)
 

@@ -82,4 +82,4 @@ That is the planner 12B used. It still exported the **whole similar-audio window
 
 Use the Watch checkbox when you want to *see why* a move happened, or to try listen-then-cut. Do not switch `GEMMA_THINKING` on in `.env`.
 
-Next experiment: [System One picker](system-one-picker.md) — skip JSON decode on the first search-routing hop only. **Live leftover pass is done; default stays off.** H7 listen-then-export got worse when the picker committed the sound book.
+Next experiment was a [System One picker](system-one-picker.md) (letter logprobs, first search hop only). **Closed. Wiring reverted.** Live leftover: letters were peaked; obeying the sound book **regressed H7**. Chat is JSON-only again.

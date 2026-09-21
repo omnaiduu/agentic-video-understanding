@@ -148,8 +148,6 @@ def configured_env(data_dir: Path) -> None:
     os.environ["VLLM_BASE_URL"] = ""
     os.environ["VLLM_THINKING_BASE_URL"] = ""
     os.environ["GEMMA_THINKING"] = "false"
-    os.environ["PICKER"] = "off"
-    os.environ["PICKER_MIN_P"] = "0.55"
     os.environ["INGEST"] = "fake"
     os.environ["EMBEDDER"] = "fake"
     os.environ["VISUAL_EMBEDDER"] = "fake"
