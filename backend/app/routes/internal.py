@@ -71,6 +71,10 @@ class SlidesIn(BaseModel):
     status: Literal["ready", "error"] = "ready"
     error_message: str | None = None
     slides: list[SlidePageIn] = Field(default_factory=list)
+    # ColQwen on a long video is too large for one JSON body. Workers post
+    # several batches. The first replaces stored pages. Only the last marks ready.
+    replace: bool = True
+    final: bool = True
 
 
 def require_ingest_secret(
@@ -273,9 +277,9 @@ def receive_slides(
         return {"ok": True, "ignored": True}
     if payload.status == "error":
         video.slides_status = IndexStatus.error.value
+        video.error_message = (payload.error_message or "slide ingest failed")[:300]
         session.add(video)
         session.commit()
-        cleanup_index_slides(folder)
         return {"ok": True}
     save_slide_pages(
         session,
@@ -283,6 +287,9 @@ def receive_slides(
         [row.t_start_s for row in payload.slides],
         [row.t_end_s for row in payload.slides],
         [row.embeddings for row in payload.slides],
+        replace=payload.replace,
+        mark_ready=payload.final,
     )
-    cleanup_index_slides(folder)
+    if payload.final:
+        cleanup_index_slides(folder)
     return {"ok": True, "slides": len(payload.slides)}

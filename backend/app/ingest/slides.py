@@ -65,11 +65,15 @@ def save_slide_pages(
     starts: list[float],
     ends: list[float],
     embeddings: list[list[list[float]]],
+    *,
+    replace: bool = True,
+    mark_ready: bool = True,
 ) -> None:
-    session.execute(
-        text("DELETE FROM slide_pages WHERE video_id = :vid"),
-        {"vid": video.id},
-    )
+    if replace:
+        session.execute(
+            text("DELETE FROM slide_pages WHERE video_id = :vid"),
+            {"vid": video.id},
+        )
     for start_s, end_s, patches in zip(starts, ends, embeddings):
         if not patches:
             raise ValueError("slide page needs at least one patch vector")
@@ -84,7 +88,11 @@ def save_slide_pages(
                 embeddings=patches,
             )
         )
-    video.slides_status = IndexStatus.ready.value
+    if mark_ready:
+        video.slides_status = IndexStatus.ready.value
+        video.error_message = None
+    else:
+        video.slides_status = IndexStatus.processing.value
     session.add(video)
     session.commit()
 

@@ -552,6 +552,66 @@ def test_internal_slides_callback(client, tiny_mp4: Path, monkeypatch) -> None:
         assert len(still) == 1
 
 
+def test_internal_slides_callback_appends_batches(
+    client, tiny_mp4: Path, monkeypatch
+) -> None:
+    from app.db import get_engine
+
+    monkeypatch.setattr("app.ingest.slides.ingest_slides", lambda *_a, **_k: None)
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    first = client.post(
+        f"/internal/videos/{video_id}/slide-pages",
+        headers={"Authorization": f"Bearer {INGEST_SECRET}"},
+        json={
+            "status": "ready",
+            "replace": True,
+            "final": False,
+            "slides": [
+                {
+                    "t_start_s": 1.0,
+                    "t_end_s": 2.0,
+                    "embeddings": [_axis(0)],
+                }
+            ],
+        },
+    )
+    assert first.status_code == 200, first.text
+    engine = get_engine()
+    with Session(engine) as session:
+        video = session.get(Video, video_id)
+        assert video is not None
+        assert video.slides_status == IndexStatus.processing.value
+        rows = session.exec(
+            select(SlidePage).where(SlidePage.video_id == video.id)
+        ).all()
+        assert len(rows) == 1
+    second = client.post(
+        f"/internal/videos/{video_id}/slide-pages",
+        headers={"Authorization": f"Bearer {INGEST_SECRET}"},
+        json={
+            "status": "ready",
+            "replace": False,
+            "final": True,
+            "slides": [
+                {
+                    "t_start_s": 4.0,
+                    "t_end_s": 5.0,
+                    "embeddings": [_axis(1)],
+                }
+            ],
+        },
+    )
+    assert second.status_code == 200, second.text
+    with Session(engine) as session:
+        video = session.get(Video, video_id)
+        assert video is not None
+        assert video.slides_status == IndexStatus.ready.value
+        rows = session.exec(
+            select(SlidePage).where(SlidePage.video_id == video.id).order_by(SlidePage.t_start_s)
+        ).all()
+        assert [round(row.t_start_s, 1) for row in rows] == [1.0, 4.0]
+
+
 def test_delete_video_removes_slide_pages(client, tiny_mp4: Path) -> None:
     from app.db import get_engine
 

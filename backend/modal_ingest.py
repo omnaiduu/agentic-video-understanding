@@ -442,7 +442,9 @@ def embed_slides(
     del video_id
     headers = _headers(secret)
     tar_bytes = httpx.get(slides_url, headers=headers, timeout=300.0).content
-    slides: list[dict] = []
+    # One full-length lecture is hundreds of megabytes of patch JSON.
+    # Post a few dozen pages at a time so the callback can finish.
+    batch_size = 25
     try:
         model, processor = _load_colqwen(colqwen_model)
         with TemporaryDirectory(prefix="ingest-colqwen-") as tmp:
@@ -465,6 +467,27 @@ def embed_slides(
                     }
                     for index, path in enumerate(files)
                 ]
+            pending: list[dict] = []
+            posted = 0
+
+            def flush(final: bool) -> None:
+                nonlocal posted
+                if not pending and not final:
+                    return
+                httpx.post(
+                    callback_url,
+                    headers=headers,
+                    json={
+                        "status": "ready",
+                        "slides": pending,
+                        "replace": posted == 0,
+                        "final": final,
+                    },
+                    timeout=180.0,
+                ).raise_for_status()
+                posted += len(pending)
+                pending.clear()
+
             for item in items:
                 jpeg_path = extract_dir / item["file"]
                 if not jpeg_path.is_file():
@@ -477,20 +500,18 @@ def embed_slides(
                 patches = [
                     [float(x) for x in token.tolist()] for token in matrix[0]
                 ]
-                slides.append(
+                pending.append(
                     {
                         "t_start_s": float(item["t_start_s"]),
                         "t_end_s": float(item["t_end_s"]),
                         "embeddings": patches,
                     }
                 )
-        httpx.post(
-            callback_url,
-            headers=headers,
-            json={"status": "ready", "slides": slides},
-            timeout=120.0,
-        ).raise_for_status()
+                if len(pending) >= batch_size:
+                    flush(False)
+            flush(True)
     except Exception as exc:
+        print(f"colqwen failed: {exc}", flush=True)
         httpx.post(
             callback_url,
             headers=headers,
