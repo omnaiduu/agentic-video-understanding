@@ -987,3 +987,35 @@ def test_loop_does_not_echo_reasoning_into_history(tiny_mp4: Path) -> None:
     assert "SECRET_THOUGHT" not in dumped
     assert "SECRET_ANSWER_THOUGHT" not in dumped
     assert result.steps[-1].reasoning == "SECRET_ANSWER_THOUGHT"
+
+
+def test_chat_stream_pings_then_finishes_and_can_be_polled(client, tiny_mp4: Path) -> None:
+    video_id = _upload(client, tiny_mp4).json()["id"]
+    brain = _look_then_answer()
+    _override(brain)
+    try:
+        response = client.post(
+            f"/videos/{video_id}/chat/stream",
+            json={"message": "what happens at 0:10?"},
+        )
+    finally:
+        _clear_override()
+    assert response.status_code == 200, response.text
+    lines = [json.loads(line) for line in response.text.splitlines() if line.strip()]
+    assert lines[0]["event"] == "ping"
+    assert lines[-1]["event"] == "done"
+    assert lines[-1]["answer"] == "A dark frame at 0.1s."
+    session_id = lines[-1]["session_id"]
+    pending = client.get(
+        f"/videos/{video_id}/chat/{session_id}/result",
+        params={"message": "a different question"},
+    )
+    assert pending.status_code == 200
+    assert pending.json()["status"] == "pending"
+    done = client.get(
+        f"/videos/{video_id}/chat/{session_id}/result",
+        params={"message": "what happens at 0:10?"},
+    )
+    assert done.status_code == 200
+    assert done.json()["status"] == "done"
+    assert done.json()["answer"] == "A dark frame at 0.1s."

@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.agent.client import Brain, FakeBrain, UnconfiguredBrain, VllmBrain, build_brain
 from app.agent.loop import LoopError, LoopResult, run_loop
 from app.agent.memory import HISTORY_KINDS, collect_windows, push_windows
-from app.db import get_session
+from app.db import get_engine, get_session
 from app.models import ChatMessage, ChatSession, Video, VideoStatus
 from app.search.audio import search_audio
 from app.search.clap import AudioEmbedder, get_audio_embedder
@@ -26,6 +29,11 @@ from app.settings import Settings, get_settings
 from app.tools.export import create_export
 
 router = APIRouter()
+
+# Latest finished turn per session, so a phone that loses the open request can
+# pick the answer up with a short poll. The GPU work keeps running either way.
+_results: dict[str, dict[str, Any]] = {}
+_PING_SECONDS = 5
 
 
 class ChatIn(BaseModel):
@@ -162,37 +170,51 @@ def _save_turn(
     session.commit()
 
 
-@router.post("/videos/{video_id}/chat", response_model=ChatOut)
-def chat(
-    video_id: uuid.UUID,
-    payload: ChatIn,
-    session: Session = Depends(get_session),
-    brain: Brain = Depends(get_brain),
-    settings: Settings = Depends(get_settings),
-    embedder: Embedder = Depends(get_embedder),
-    visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
-    audio_embedder: AudioEmbedder = Depends(get_audio_embedder),
-    slide_embedder: SlideEmbedder = Depends(get_slide_embedder),
-) -> ChatOut:
-    video = session.get(Video, video_id)
-    if video is None:
-        raise HTTPException(status_code=404, detail="video not found")
-    if video.status != VideoStatus.ready.value:
-        raise HTTPException(status_code=409, detail="video is not ready")
+def _remember(session_id: uuid.UUID, question: str, out: ChatOut) -> None:
+    data = out.model_dump(mode="json")
+    data["status"] = "done"
+    data["question"] = question
+    _results[str(session_id)] = data
 
-    want_thinking = _want_thinking(payload, settings)
-    brain = _brain_for_turn(brain, want_thinking, settings)
 
-    if payload.session_id is None:
+def _ping(session_id: uuid.UUID | None) -> bytes:
+    body: dict[str, Any] = {"event": "ping", "pad": " " * 1024}
+    if session_id is not None:
+        body["session_id"] = str(session_id)
+    return (json.dumps(body) + "\n").encode()
+
+
+def _ensure_chat(
+    session: Session,
+    video: Video,
+    session_id: uuid.UUID | None,
+) -> ChatSession:
+    if session_id is None:
         chat_row = ChatSession(video_id=video.id)
         session.add(chat_row)
         session.commit()
         session.refresh(chat_row)
-    else:
-        chat_row = session.get(ChatSession, payload.session_id)
-        if chat_row is None or chat_row.video_id != video.id:
-            raise HTTPException(status_code=404, detail="session not found")
+        return chat_row
+    chat_row = session.get(ChatSession, session_id)
+    if chat_row is None or chat_row.video_id != video.id:
+        raise HTTPException(status_code=404, detail="session not found")
+    return chat_row
 
+
+def _run_turn(
+    session: Session,
+    video: Video,
+    chat_row: ChatSession,
+    payload: ChatIn,
+    brain: Brain,
+    settings: Settings,
+    embedder: Embedder,
+    visual_embedder: VisualEmbedder,
+    audio_embedder: AudioEmbedder,
+    slide_embedder: SlideEmbedder,
+) -> ChatOut:
+    want_thinking = _want_thinking(payload, settings)
+    brain = _brain_for_turn(brain, want_thinking, settings)
     history = _history(session, chat_row)
     last_times = list(chat_row.last_times or [])
     _log_debug_question(
@@ -245,7 +267,7 @@ def chat(
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     _save_turn(session, chat_row, payload.message, result)
-    return ChatOut(
+    out = ChatOut(
         answer=result.answer,
         citations=result.citations,
         steps=[StepOut.model_validate(step, from_attributes=True) for step in result.steps],
@@ -254,3 +276,137 @@ def chat(
         thinking=want_thinking,
         thoughts=_thoughts(result, want_thinking),
     )
+    _remember(chat_row.id, payload.message, out)
+    return out
+
+
+def _load_ready(session: Session, video_id: uuid.UUID) -> Video:
+    video = session.get(Video, video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="video not found")
+    if video.status != VideoStatus.ready.value:
+        raise HTTPException(status_code=409, detail="video is not ready")
+    return video
+
+
+@router.post("/videos/{video_id}/chat", response_model=ChatOut)
+def chat(
+    video_id: uuid.UUID,
+    payload: ChatIn,
+    session: Session = Depends(get_session),
+    brain: Brain = Depends(get_brain),
+    settings: Settings = Depends(get_settings),
+    embedder: Embedder = Depends(get_embedder),
+    visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
+    audio_embedder: AudioEmbedder = Depends(get_audio_embedder),
+    slide_embedder: SlideEmbedder = Depends(get_slide_embedder),
+) -> ChatOut:
+    video = _load_ready(session, video_id)
+    chat_row = _ensure_chat(session, video, payload.session_id)
+    return _run_turn(
+        session,
+        video,
+        chat_row,
+        payload,
+        brain,
+        settings,
+        embedder,
+        visual_embedder,
+        audio_embedder,
+        slide_embedder,
+    )
+
+
+@router.post("/videos/{video_id}/chat/stream")
+def chat_stream(
+    video_id: uuid.UUID,
+    payload: ChatIn,
+    session: Session = Depends(get_session),
+    brain: Brain = Depends(get_brain),
+    settings: Settings = Depends(get_settings),
+    embedder: Embedder = Depends(get_embedder),
+    visual_embedder: VisualEmbedder = Depends(get_visual_embedder),
+    audio_embedder: AudioEmbedder = Depends(get_audio_embedder),
+    slide_embedder: SlideEmbedder = Depends(get_slide_embedder),
+) -> StreamingResponse:
+    """Send a byte immediately, then a ping every few seconds.
+
+    A phone tunnel drops a chat POST that stays silent for about 30 seconds.
+    The model keeps running; the pings hold the connection open.
+    """
+    video = _load_ready(session, video_id)
+    chat_row = _ensure_chat(session, video, payload.session_id)
+    session.commit()
+    bound = payload.model_copy(update={"session_id": chat_row.id})
+    sid = chat_row.id
+    vid = video.id
+
+    def generate():
+        yield _ping(sid)
+        holder: dict[str, Any] = {}
+
+        def work() -> None:
+            with Session(get_engine()) as db:
+                fresh_video = db.get(Video, vid)
+                fresh_chat = db.get(ChatSession, sid)
+                if fresh_video is None or fresh_chat is None:
+                    holder["error"] = (404, "video not found")
+                    return
+                try:
+                    holder["out"] = _run_turn(
+                        db,
+                        fresh_video,
+                        fresh_chat,
+                        bound,
+                        brain,
+                        settings,
+                        embedder,
+                        visual_embedder,
+                        audio_embedder,
+                        slide_embedder,
+                    )
+                except HTTPException as exc:
+                    detail = exc.detail if isinstance(exc.detail, str) else "chat failed"
+                    holder["error"] = (exc.status_code, detail)
+
+        worker = threading.Thread(target=work, name="chat-stream", daemon=True)
+        worker.start()
+        while worker.is_alive():
+            worker.join(_PING_SECONDS)
+            if worker.is_alive():
+                yield _ping(sid)
+        if "error" in holder:
+            code, detail = holder["error"]
+            yield (
+                json.dumps({"event": "error", "status": code, "detail": detail}) + "\n"
+            ).encode()
+            return
+        done = holder["out"].model_dump(mode="json")
+        done["event"] = "done"
+        done["status"] = "done"
+        yield (json.dumps(done) + "\n").encode()
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/videos/{video_id}/chat/{session_id}/result")
+def chat_result(
+    video_id: uuid.UUID,
+    session_id: uuid.UUID,
+    message: str,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    chat_row = session.get(ChatSession, session_id)
+    if chat_row is None or chat_row.video_id != video_id:
+        raise HTTPException(status_code=404, detail="session not found")
+    saved = _results.get(str(session_id))
+    if saved is None or saved.get("question") != message:
+        return {"status": "pending"}
+    return saved

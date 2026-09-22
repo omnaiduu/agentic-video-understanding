@@ -33,6 +33,31 @@ function jsonResponse(status: number, body: unknown) {
   }
 }
 
+function streamResponse(events: unknown[]) {
+  const text = `${events.map((event) => JSON.stringify(event)).join("\n")}\n`
+  const bytes = new TextEncoder().encode(text)
+  let sent = false
+  return {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    text: async () => text,
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (sent) {
+              return { done: true, value: undefined }
+            }
+            sent = true
+            return { done: false, value: bytes }
+          },
+        }
+      },
+    },
+  }
+}
+
 describe("getApiBaseUrl", () => {
   it("uses VITE_API_URL when set", () => {
     vi.stubEnv("VITE_API_URL", "http://api.example:9000/")
@@ -220,11 +245,13 @@ describe("postChat", () => {
       session_id: "sess-1",
       export_url: null,
     }
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, body))
+    const fetchMock = vi.fn().mockResolvedValue(
+      streamResponse([{ event: "ping" }, { event: "done", ...body }]),
+    )
     vi.stubGlobal("fetch", fetchMock)
     await expect(postChat("vid-1", "what is at 0.1s?")).resolves.toEqual(body)
     expect(fetchMock).toHaveBeenCalledWith(
-      `${window.location.origin}/videos/vid-1/chat`,
+      `${window.location.origin}/videos/vid-1/chat/stream`,
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({ Accept: "application/json" }),
@@ -235,13 +262,16 @@ describe("postChat", () => {
 
   it("sends a saved session_id", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      jsonResponse(200, {
-        answer: "same thread",
-        citations: [],
-        steps: [],
-        session_id: "sess-1",
-        export_url: null,
-      }),
+      streamResponse([
+        {
+          event: "done",
+          answer: "same thread",
+          citations: [],
+          steps: [],
+          session_id: "sess-1",
+          export_url: null,
+        },
+      ]),
     )
     vi.stubGlobal("fetch", fetchMock)
     await postChat("vid-1", "again", "sess-1")
@@ -253,15 +283,18 @@ describe("postChat", () => {
 
   it("sends thinking only when it is on", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      jsonResponse(200, {
-        answer: "ok",
-        citations: [],
-        steps: [],
-        session_id: "sess-1",
-        export_url: null,
-        thinking: true,
-        thoughts: [{ do: "look", text: "check the frame" }],
-      }),
+      streamResponse([
+        {
+          event: "done",
+          answer: "ok",
+          citations: [],
+          steps: [],
+          session_id: "sess-1",
+          export_url: null,
+          thinking: true,
+          thoughts: [{ do: "look", text: "check the frame" }],
+        },
+      ]),
     )
     vi.stubGlobal("fetch", fetchMock)
     await postChat("vid-1", "clip the beep", null, true)

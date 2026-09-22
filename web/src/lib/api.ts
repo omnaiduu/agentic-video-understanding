@@ -202,6 +202,148 @@ export type ChatOut = {
   thoughts?: ChatThought[]
 }
 
+type ChatStreamLine = {
+  event?: string
+  status?: string | number
+  detail?: string
+  session_id?: string
+  answer?: string
+  citations?: number[]
+  steps?: ChatStep[]
+  export_url?: string | null
+  thinking?: boolean
+  thoughts?: ChatThought[]
+}
+
+function parseChatStream(text: string): {
+  done: ChatOut | null
+  error: { status: number; detail: string } | null
+  sessionId: string | null
+} {
+  let done: ChatOut | null = null
+  let error: { status: number; detail: string } | null = null
+  let sessionId: string | null = null
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim()
+    if (!trimmed.startsWith("{")) {
+      continue
+    }
+    let row: ChatStreamLine
+    try {
+      row = JSON.parse(trimmed) as ChatStreamLine
+    } catch {
+      continue
+    }
+    if (typeof row.session_id === "string" && row.session_id) {
+      sessionId = row.session_id
+    }
+    if (row.event === "error") {
+      error = {
+        status: typeof row.status === "number" ? row.status : 503,
+        detail: row.detail || "Chat failed.",
+      }
+    }
+    if (row.event === "done" && typeof row.answer === "string" && row.session_id) {
+      done = {
+        answer: row.answer,
+        citations: row.citations ?? [],
+        steps: row.steps ?? [],
+        session_id: row.session_id,
+        export_url: row.export_url ?? null,
+        thinking: row.thinking,
+        thoughts: row.thoughts,
+      }
+    }
+  }
+  return { done, error, sessionId }
+}
+
+async function readChatStream(
+  response: Response,
+  onSession: (sessionId: string) => void,
+): Promise<ChatOut> {
+  const reader = response.body?.getReader()
+  if (!reader) {
+    const parsed = parseChatStream(await response.text())
+    if (parsed.sessionId) {
+      onSession(parsed.sessionId)
+    }
+    if (parsed.error && !parsed.done) {
+      throw new ApiError(parsed.error.status, parsed.error.detail)
+    }
+    if (!parsed.done) {
+      throw new ApiError(0, "The API is unreachable")
+    }
+    return parsed.done
+  }
+  const decoder = new TextDecoder()
+  let buf = ""
+  while (true) {
+    const chunk = await reader.read()
+    if (chunk.done) {
+      break
+    }
+    buf += decoder.decode(chunk.value, { stream: true })
+    const parsed = parseChatStream(buf)
+    if (parsed.sessionId) {
+      onSession(parsed.sessionId)
+    }
+    if (parsed.done) {
+      return parsed.done
+    }
+    if (parsed.error) {
+      throw new ApiError(parsed.error.status, parsed.error.detail)
+    }
+  }
+  const parsed = parseChatStream(buf)
+  if (parsed.sessionId) {
+    onSession(parsed.sessionId)
+  }
+  if (parsed.error && !parsed.done) {
+    throw new ApiError(parsed.error.status, parsed.error.detail)
+  }
+  if (!parsed.done) {
+    throw new ApiError(0, "The API is unreachable")
+  }
+  return parsed.done
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+async function pollChatResult(
+  videoId: string,
+  sessionId: string,
+  message: string,
+  timeoutMs: number,
+): Promise<ChatOut | null> {
+  const deadline = Date.now() + timeoutMs
+  const path = `/videos/${videoId}/chat/${sessionId}/result?message=${encodeURIComponent(message)}`
+  while (Date.now() < deadline) {
+    await sleep(2000)
+    try {
+      const row = await getJson<ChatStreamLine>(path)
+      if (row.status === "done" && typeof row.answer === "string" && row.session_id) {
+        return {
+          answer: row.answer,
+          citations: row.citations ?? [],
+          steps: row.steps ?? [],
+          session_id: row.session_id,
+          export_url: row.export_url ?? null,
+          thinking: row.thinking,
+          thoughts: row.thoughts,
+        }
+      }
+    } catch {
+      // A dropped poll is not the end of the turn. The next one can still land.
+    }
+  }
+  return null
+}
+
 export function postChat(
   videoId: string,
   message: string,
@@ -218,7 +360,47 @@ export function postChat(
     body.thinking = true
   }
   const timeout = thinking ? THINKING_CHAT_TIMEOUT_MS : CHAT_TIMEOUT_MS
-  return postJson<ChatOut>(`/videos/${videoId}/chat`, body, timeout)
+  return postChatStream(videoId, message, body, sessionId ?? null, timeout)
+}
+
+async function postChatStream(
+  videoId: string,
+  message: string,
+  body: { message: string; session_id?: string; thinking?: boolean },
+  sessionId: string | null,
+  timeoutMs: number,
+): Promise<ChatOut> {
+  const url = `${getApiBaseUrl()}/videos/${videoId}/chat/stream`
+  let knownSession = sessionId
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { ...JSON_ACCEPT, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+    if (!response.ok) {
+      throw new ApiError(response.status, await readError(response))
+    }
+    return await readChatStream(response, (id) => {
+      knownSession = id
+    })
+  } catch (error) {
+    const dropped = !(error instanceof ApiError) || error.status === 0
+    if (dropped && knownSession) {
+      const recovered = await pollChatResult(videoId, knownSession, message, timeoutMs)
+      if (recovered) {
+        return recovered
+      }
+    }
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new ApiError(0, "The API timed out")
+    }
+    if (error instanceof ApiError) {
+      throw error
+    }
+    throw new ApiError(0, "The API is unreachable")
+  }
 }
 
 export function absoluteApiUrl(path: string): string {
