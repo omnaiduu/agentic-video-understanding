@@ -33,7 +33,7 @@ A ready file returns `status: "ready"` after ffprobe. `transcript_status`, `visu
 uv run pytest
 ```
 
-Caps: at most **64** JPEGs per `get_frames`, **30 seconds** per `get_audio`, **60 seconds** per `export_clip` / `export_audio`. Oversize is refused (not shrunk). Picture **ingest** is a separate ~1 FPS extract (not the look cap). Sound **ingest** is 3s chunks with a 1.5s hop (not the listen cap). Slide **ingest** dedups that 1 FPS stream (pHash + brightness), then ColQwen runs on unique pages only. Bulk JPEGs and chunk wavs are deleted after embed. Export files are **kept** until the video is deleted.
+Caps: at most **12** JPEGs per `get_frames`, **30 seconds** per `get_audio`, **12** JSON rounds, **60 seconds** per `export_clip` / `export_audio`. Oversize is refused (not shrunk). Picture **ingest** is a separate ~1 FPS extract (not the look cap). Sound **ingest** is 3s chunks with a 1.5s hop (not the listen cap). Slide **ingest** dedups that 1 FPS stream (pHash + brightness), then ColQwen runs on unique pages only. Bulk JPEGs and chunk wavs are deleted after embed. Export files are **kept** until the video is deleted.
 
 ## Chat
 

@@ -39,4 +39,5 @@ Then:
 33. [Sound search returns a range](sound-window-export.md) — H7: CLAP windows vs listen-then-export; recut-from-middle removed
 34. [E4B vs 12B Unified A/B](e4b-vs-12b-plan.md) — **closed.** Second Modal worker, same eight questions, E4B stays default
 35. [Why 4B is enough](why-4b-is-enough.md) — leftover problems in plain words, what 12B vs 4B did, clap counting is not arithmetic
-36. [E4B thinking on/off](e4b-thinking.md) — next experiment after the closed 12B A/B
+36. [E4B thinking on/off](e4b-thinking.md) — second E4B worker, visible thoughts, default brain unchanged
+37. [Gemma as indexer](15-gemma-as-indexer.md) — discussion: find vs answer, vectors vs four drawers (**not v1**)

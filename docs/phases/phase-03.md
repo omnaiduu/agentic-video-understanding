@@ -103,7 +103,7 @@ Save messages in **Postgres** (text + pointers to which times we showed). Do not
 | Model output | **vLLM structured output** — `response_format` JSON schema (`do`: look / listen / answer). This is Gemma 4 + vLLM’s native feature, not “ask nicely for JSON.” ([vLLM Gemma 4 recipe](https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html)) |
 | Native tool calling | **Not used** for this app’s brain |
 | How it sees media | Image/audio **content parts**, not tool_response |
-| Caps | Phase 2: 64 photos / 30s audio, reject oversize |
+| Caps | Phase 2: 12 photos / 30s audio, reject oversize. Loop allows 12 JSON rounds. |
 | Max rounds | **8** |
 | Brain | **E4B** default (vLLM). 12B is an env switch if we want later. |
 | Fake brain in tests | **Yes** (no GPU in CI) |

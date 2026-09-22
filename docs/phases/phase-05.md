@@ -29,7 +29,7 @@ This **is** RAG (retrieve, then generate). SigLIP finds times; Gemma understands
 ## Words
 
 **SigLIP 2** — photos → vectors, phrases → vectors. Search, don’t narrate.  
-**1 FPS** — phone-book sample rate. Not the look budget (still 64 photos).  
+**1 FPS** — phone-book sample rate. Not the look budget (still 12 photos).  
 **`search_visual`** — JSON action beside look / listen / search / answer. Our Python. Not vLLM tools.
 
 ---

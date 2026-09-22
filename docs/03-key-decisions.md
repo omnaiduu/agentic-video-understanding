@@ -19,7 +19,7 @@ Locked. Short. This file matches the **13 build phases**. Do not follow older SQ
 
 - We own a state machine: `look` · `listen` · `search` · `search_visual` · `search_audio` · `search_slides` · `export_clip` · `export_audio` · `answer`.
 - vLLM **JSON schema** (`response_format`), not native function calling.
-- Caps: **64 photos or 30 seconds of sound** per look/listen. **8** rounds max. Export **60s**, reject oversize.
+- Caps: **12 photos or 30 seconds of sound** per look/listen. **12** rounds max. Export **60s**, reject oversize. (The first cards said 64 photos and 8 rounds. The live loop uses 12 and 12.)
 - Tests use a FakeBrain. No GPU in CI.
 
 ## Indexes (ingest once, cache)

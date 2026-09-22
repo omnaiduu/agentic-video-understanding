@@ -30,5 +30,6 @@
 | **Kitchen-sink desktop tools** (web, python, calendar) | Different product. Video loop first |
 | **Full Agentic Vision (arbitrary Python on images)** | `crop_frame` is enough if tiny objects fail |
 | **Graph DB / Elasticsearch on day one** | Postgres + pgvector is enough |
+| **System One letter picker on the first hop** | Closed-set logprobs pick a book, not a time, and cannot look, listen, or cut. Live leftover runs: letters were peaked, a sound question got worse when we obeyed the letter, and the other misses stayed misses. Extra GPU call is not cheaper than JSON `search`. Reverted. Chat is JSON-only. |
 
 **ColQwen2.x + `search_slides` is the product** (Phase 13), not a rejected idea. Locked brief: [phase-13.md](phases/phase-13.md). For “which slide had **Pro $99**?” when nobody said the number. Gemma still reads the real frame; ColQwen only finds the time.

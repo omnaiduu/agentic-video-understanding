@@ -1,14 +1,12 @@
-# Agentic Video Understanding (open-source)
+# Agentic Video Understanding
 
-An open-source system that copies **Google Gemini’s agentic video understanding** (announced 1 Sep 2026): a model with a remote control on a video timeline, not a model that watches every second.
+Ask a question about a long video. The model does not watch every second. It holds a remote: search a phone book, open a short slice, then answer.
 
-This repository is the **design, decisions, and conversation record**, plus **Phases 1–13** of the app (`backend/` through the slide book, `web/` library through clips and delete). Four indexes: speech, pictures, sounds, and unique slides.
+This is an open-weight copy of **Google Gemini’s agentic video understanding** (1 Sep 2026). Google did not ship a new video model. They shipped a tool loop. This repo ships the same idea with weights we can host.
 
-**To start code:** [docs/13-implementation-pass.md](docs/13-implementation-pass.md) (how) + the matching [docs/phases/](docs/phases/phase-01.md) brief. One phase only.
+**`main` is the app.** `backend/` is the API and the loop. `web/` is the library, player, and chat. `docs/` is why it is built this way, including the 13 phases and the live tests.
 
-**Source of truth:** the **13 locked build phases**. If an older paragraph says SQLite, Gemma 12B as default, native `tools=`, Vite-only UI, or Node backend — ignore it. Those were earlier drafts. They are not this app.
-
-**Goal:** Ask questions about long videos (talks, slides, sports, CCTV, sounds) without dumping the whole file into a large model. Find the moment, look or listen to a short slice, then answer — optionally export a clip that plays **in the chat**.
+**Goal:** talks, slides, sports, CCTV, sounds. Find the moment, look or listen to a short slice, answer with a timestamp, optionally export a clip that plays in the chat. A second question on the same file does not rebuild the indexes.
 
 ---
 
@@ -17,6 +15,16 @@ This repository is the **design, decisions, and conversation record**, plus **Ph
 **Gemma 4 E4B (fills a JSON form) + our Python loop + ffmpeg (scissors) + four phone books built once: Whisper (speech), SigLIP 2 (pictures), CLAP (sounds), ColQwen2.x (slides) + a TanStack Start website.**
 
 ColQwen2.x and `search_slides` are for questions like “which slide had **Pro $99**?” when nobody said the number. Gemma still reads the real frame; ColQwen only finds the time.
+
+| Piece | Where |
+|---|---|
+| FastAPI, scissors, indexes, JSON loop | `backend/` |
+| Gemma on Modal (E4B default, optional thinking worker, optional 12B) | `backend/modal_brain.py` and the sibling workers |
+| Ingest on a separate Modal app | `backend/modal_ingest.py` |
+| Library, upload, Video.js, chat, clips | `web/` |
+| Decisions, phases, live tests | `docs/` |
+
+Tests do not need a GPU. Chat tests inject a fake brain. Real answers need `BRAIN=vllm` and a Modal URL in `.env` (gitignored). Copy `backend/.env.example`. Do not commit secrets.
 
 ---
 
@@ -92,7 +100,7 @@ cd web && npm test
 
 ## Read in this order
 
-Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How a coding agent writes code is [13](docs/13-implementation-pass.md) (**locked**). Code so far is in `backend/` (Phases [1](docs/phases/phase-01.md)–[8](docs/phases/phase-08.md) plus [13](docs/phases/phase-13.md) slides) and `web/` ([Phase 9](docs/phases/phase-09.md)–[Phase 12](docs/phases/phase-12.md)).
+Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How the code is hosted is [13](docs/13-implementation-pass.md). The full index is [docs/README.md](docs/README.md).
 
 | Doc | What it is |
 |---|---|
@@ -123,8 +131,6 @@ Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–
 - Not Node-on-laptop as the API
 - Not training Gemma E2B into CLIP for v1
 
----
+Shipped caps live in `backend/app/tools/caps.py` and `backend/app/agent/schema.py`: **12 photos** per look, **30 seconds** of audio per listen, **12** JSON rounds, **60 seconds** per export. Oversize is refused, not silently shrunk. The early phase cards said 64 photos and 8 rounds; the live loop tightened the look and gave the model more rounds.
 
-## Environment note
-
-Docs were written in a **Linux cloud agent**. Clone this repo to work locally.
+There is no license file yet. Until one is added, do not treat this as free to reuse.

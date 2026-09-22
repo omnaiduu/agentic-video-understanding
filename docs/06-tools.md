@@ -19,7 +19,7 @@ These are **Python functions our state machine runs**. Gemma does not call OpenA
 
 ### `look` / `listen` policy (server clamps)
 
-- One rule: **64 photos or 30 seconds of sound**. Count before cut. Oversize → **reject** (do not silent-shrink).
+- One rule: **12 photos or 30 seconds of sound**. Count before cut. Oversize → **reject** (do not silent-shrink).
 - Never extract 0–7200s at 1 FPS.
 - Temp JPEGs/wavs for Gemma are deleted after the round. Export files are **kept**.
 

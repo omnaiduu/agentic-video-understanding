@@ -1,4 +1,4 @@
-"""1 FPS JPEG extract for the picture index. Not the 64-frame look cap."""
+"""1 FPS JPEG extract for the picture index. Not the 12-frame look cap."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def frames_tar_path(folder: Path) -> Path:
 
 
 def extract_index_frames(source: str | Path, dest_dir: str | Path) -> list[IndexJpeg]:
-    """Write ~1 JPEG per second. Do not use get_frames (that tool caps at 64 photos)."""
+    """Write ~1 JPEG per second. Do not use get_frames (that tool caps at 12 photos)."""
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
     pattern = str(dest / "frame_%06d.jpg")

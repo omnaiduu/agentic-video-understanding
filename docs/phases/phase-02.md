@@ -19,10 +19,10 @@ Cut a **small** piece of a file we already stored: a few photos, or a short soun
 | Topic | Decision |
 |---|---|
 | Functions | `get_meta`, `get_frames`, `get_audio` in `backend/app/tools/` |
-| Picture cap | At most **64 photos** per `get_frames` call |
+| Picture cap | At most **12 photos** per `get_frames` call |
 | Sound cap | At most **30 seconds** per `get_audio` call |
 | Oversize | **Reject** with a clear error. Do not silent-shrink. Do not run ffmpeg on the whole file. |
-| How photos are spaced | Code’s job: 1/sec over a longer span, or several/sec over a few seconds, still ≤ 64 |
+| How photos are spaced | Code’s job: 1/sec over a longer span, or several/sec over a few seconds, still ≤ 12 |
 | ffmpeg | subprocess CLI |
 | Frame format | JPEG |
 | Audio format | 16 kHz mono wav |
@@ -31,7 +31,7 @@ Cut a **small** piece of a file we already stored: a few photos, or a short soun
 | HTTP for scissors | **No extra routes.** Tests call the Python functions. Chat HTTP is Phase 3. |
 | Tool call vs structured output | **Phase 3.** Scissors do not talk to Gemma. |
 
-**Count before cut:** `seconds × photos_per_second` > 64 → refuse. Audio duration > 30s → refuse. Start/end invalid → refuse.
+**Count before cut:** `seconds × photos_per_second` > 12 → refuse. Audio duration > 30s → refuse. Start/end invalid → refuse. The first card said 64 photos. The shipped loop uses 12.
 
 ---
 

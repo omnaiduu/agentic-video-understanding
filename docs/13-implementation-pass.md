@@ -13,7 +13,7 @@ Related: [phase map](12-build-phases.md) · [hosting](08-frontend-backend.md) ·
 | Piece | Locked |
 |---|---|
 | API | FastAPI + SQLModel + **Postgres** + pgvector |
-| Cut | ffmpeg CLI, 64 photos / 30s audio, 60s export |
+| Cut | ffmpeg CLI, 12 photos / 30s audio, 60s export |
 | Brain | Gemma 4 **E4B** default, vLLM **JSON schema**, our state machine |
 | Speech | faster-whisper turbo, hybrid FTS + E5 |
 | Pictures | SigLIP 2 `so400m-patch16-384` |
@@ -105,7 +105,7 @@ Product brief stays [phase-01.md](phases/phase-01.md). An agent follows **this c
 
 ### Phase 2 — Scissors
 
-Laptop ffmpeg. `tools/frames.py`, `audio.py`, `caps.py`. Caps 64 photos / 30s. No HTTP extras.
+Laptop ffmpeg. `tools/frames.py`, `audio.py`, `caps.py`. Caps 12 photos / 30s. No HTTP extras.
 
 ### Phase 3 — Brain loop
 

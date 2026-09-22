@@ -39,7 +39,7 @@ On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP/ColQw
 | Silent visual | “Red light / flying bird” | `search_visual` → `look` |
 | Sound | “When did the bird chirp?” | `search_audio` → `listen` |
 | Count events | “How many claps?” | `search_audio` → merge hits → **count in code** → spot-check |
-| Fast action | “How many shots in 10s?” | Find window → `look` (still ≤ 64 photos) |
+| Fast action | “How many shots in 10s?” | Find window → `look` (still ≤ 12 photos) |
 | Follow-up | “Was a car in that frame?” | Session last 3 times as **text**; no re-ingest |
 | Export | “Give me that clip” | `export_clip` after times are known |
 
@@ -47,8 +47,8 @@ On-the-fly = the **loop**. Cache = **don’t rebuild** Whisper/SigLIP/CLAP/ColQw
 
 1. Pointer first: duration, ids — do not load the movie into Gemma.
 2. Search before gulp.
-3. Rewatch is capped: **64 photos or 30s of sound**. Oversize → reject, tell the model to try smaller.
-4. Max **8** JSON rounds.
+3. Rewatch is capped: **12 photos or 30s of sound**. Oversize → reject, tell the model to try smaller.
+4. Max **12** JSON rounds.
 5. Multi-turn: `session_id` + last 3 windows as text (Google’s `step_list` idea). Do not re-attach old JPEGs.
 
 ## Why this matches Google

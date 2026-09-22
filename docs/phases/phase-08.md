@@ -22,7 +22,7 @@ This is the last slice of the **first** backend pass (hold → scissors → loop
 
 ## Locked
 
-**Why text pointers, not old photos:** replaying frames would blow the 64-photo / 30s caps. Gemma can `look` again if she needs eyes.
+**Why text pointers, not old photos:** replaying frames would blow the 12-photo / 30s caps. Gemma can `look` again if she needs eyes.
 
 **Why not auto-delete the video:** the later library lists videos. Wiping on “bye” would empty it. **`DELETE /videos/{id}`** still removes row + folder + sessions.
 
