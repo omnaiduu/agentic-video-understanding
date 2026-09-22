@@ -225,6 +225,45 @@
   height: 3.5rem;
 }
 
+/* Elapsed position over the full length (2:14 / 9:56), including on a phone. */
+.video-js .vjs-current-time,
+.video-js .vjs-duration,
+.video-js .vjs-time-divider,
+.video-js.vjs-layout-tiny .vjs-current-time,
+.video-js.vjs-layout-tiny .vjs-duration,
+.video-js.vjs-layout-tiny .vjs-time-divider,
+.video-js.vjs-layout-x-small .vjs-current-time,
+.video-js.vjs-layout-x-small .vjs-duration,
+.video-js.vjs-layout-x-small .vjs-time-divider,
+.video-js.vjs-layout-small .vjs-current-time,
+.video-js.vjs-layout-small .vjs-duration,
+.video-js.vjs-layout-small .vjs-time-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 0;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fff;
+}
+
+.video-js .vjs-time-divider,
+.video-js.vjs-layout-tiny .vjs-time-divider,
+.video-js.vjs-layout-x-small .vjs-time-divider,
+.video-js.vjs-layout-small .vjs-time-divider {
+  padding-left: 0;
+  padding-right: 0.1rem;
+}
+
+.video-js .vjs-remaining-time {
+  display: none;
+}
+
 .video-js .vjs-play-progress,
 .video-js .vjs-volume-level {
   background: oklch(0.84 0.13 85);

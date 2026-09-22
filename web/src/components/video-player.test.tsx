@@ -27,7 +27,26 @@ describe("VideoPlayer", () => {
     })
     seek?.(12.5)
     expect(player.currentTime).toHaveBeenCalledWith(12.5)
-    expect(videojs).toHaveBeenCalled()
+    expect(videojs).toHaveBeenCalledWith(
+      expect.any(HTMLVideoElement),
+      expect.objectContaining({
+        controlBar: {
+          children: [
+            "playToggle",
+            "volumePanel",
+            "progressControl",
+            "currentTimeDisplay",
+            "timeDivider",
+            "durationDisplay",
+            "pictureInPictureToggle",
+            "fullscreenToggle",
+          ],
+        },
+      }),
+    )
+    expect(videojs.mock.calls[0]?.[1]?.controlBar?.children).not.toContain(
+      "remainingTimeDisplay",
+    )
     unmount()
     expect(player.dispose).toHaveBeenCalled()
   })

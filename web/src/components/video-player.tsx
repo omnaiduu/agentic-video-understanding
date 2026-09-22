@@ -50,6 +50,18 @@ export function VideoPlayer({
         playsinline: true,
         audioOnlyMode: audioOnly,
         sources: [{ src, type }],
+        controlBar: {
+          children: [
+            "playToggle",
+            "volumePanel",
+            "progressControl",
+            "currentTimeDisplay",
+            "timeDivider",
+            "durationDisplay",
+            "pictureInPictureToggle",
+            "fullscreenToggle",
+          ],
+        },
       })
       onReadyRef.current?.((seconds) => {
         player?.currentTime(seconds)
