@@ -10,6 +10,8 @@ __pycache__/
 .env.*
 !.env.example
 !**/.env.example
+.cursor/mcp.json
+!.cursor/mcp.json.example
 node_modules/
 
 # Website build

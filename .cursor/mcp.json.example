@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "omnaidu": {
+      "url": "https://omnaidu.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_PUBLISH_SECRET"
+      }
+    }
+  }
+}
