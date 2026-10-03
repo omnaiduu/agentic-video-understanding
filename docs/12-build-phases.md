@@ -1,163 +1,33 @@
-# Build phases (complete app)
+# Build phases
 
-This is **one production app**, built in slices. It is not a v1 toy that we later replace.
-
-**This file plus `docs/phases/` is the source of truth.** Docs 01–11 were rewritten to match. Older GitHub PRs (Node/Modal hybrid, WhisperX, 12B native tools) are **not** this app. **ColQwen2.x + `search_slides` is this app** (Phase 13).
+This is one production app, built in slices. ColQwen2.x + `search_slides` is part of this app.
 
 | Read this | For |
 |---|---|
 | [01 Goal](01-goal-and-context.md) | What the product is |
 | [03 Key decisions](03-key-decisions.md) | Locked product choices |
 | [05 Architecture](05-architecture.md) | Ingest vs question loop |
-| [06 Tools](06-tools.md) | Tool list and caps |
+| [06 Tools](06-tools.md) | Action list and limits |
 | [07 Models](07-models-and-indexes.md) | Gemma, Whisper, SigLIP, CLAP, ColQwen |
 | [08 Frontend/backend](08-frontend-backend.md) | Stack |
-| [09 Implementation plan](09-implementation-plan.md) | Pointer here — do not implement the old 7-step list |
-| [11 Glossary](11-glossary.md) | Words |
-| [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size — **locked** |
-| [14 From idea to production](14-from-idea-to-production.md) | How to run agents without reading code (method, any project) |
+| [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size |
 
-**How an agent should use this file**
+Upload a long video. Indexes are built once (speech, pictures, sounds, slides). Ask a question. Gemma names a step on a short slice. The answer has a timestamp, and sometimes a clip. A second question does not rebuild the indexes.
 
-- Read [13](13-implementation-pass.md) for where things run (laptop vs Modal).
-- Do **only** the phase you were told to do. First code = Phase 1.
-- Do not skip ahead (no Whisper in Phase 1, no React in Phase 3).
-- Leave seams for later phases (folder layout, status field, tool module). Do not implement those later phases.
-- When a phase says **LOCKED**, follow it. When it says **OPEN**, stop and ask the human.
+| Slice | What it added |
+|---|---|
+| 1 | FastAPI + Postgres + save the file + duration |
+| 2 | `get_meta` / `get_frames` / `get_audio`, with limits |
+| 3 | Gemma JSON loop, `/chat` |
+| 4 | Whisper speech index on Postgres |
+| 5 | SigLIP 2 + `search_visual` |
+| 6 | CLAP + `search_audio` |
+| 7 | `export_clip` / `export_audio` + a URL |
+| 8 | Last timestamps across turns in a session |
+| 9 | TanStack Start website shell |
+| 10 | Upload in the browser, live index status |
+| 11 | Video.js, chat, seek |
+| 12 | Clip in the chat, phone layout, delete |
+| 13 | Unique slides + ColQwen2.x + `search_slides` |
 
-**End state (the complete app)**
-
-Upload a long video → indexes built once (speech, pictures, sounds, **slides**) → ask questions → Gemma uses tools on short slices → timestamped answer → optional clip link → website for upload, player, chat. Second question does not re-ingest.
-
-Backend first (Phases 1–8). Frontend second (Phases 9–12). Slide book last (Phase 13). Same app.
-
----
-
-## Phase map
-
-| Phase | Name | Adds to the app | Status |
-|---|---|---|---|
-| 1 | Hold a video | FastAPI + Postgres + save file + duration | **LOCKED** — [phase-01.md](phases/phase-01.md) |
-| 2 | Scissors | `get_meta` / `get_frames` / `get_audio` + caps | **LOCKED** — [phase-02.md](phases/phase-02.md) |
-| 3 | Brain loop | Gemma JSON loop, `/chat` | **LOCKED** — [phase-03.md](phases/phase-03.md) |
-| 4 | Speech index | Hybrid Whisper RAG on **Postgres** | **LOCKED** — [phase-04.md](phases/phase-04.md) |
-| 5 | Picture index | SigLIP 2 + `search_visual` | **LOCKED** — [phase-05.md](phases/phase-05.md) |
-| 6 | Sound index | CLAP + `search_audio` + Python count | **LOCKED** — [phase-06.md](phases/phase-06.md) |
-| 7 | Export | `export_clip` / `export_audio` + URL | **LOCKED** — [phase-07.md](phases/phase-07.md) |
-| 8 | Memory | Multi-turn last timestamps | **LOCKED** — [phase-08.md](phases/phase-08.md) |
-| 9 | UI shell | TanStack Start + shadcn + Query | **LOCKED** — [phase-09.md](phases/phase-09.md) |
-| 10 | Upload UI | Pick file, live index status | **LOCKED** — [phase-10.md](phases/phase-10.md) |
-| 11 | Watch + ask | Video.js, chat, seek, collapsed trace | **LOCKED** — [phase-11.md](phases/phase-11.md) |
-| 12 | Clips + polish | Clip in chat, phone stack, delete, README | **LOCKED** — [phase-12.md](phases/phase-12.md) |
-| 13 | Slide index | Unique slides + ColQwen2.x + `search_slides` | **LOCKED** — [phase-13.md](phases/phase-13.md) |
-
----
-
-# Phase 1 — Hold a video
-
-**LOCKED.** Brief: [phases/phase-01.md](phases/phase-01.md)
-
----
-
-# Phase 2 — Scissors
-
-**LOCKED.** Brief: [phases/phase-02.md](phases/phase-02.md)
-
----
-
-# Phase 3 — Brain loop
-
-**LOCKED.** Brief: [phases/phase-03.md](phases/phase-03.md)
-
-vLLM JSON schema + our look/listen/answer state machine. Not native `tools=`.
-
----
-
-# Phase 4 — Speech index
-
-**LOCKED.** Brief: [phases/phase-04.md](phases/phase-04.md)
-
-Hybrid keyword + dense RAG on Whisper lines. PostgreSQL + pgvector (not SQLite).
-
----
-
-# Phase 5 — Picture index
-
-**LOCKED.** Brief: [phases/phase-05.md](phases/phase-05.md)
-
-SigLIP 2 at ~1 FPS → pgvector; `search_visual` in the JSON loop. Dense picture search (not hybrid).
-
----
-
-# Phase 6 — Sound index
-
-**LOCKED.** Brief: [phases/phase-06.md](phases/phase-06.md)
-
-LAION-CLAP on 3s chunks → pgvector; `search_audio` in the JSON loop. Counts happen in **Python**.
-
----
-
-# Phase 7 — Export
-
-**LOCKED.** Brief: [phases/phase-07.md](phases/phase-07.md)
-
-60s cap, reject oversize; local GET URL; mp4 / wav; re-encode; `export_clip` / `export_audio` in the JSON loop.
-
----
-
-# Phase 8 — Memory (multi-turn)
-
-**LOCKED.** Brief: [phases/phase-08.md](phases/phase-08.md)
-
-Last 3 time windows; `session_id`; text pointers, not old photos. Last backend slice.
-
----
-
-# Phase 9 — UI shell
-
-**LOCKED.** Brief: [phases/phase-09.md](phases/phase-09.md)
-
-TanStack Start + shadcn/Tailwind + TanStack Query. Library + watch+ask shell. FastAPI stays the API.
-
----
-
-# Phase 10 — Upload UI
-
-**LOCKED.** Brief: [phases/phase-10.md](phases/phase-10.md)
-
-File picker on the library; byte progress; **live four-line index panel**; jump to `/videos/:id` **while processing**.
-
----
-
-# Phase 11 — Watch + ask
-
-**LOCKED.** Brief: [phases/phase-11.md](phases/phase-11.md)
-
-Video.js; saved `session_id`; click-to-seek; Working…; collapsed tool trace. No export buttons yet.
-
----
-
-# Phase 12 — Clips + polish
-
-**LOCKED.** Brief: [phases/phase-12.md](phases/phase-12.md)
-
-Exported clip lives **in the scrollable chat**. Phone stacks player above chat. Delete button. Root README.
-
----
-
-# Phase 13 — Slide index
-
-**LOCKED.** Brief: [phases/phase-13.md](phases/phase-13.md)
-
-Unique-slide dedup + **ColQwen2.x** + `search_slides`. For “which slide had **Pro $99**?” when nobody said the number. **Gemma still reads the real frame. ColQwen only finds the time.**
-
-**All 13 phases are locked.** An agent implements one brief at a time, in order, toward one production app.
-
----
-
-# Rules for every phase
-
-1. Same repo. Same video id. Same tools module. Grow it; do not start a second app.
-2. Indexes are caches. The product is the agent loop.
-3. Counting is code on hits, not Gemma memory.
-4. If something is **OPEN**, ask the human. Do not invent a second product.
+vLLM JSON schema, not native `tools=`. Speech search is keyword plus dense retrieval on Whisper lines. Picture search is SigLIP 2 at about 1 FPS. Sound search is LAION-CLAP on 3-second chunks. Export longer than 60 seconds is refused. The website is TanStack Start. ColQwen finds a slide time. Gemma still reads the frame.

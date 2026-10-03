@@ -1,12 +1,12 @@
 # Hidden-intent live test
 
-Same 16s tape as [live-query-retest](live-query-retest.md). This time **nobody named the tool**. No “look”, “listen”, “search slides”, or timestamps. Easy / medium / hard. Some questions plant a false idea on purpose.
+**Nobody named the tool.** No “look”, “listen”, “search slides”, or timestamps. Easy / medium / hard. Some questions plant a false idea on purpose.
 
 **12 passed, 1 partial, 6 failed** (19 questions). Browser re-ran 3 of them.
 
-After the [spoken-words-then-stop](live-spoken-words.md) notes, we **reran the failures**. **M3 and H2 now pass** (they leave speech and read the printed “Ship the slide index”). **H7 is partial** (opens the sound book, still exports 9–12s which mixes red + Q3). H5 / H8 / M1 still fail; M4 is still partial. Easy checks E1, E2, H1 still pass.
+After a later pass, spoken-word hits are only speech, and a second speech search in the same question is blocked. **M3 and H2 now pass** (they leave speech and read the printed “Ship the slide index”). **H7 is partial** (opens the sound book, still exports 9–12s which mixes red + Q3). H5 / H8 / M1 still fail; M4 is still partial. Easy checks E1, E2, H1 still pass.
 
-What those leftovers *are*, and whether a laptop rule can fix them (not a live rerun): [four leftover live issues](live-leftover-issues.md). H7 (CLAP range vs listen-then-export): [sound-window-export](sound-window-export.md). Same questions on 12B: [e4b-vs-12b-plan](e4b-vs-12b-plan.md). Why we still keep 4B: [why-4b-is-enough](why-4b-is-enough.md).
+Same questions on 12B: [e4b-vs-12b-plan](e4b-vs-12b-plan.md). Thinking on and off: [e4b-thinking](e4b-thinking.md).
 
 Video: `af12a3ad-c22d-4359-8de9-ec7baff9eb6a` (`live-test-talk.mp4`)
 
@@ -92,7 +92,7 @@ Sounds like a **speech** question. The answer is **only printed**: “Ship the s
 - **Did (API):** Searched the transcript three times. “The transcript does not contain information…”
 - **Did (browser):** Same miss. Details: `search 3.1s` only. Never `search_slides`, never a look at 10s.
 - **Verdict: fail.** This is the main limit: if the sentence sounds spoken, it will not open the slide book.
-- **After the spoken-words note:** Speech → printed slides → look 10–12s. “Ship the slide index this quarter (Q3 Roadmap).” **Pass.** See [spoken words, then stop](live-spoken-words.md).
+- **After the spoken-words note:** Speech → printed slides → look 10–12s. “Ship the slide index this quarter (Q3 Roadmap).” **Pass.**
 
 ### M4. “When does the notification tone play, and what is on screen at that moment?”
 
@@ -214,4 +214,4 @@ The UI showed Details (`search` / `search_slides` / `look`) under each bubble. N
 
 Those stop crashes. They do not teach the model to open the slide book when the question *sounds* like speech.
 
-A later pass added two loop notes (no keyword list): spoken-word hits are only speech — try another move, and do not search speech again; sound hits are times to listen, not a clap count. **M3 and H2 then passed.** Details: [spoken words, then stop](live-spoken-words.md).
+A later pass added two loop notes (no keyword list): spoken-word hits are only speech — try another move, and do not search speech again; sound hits are times to listen, not a clap count. **M3 and H2 then passed.**

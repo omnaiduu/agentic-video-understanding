@@ -2,9 +2,9 @@
 
 **Status: LOCKED.** Product phases 1–13 stay locked. This file is the **how**: where it runs, which GPU, how ingest starts, how small the code stays. **Phase 1 how-to card** is also locked (uv, Docker Postgres, Alembic, chunked upload).
 
-A coding agent follows the phase brief **and** that phase’s card below. Do **not** implement the whole app. One phase at a time, starting at [Phase 1](phases/phase-01.md).
+This file records where the finished app runs. The product choices are in [decisions](03-key-decisions.md) and [architecture](05-architecture.md).
 
-Related: [phase map](12-build-phases.md) · [hosting](08-frontend-backend.md) · [models](07-models-and-indexes.md) · [method](14-from-idea-to-production.md)
+Related: [build record](12-build-phases.md) · [hosting](08-frontend-backend.md) · [models](07-models-and-indexes.md)
 
 ---
 
@@ -78,7 +78,7 @@ Backend already has `transcript_status` · `visual_status` · `audio_status` · 
 
 ## Phase 1 card — **LOCKED** (how to write it)
 
-Product brief stays [phase-01.md](phases/phase-01.md). An agent follows **this card** plus that brief. No extra libraries.
+This is how Phase 1 was built. No extra libraries.
 
 | Piece | Locked how | In easy words |
 |---|---|---|
@@ -153,10 +153,4 @@ Same ingest worker after pictures. ColQwen2.x on unique frames. `slides_status` 
 
 ---
 
-**Point a coding agent here**
-
-1. Read this file (how) + the matching `docs/phases/phase-XX.md` (what).
-2. Implement **only** the phase you were told to do.
-3. Stop. Do not start the next phase until we lock go-ahead for that slice.
-
-Phase 1 code lives in `backend/`. Next code is Phase 2 only.
+The app is built. `backend/` is the API. `web/` is the site.

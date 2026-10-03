@@ -4,7 +4,7 @@ The [12B A/B is closed](e4b-vs-12b-plan.md). Default brain stays **Gemma 4 E4B**
 
 Thinking will not pin 11.00s and is not a clap detector. The question was whether the **planner** starts listening before it exports (H7) and whether it still guesses claps (H5).
 
-Related: [why 4B is enough](why-4b-is-enough.md) · [hidden-intent questions](live-intent-questions.md)
+Related: [hidden-intent questions](live-intent-questions.md) · [E4B vs 12B](e4b-vs-12b-plan.md)
 
 **Verdict:** thinking **stays off** as default. The suite H7 did listen-then-export (the 12B path). A smoke of the same question still skipped listen. Clap counting got worse. Keep the Watch checkbox; do not pay the second GPU for every chat.
 

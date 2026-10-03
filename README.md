@@ -100,25 +100,23 @@ cd web && npm test
 
 ## Read in this order
 
-Start with the [phase map](docs/12-build-phases.md). Product *why* is docs 01–11. How the code is hosted is [13](docs/13-implementation-pass.md). The full index is [docs/README.md](docs/README.md).
+Product decisions are [docs/03](docs/03-key-decisions.md) through [docs/08](docs/08-frontend-backend.md). How the code is hosted is [13](docs/13-implementation-pass.md). The full index is [docs/README.md](docs/README.md).
 
 | Doc | What it is |
 |---|---|
 | [docs/01-goal-and-context.md](docs/01-goal-and-context.md) | What this is, why it exists |
-| [docs/02-conversation-summary.md](docs/02-conversation-summary.md) | Early thread, compressed (history) |
-| [docs/03-key-decisions.md](docs/03-key-decisions.md) | Locked choices — **matches the 13 phases** |
+| [docs/03-key-decisions.md](docs/03-key-decisions.md) | Locked choices |
 | [docs/04-what-we-rejected.md](docs/04-what-we-rejected.md) | What we are not doing |
 | [docs/05-architecture.md](docs/05-architecture.md) | Ingest vs question loop |
 | [docs/06-tools.md](docs/06-tools.md) | JSON actions our Python runs |
 | [docs/07-models-and-indexes.md](docs/07-models-and-indexes.md) | E4B, Whisper, SigLIP, CLAP, ColQwen, Postgres |
 | [docs/08-frontend-backend.md](docs/08-frontend-backend.md) | FastAPI + Start + Video.js |
-| [docs/09-implementation-plan.md](docs/09-implementation-plan.md) | Pointer to the 13 phases |
 | [docs/10-references.md](docs/10-references.md) | Google posts, model cards, papers |
-| [docs/11-glossary.md](docs/11-glossary.md) | Words |
-| [docs/12-build-phases.md](docs/12-build-phases.md) | **Build order — phases 1–13 locked** |
-| [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | Libraries, Modal, size — **locked** |
-| [docs/14-from-idea-to-production.md](docs/14-from-idea-to-production.md) | How to run agents without reading code |
-| [docs/phases/](docs/phases/phase-01.md) | One brief per phase |
+| [docs/12-build-phases.md](docs/12-build-phases.md) | What each slice of the app added |
+| [docs/13-implementation-pass.md](docs/13-implementation-pass.md) | Libraries, Modal, size |
+| [docs/live-intent-questions.md](docs/live-intent-questions.md) | Questions that never name the index |
+| [docs/e4b-vs-12b-plan.md](docs/e4b-vs-12b-plan.md) | E4B vs 12B on the same eight questions |
+| [docs/e4b-thinking.md](docs/e4b-thinking.md) | Thinking on and off, E4B stays default |
 
 ---
 

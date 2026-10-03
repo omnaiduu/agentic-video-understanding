@@ -1,13 +1,7 @@
 # Implementation plan
 
-**Superseded.** The build order is the **13 locked phases**.
+The app is built. Read [architecture](05-architecture.md) for the loop, [models](07-models-and-indexes.md) for the four indexes, and [implementation pass](13-implementation-pass.md) for where it runs.
 
-Read:
+[Build phases](12-build-phases.md) is the short record of what each slice added. Do not implement from the old 7-step skeleton (SQLite, 12B native tools, Vite-only).
 
-1. [12 — Build phases](12-build-phases.md) — map
-2. [phases/phase-01.md](phases/phase-01.md) through [phase-13.md](phases/phase-13.md) — one slice at a time
-3. [13 — Implementation pass](13-implementation-pass.md) — libraries / Modal / size (**locked**)
-
-Do not implement from the old 7-step skeleton (SQLite, 12B native tools, Vite-only). That list is history.
-
-**Done when** (unchanged product bar): from the website, a ≥10 minute video can (a) answer a speech question, (b) a silent visual, (c) a sound question, (d) “which slide had **Pro $99**?” when nobody said the number, (e) a follow-up without re-ingest, (f) show an exported clip **in the chat**, (g) work on a phone — without loading the whole file into Gemma. ColQwen finds the slide time; Gemma still reads the real frame.
+**Done when:** from the website, a long video can (a) answer a speech question, (b) a silent visual, (c) a sound question, (d) “which slide had **Pro $99**?” when nobody said the number, (e) a follow-up without re-ingest, (f) show an exported clip **in the chat**, (g) work on a phone — without loading the whole file into Gemma. ColQwen finds the slide time; Gemma still reads the real frame.
