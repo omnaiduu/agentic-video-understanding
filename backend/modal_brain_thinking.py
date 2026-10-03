@@ -4,7 +4,7 @@ Second app next to `modal_brain.py` (default E4B, no parser). Do not add
 `--reasoning-parser` to that worker: with thinking off, vLLM can silently
 drop json_schema on E4B. This replica always serves thinking-on requests.
 
-Laptop FastAPI owns the JSON loop and only sends already-cut slices.
+FastAPI owns the JSON loop and only sends already-cut slices.
 This process never sees the original video file. No tools= / tool-call parser.
 
 Idle containers shut down after 15 minutes. min_containers=0 so the GPU is

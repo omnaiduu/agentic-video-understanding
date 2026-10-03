@@ -1,4 +1,4 @@
-"""File measurements for planning a cut. Wraps Phase 1 ffprobe."""
+"""File measurements for a cut. Wraps ffprobe."""
 
 from __future__ import annotations
 

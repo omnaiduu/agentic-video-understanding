@@ -1,8 +1,4 @@
-"""Laptop skip-ahead stays. Recut / print-vs-speech bounces are gone.
-
-Black mp4s, not the exam tape. Tests must not mention beep / clap / ship / $99
-as answers. The OG sound path is search_audio → listen → export the heard range.
-"""
+"""Skip-ahead on a long file, and the sound path: search, listen, then export the heard range."""
 
 from __future__ import annotations
 
@@ -192,7 +188,7 @@ def test_search_audio_then_listen_then_export_heard_range(twelve_s_mp4: Path) ->
 
 
 def test_exporting_the_full_hit_window_is_not_recut(twelve_s_mp4: Path) -> None:
-    """If the model dumps the CLAP range, the laptop cuts that range. No middle recut."""
+    """If the model exports the whole sound-search window, the cut is that window."""
     brain = FakeBrain(
         [
             _act("search_audio", query="tone"),
@@ -279,7 +275,7 @@ def test_audio_observe_does_not_name_an_exam_sound(tiny_mp4: Path) -> None:
 
 
 def test_print_vs_speech_answer_is_not_blocked_without_search(tiny_mp4: Path) -> None:
-    """E4B needed a bounce. 12B A/B uses this hole; the laptop no longer fills it."""
+    """An answer is allowed before a speech search. The loop does not block it."""
 
     def speech(_query: str) -> list[TranscriptHit]:
         return [TranscriptHit(t=0.0, text="they named a number")]

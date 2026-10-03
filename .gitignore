@@ -18,11 +18,11 @@ web/.tanstack
 web/.nitro
 web/dist
 
-# Agent scratch (not part of this project)
+# Local scratch
 agent-tools/
 tmp-scaffold/
 
-# Media and indexes (when implementation lands)
+# Media and indexes
 data/
 *.mp4
 *.wav

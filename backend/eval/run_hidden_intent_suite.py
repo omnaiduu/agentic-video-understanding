@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""Live hidden-intent A/B runner. Same eight questions E4B already ran.
+"""Run the hidden-intent questions against a running FastAPI.
 
-Point BASE_URL at FastAPI; FastAPI points at whatever brain VLLM_MODEL /
-VLLM_BASE_URL is set to (E4B default, 12B for this A/B). Do not deploy from
-this script. THINKING=1 posts ChatIn.thinking=true (E4B thinking worker).
+Point BASE_URL at FastAPI. FastAPI uses whatever brain VLLM_MODEL and
+VLLM_BASE_URL are set to. This script does not deploy a worker.
+THINKING=1 sends thinking=true. Set VIDEO_ID to a file this API already has.
 
     cd backend
     VIDEO_ID=... BASE_URL=http://127.0.0.1:8000 BRAIN_LABEL=e4b \\
-      uv run python eval/run_hidden_intent_suite.py
-
-    THINKING=1 BRAIN_LABEL=e4b-thinking OUT=/tmp/hidden-intent-e4b-thinking.json \\
       uv run python eval/run_hidden_intent_suite.py
 """
 

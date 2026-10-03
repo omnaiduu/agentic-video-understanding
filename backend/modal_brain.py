@@ -1,6 +1,6 @@
 """Modal chat worker: vLLM OpenAI server, Gemma 4 E4B, L4, scale to zero.
 
-Laptop FastAPI owns the JSON loop and only sends already-cut slices.
+FastAPI owns the JSON loop and only sends already-cut slices.
 This process never sees the original video file. No tools= / tool-call parser.
 
 Idle containers shut down after 15 minutes. min_containers=0 so the GPU is

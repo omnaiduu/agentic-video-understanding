@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Score a hidden-intent suite JSON. Steps and wording, not loop bounces.
-
-Does not hardcode beep→11s into the laptop loop. This file only grades the
-A/B traces for the exam tape after the fact.
-"""
+"""Score a hidden-intent suite JSON from steps and wording."""
 
 from __future__ import annotations
 
@@ -353,7 +349,7 @@ def main() -> None:
     if len(sys.argv) < 2:
         raise SystemExit(
             "Usage: score_hidden_intent.py RUN.json [OTHER.json]\n"
-            "Writes a markdown table to stdout. Two files → A/B columns."
+            "Writes a markdown table to stdout. Two files print side by side."
         )
     first = json.loads(Path(sys.argv[1]).read_text())
     scored = score_run(first)
