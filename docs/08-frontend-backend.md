@@ -1,6 +1,6 @@
 # Frontend and backend
 
-Locked with the 13 phases.
+The split that shipped.
 
 ## Backend
 

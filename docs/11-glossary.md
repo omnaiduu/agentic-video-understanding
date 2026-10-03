@@ -13,7 +13,7 @@
 | **Whisper** | Speech → text + times. No vision. We use faster-whisper **turbo**. |
 | **Transcript** | Whisper output |
 | **CLIP / SigLIP** | Picture and text → vectors; **search**, don’t narrate |
-| **Index / phone book** | Saved search (transcript / visual vectors / audio vectors) |
+| **Index** | Saved search (transcript, frame vectors, audio vectors, slides) |
 | **Ingest** | Build indexes **once** per video |
 | **Cache** | Reuse ingest; don’t Whisper again on question 2 |
 | **CLAP** | CLIP-for-**audio**; sound ↔ text search |
@@ -26,5 +26,5 @@
 | **search_notes** | Search VLM **captions** from ingest. **We don’t do this** |
 | **Modal** | GPU host for Gemma (chat worker) and ingest (other worker). Laptop keeps the API and files. |
 | **E4B / 12B** | Gemma 4 sizes. **E4B = default.** 12B = later env switch. |
-| **ColQwen / ColPali** | Patch-level slide retriever (MaxSim). **This app** (Phase 13). `search_slides`. Gemma still reads the real frame; ColQwen only finds the time. |
+| **ColQwen / ColPali** | Patch-level slide retriever (MaxSim). `search_slides`. Gemma still reads the real frame; ColQwen only finds the time. |
 | **search_slides** | JSON action: find a unique slide by on-screen text (“Pro $99”). |

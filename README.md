@@ -1,10 +1,10 @@
 # Agentic Video Understanding
 
-Ask a question about a long video. The model does not watch every second. It holds a remote: search a phone book, open a short slice, then answer.
+Ask a question about a long video. The model does not watch every second. It searches an index, opens a short slice, then answers.
 
 This is an open-weight copy of **Google Gemini’s agentic video understanding** (1 Sep 2026). Google did not ship a new video model. They shipped a tool loop. This repo ships the same idea with weights we can host.
 
-**`main` is the app.** `backend/` is the API and the loop. `web/` is the library, player, and chat. `docs/` is why it is built this way, including the 13 phases and the live tests.
+**`main` is the app.** `backend/` is the API and the loop. `web/` is the library, player, and chat. `docs/` is why it is built this way, including the live tests.
 
 **Goal:** talks, slides, sports, CCTV, sounds. Find the moment, look or listen to a short slice, answer with a timestamp, optionally export a clip that plays in the chat. A second question on the same file does not rebuild the indexes.
 
@@ -12,7 +12,7 @@ This is an open-weight copy of **Google Gemini’s agentic video understanding**
 
 ## One-sentence product
 
-**Gemma 4 E4B (fills a JSON form) + our Python loop + ffmpeg (scissors) + four phone books built once: Whisper (speech), SigLIP 2 (pictures), CLAP (sounds), ColQwen2.x (slides) + a TanStack Start website.**
+**Gemma 4 E4B (one JSON object that has to match a schema) + our Python loop + ffmpeg + four indexes built once: faster-whisper (speech), SigLIP 2 (frames), LAION-CLAP (sounds), ColQwen2 (slides) + a TanStack Start website.**
 
 ColQwen2.x and `search_slides` are for questions like “which slide had **Pro $99**?” when nobody said the number. Gemma still reads the real frame; ColQwen only finds the time.
 
@@ -128,6 +128,6 @@ Product decisions are [docs/03](docs/03-key-decisions.md) through [docs/08](docs
 - Not Node-on-laptop as the API
 - Not training Gemma E2B into CLIP for v1
 
-Shipped caps live in `backend/app/tools/caps.py` and `backend/app/agent/schema.py`: **12 photos** per look, **30 seconds** of audio per listen, **12** JSON rounds, **60 seconds** per export. Oversize is refused, not silently shrunk. The early phase cards said 64 photos and 8 rounds; the live loop tightened the look and gave the model more rounds.
+Shipped caps live in `backend/app/tools/caps.py` and `backend/app/agent/schema.py`: **12 photos** per look, **30 seconds** of audio per listen, **12** JSON rounds, **60 seconds** per export. Oversize is refused, not silently shrunk. An earlier cap was 64 photos and 8 rounds. The live loop allows fewer frames per look and more rounds per question.
 
 There is no license file yet. Until one is added, do not treat this as free to reuse.
