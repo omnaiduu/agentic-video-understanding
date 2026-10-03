@@ -8,7 +8,7 @@ We are building the **open-weight equivalent**: same loop, our tools, our indexe
 
 This is **not** “ffmpeg + LLM” as a slogan. ffmpeg only cuts. The product is:
 
-1. A **loop we own** (Python). Gemma 4 **E4B** only fills a JSON form (look / listen / search / answer).
+1. A **loop we own** (Python). Gemma 4 **E4B** returns one JSON object that has to match a schema (look / listen / search / answer).
 2. **Scissors** that open short slices (ffmpeg)
 3. **Indexes** so we do not scan two hours with the big model
 4. Optional **export** of a clip/audio file + URL

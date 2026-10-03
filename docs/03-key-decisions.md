@@ -10,7 +10,7 @@ Locked. Short. This file matches the **13 build phases**. Do not follow older SQ
 
 ## Brain (question time only)
 
-- **Gemma 4 E4B** = default. It **fills a JSON form**. It does not drive OpenAI-style `tools=`.
+- **Gemma 4 E4B** = default. Each turn is **one JSON object that has to match a schema**. It does not drive OpenAI-style `tools=`.
 - **12B Unified** = env switch later if we want a stronger planner. Not the default.
 - Do **not** use **Gemma** to index the whole video (no caption diary). **ColQwen2.x** at ingest is a **retriever** on unique slides (Phase 13), not a captioner.
 - How it sees media: image/audio **content parts**, not `tool` messages.
@@ -47,7 +47,7 @@ Locked. Short. This file matches the **13 build phases**. Do not follow older SQ
 
 - API: **Python FastAPI** + SQLModel. Not Node.
 - Cut media: **ffmpeg** CLI.
-- Serve Gemma: **vLLM on Modal (L4)**. Laptop FastAPI. Ingest is a **separate** Modal worker. Cards in [13](13-implementation-pass.md).
+- Serve Gemma: **vLLM on Modal (L4)**. Laptop FastAPI. Ingest is a **separate** Modal worker.
 - UI: **TanStack Start** + Tailwind + shadcn/ui + TanStack Query + **Video.js**. FastAPI is the only ML API.
 - Auth: none for v1.
 

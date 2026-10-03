@@ -158,7 +158,7 @@ Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`, indexes `ready`. Clean loop (s
 - E4B: existing FastAPI on port 8000 → `agentic-video-brain` (`google/gemma-4-E4B-it`)
 - 12B: FastAPI on port 8001 → `agentic-video-brain-12b` serving `google/gemma-4-12B-it` from QAT `google/gemma-4-12B-it-qat-w4a16-ct`
 
-Traces: `backend/eval/results/hidden-intent-e4b.json` and `hidden-intent-12b.json`. Scorer: `eval/score_hidden_intent.py`.
+The raw JSON traces from this run are not in the repo. Scorer: `eval/score_hidden_intent.py`.
 
 | Q | E4B this run | 12B this run | What that means |
 |---|---|---|---|
@@ -200,7 +200,7 @@ Default in `settings.py` remains `google/gemma-4-E4B-it`.
 | Live runner | `backend/eval/run_hidden_intent_suite.py` |
 | Scorer | `backend/eval/score_hidden_intent.py` |
 | Wait for `/v1/models` | `backend/eval/wait_vllm.py` |
-| Live traces (this A/B) | `backend/eval/results/hidden-intent-e4b.json`, `hidden-intent-12b.json` |
+| Live traces (this A/B) | Not kept in the repo. The scoreboard above is the record. |
 | Catalog + scorer tests | `backend/tests/test_hidden_intent.py` |
 | OG loop tests | `backend/tests/test_loop_rules.py` |
 | Skip-ahead (kept) | `backend/app/agent/loop.py` |

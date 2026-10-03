@@ -10,7 +10,6 @@ This is one production app, built in slices. ColQwen2.x + `search_slides` is par
 | [06 Tools](06-tools.md) | Action list and limits |
 | [07 Models](07-models-and-indexes.md) | Gemma, Whisper, SigLIP, CLAP, ColQwen |
 | [08 Frontend/backend](08-frontend-backend.md) | Stack |
-| [13 Implementation pass](13-implementation-pass.md) | Libraries, Modal/GPU, size |
 
 Upload a long video. Indexes are built once (speech, pictures, sounds, slides). Ask a question. Gemma names a step on a short slice. The answer has a timestamp, and sometimes a clip. A second question does not rebuild the indexes.
 
