@@ -11,7 +11,7 @@ Locked with the 13 phases.
 | ORM / DB | **SQLModel + PostgreSQL + pgvector** | Rows, FTS, vectors, sessions |
 | Media | **ffmpeg** CLI | Cut frames/audio/clips |
 | Agent | vLLM OpenAI client, **`response_format` JSON schema**, no `tools=` | Phase 3 |
-| Ingest | Same `ingest_video(id)` — laptop FastAPI **`.spawn()`s a Modal worker** (not the chat GPU) | [13](13-implementation-pass.md) **locked** |
+| Ingest | Same `ingest_video(id)` — laptop FastAPI **`.spawn()`s a Modal worker** (not the chat GPU) | Separate from the chat GPU |
 | Auth | None | v1 |
 | Files | Local disk `data/videos/{id}/` | S3 later behind the same functions |
 
@@ -66,4 +66,4 @@ Screens: empty library → upload → **live index panel** → watch+ask → cli
 - ffmpeg 5s export: sub-second to a few seconds.
 - Bottleneck = **Gemma + frames**, not Postgres.
 
-Hosting is **locked** in [13](13-implementation-pass.md): laptop API + files + ffmpeg; all models on Modal; L4; slices only; live ingest UI.
+Hosting: laptop API, files, and ffmpeg. All models on Modal L4s. The GPU only sees slices. The ingest status shows in the UI.

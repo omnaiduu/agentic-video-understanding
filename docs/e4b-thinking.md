@@ -40,7 +40,7 @@ Sources: [Gemma thinking](https://ai.google.dev/gemma/docs/capabilities/thinking
 
 Same tape `c1d9beb7-5465-4f47-9d53-2d6b299104b5`, indexes `ready`, crutches **off**. Fresh session per question. All eight HTTP **200** on both paths. JSON stayed BrainAction (no `---` preamble).
 
-Traces: `backend/eval/results/hidden-intent-e4b-off.json` (this run) and `hidden-intent-e4b-thinking.json`.
+The raw JSON traces from this run are not in the repo. The scoreboard below is the record.
 
 | Q | Thinking off (this run) | Thinking on (this run) |
 |---|---|---|

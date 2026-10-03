@@ -47,7 +47,7 @@ Locked. Short. This file matches the **13 build phases**. Do not follow older SQ
 
 - API: **Python FastAPI** + SQLModel. Not Node.
 - Cut media: **ffmpeg** CLI.
-- Serve Gemma: **vLLM on Modal (L4)**. Laptop FastAPI. Ingest is a **separate** Modal worker. Cards in [13](13-implementation-pass.md).
+- Serve Gemma: **vLLM on Modal (L4)**. Laptop FastAPI. Ingest is a **separate** Modal worker.
 - UI: **TanStack Start** + Tailwind + shadcn/ui + TanStack Query + **Video.js**. FastAPI is the only ML API.
 - Auth: none for v1.
 
