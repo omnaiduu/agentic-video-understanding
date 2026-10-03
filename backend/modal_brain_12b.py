@@ -1,10 +1,9 @@
 """Modal chat worker: vLLM OpenAI server, Gemma 4 12B Unified, L4, scale to zero.
 
-Second app next to `modal_brain.py` (E4B, `agentic-video-brain`). Do not
-overwrite that worker. FastAPI still defaults to E4B; point VLLM_BASE_URL at
-this URL only for the hidden-intent A/B.
+Second app next to `modal_brain.py`. Do not overwrite that worker.
+FastAPI still defaults to E4B. Point VLLM_BASE_URL here when you want 12B.
 
-Laptop FastAPI owns the JSON loop and only sends already-cut slices.
+FastAPI owns the JSON loop and only sends already-cut slices.
 This process never sees the original video file. No tools= / tool-call parser.
 
 Idle containers shut down after 15 minutes. min_containers=0 so the GPU is
@@ -14,7 +13,7 @@ later boots faster.
 BF16 12B weights are ~23 GB. vLLM wants ~40 GB for a full-precision 12B
 server. This L4 is 24 GB, so we load Google's official QAT W4A16 checkpoint
 (~8.3 GB weights) and serve it as `google/gemma-4-12B-it` (same instruction-
-tuned Unified model the plan names). vLLM reads the quant config from the
+tuned Unified model). vLLM reads the quant config from the
 checkpoint; no extra --quantization flag.
 
 vLLM 0.29 dummy-audio profiling still reads `fft_length` from the tower

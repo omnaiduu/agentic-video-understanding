@@ -1,16 +1,13 @@
-"""Same hidden-intent questions E4B already ran. Not an answer key.
+"""Hidden-intent questions and notes from the E4B run.
 
-The laptop still does not hardcode beep / clap / ship / $99.
-Gemma still picks look / listen / search / search_visual / search_audio /
-search_slides / export / answer. This file only lists the questions and
-what E4B actually did, so a later 12B run can use the same wording.
+The loop does not special-case these phrases. Gemma still picks the JSON action.
 """
 
 from __future__ import annotations
 
 from typing import TypedDict
 
-# Leftover live suite. Same eight prompts as the Modal E4B reruns.
+# Eight prompts. The loop does not treat these strings as an answer key.
 QUESTIONS: list[tuple[str, str]] = [
     ("E1", "How much does Pro cost?"),
     (
@@ -46,7 +43,7 @@ class E4BNote(TypedDict):
     what_12b_should_try_without_a_bounce: str
 
 
-# Honest E4B scoreboard. Not a claim that 12B will pass.
+# Notes from the E4B run of these questions.
 E4B_OBSERVATIONS: dict[str, E4BNote] = {
     "E1": {
         "verdict": "pass",

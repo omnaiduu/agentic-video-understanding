@@ -1,10 +1,10 @@
 """Modal ingest worker: faster-whisper turbo on L4. Not the chat GPU.
 
-Laptop extracts the full audio track (no 30s listen cap), 1 FPS JPEGs, and
-3s / 1.5s-hop wav chunks. This worker transcribes (faster-whisper turbo),
+The API host extracts the full audio track (no 30s listen cap), 1 FPS JPEGs,
+and 3s / 1.5s-hop wav chunks. This worker transcribes (faster-whisper turbo),
 embeds pictures (SigLIP 2), embeds sounds (LAION-CLAP), and embeds unique
 slides (ColQwen2.x).
-It POSTs results to the laptop API and never opens laptop Postgres.
+It POSTs results to the API and never opens that Postgres.
 
 Deploy from backend/:
 

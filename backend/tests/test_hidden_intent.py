@@ -1,4 +1,4 @@
-"""A/B catalog, scorer, and 12B worker file. Does not call a GPU."""
+"""Hidden-intent catalog, scorer, and worker ids. Does not call a GPU."""
 
 from __future__ import annotations
 

@@ -1,72 +1,61 @@
-# Backend (Phases 1–8 + 13)
+# Backend
 
-Takes a video or audio file, stores it on disk, measures it with ffprobe, remembers it in Postgres. Python scissors cut a short slice. `POST /videos/{id}/chat` runs our look / listen / search / search_visual / search_audio / search_slides / export_clip / export_audio / answer loop. Whisper writes a speech index once; SigLIP writes a picture index once; CLAP writes a sound index once; ColQwen2.x writes a **unique-slide** index once. Export re-encodes a ≤60s mp4 or wav onto disk and returns a GET URL. A follow-up reuses the same `session_id` and the last 3 time windows as **text**. The website lives in `web/` (Phases 9–12): upload, live indexes (including slides), Video.js on `GET /videos/{id}/file`, `POST /videos/{id}/chat`, in-thread clip players, and `DELETE /videos/{id}`.
+FastAPI stores a video or audio file, measures it with ffprobe, and keeps the row in Postgres. Python cuts a short slice. `POST /videos/{id}/chat` runs look, listen, search, search_visual, search_audio, search_slides, export_clip, export_audio, and answer. Whisper, SigLIP, CLAP, and ColQwen each write an index once. Export re-encodes a clip of at most 60 seconds and returns a GET URL. A follow-up reuses the same `session_id`. The website is in `web/`.
 
-## What you need on the machine
+## What you need
 
-- **Python 3.11+** and [uv](https://docs.astral.sh/uv/)
-- **ffmpeg** (this gives **ffprobe**). Not installed by pip. Not inside the Postgres container.
-- **Docker** for Postgres with **pgvector** (`docker compose` in this folder)
+- Python 3.11+ and [uv](https://docs.astral.sh/uv/)
+- ffmpeg, which provides ffprobe. It is not installed by pip, and it is not inside the Postgres container.
+- Docker, for Postgres with pgvector (`docker compose` in this folder)
+
+Full three-process runbook: [../README.md](../README.md).
 
 ## Run
 
 ```bash
 cd backend
-cp .env.example .env          # edit if your Postgres is not local
+cp .env.example .env
 docker compose up -d
 uv sync --group dev
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Compose uses `pgvector/pgvector:pg16` and also creates a `video_test` database for pytest. ffmpeg and ffprobe stay on the **host**.
-
-Check:
+Compose uses `pgvector/pgvector:pg16` and creates `video_test` for pytest.
 
 ```bash
 curl -F "file=@/path/to/clip.mp4" http://127.0.0.1:8000/videos
-```
-
-A ready file returns `status: "ready"` after ffprobe. `transcript_status`, `visual_status`, `audio_status`, and `slides_status` start as `processing` (or `skipped` if that channel does not apply). POST `/videos` does **not** wait for Whisper, SigLIP, CLAP, or ColQwen.
-
-```bash
 uv run pytest
 ```
 
-Caps: at most **12** JPEGs per `get_frames`, **30 seconds** per `get_audio`, **12** JSON rounds, **60 seconds** per `export_clip` / `export_audio`. Oversize is refused (not shrunk). Picture **ingest** is a separate ~1 FPS extract (not the look cap). Sound **ingest** is 3s chunks with a 1.5s hop (not the listen cap). Slide **ingest** dedups that 1 FPS stream (pHash + brightness), then ColQwen runs on unique pages only. Bulk JPEGs and chunk wavs are deleted after embed. Export files are **kept** until the video is deleted.
+`POST /videos` returns after ffprobe. Speech, picture, sound, and slide indexes continue in the background. Their status fields start as `processing`, or `skipped` when that channel does not apply.
+
+Caps: at most **12** JPEGs per `get_frames`, **30** seconds per `get_audio`, **12** JSON rounds, **60** seconds per `export_clip` or `export_audio`. A request over a cap is refused. Picture ingest is a separate extract at about 1 frame per second. Sound ingest is 3 second chunks with a 1.5 second hop. Slide ingest keeps unique pages from that frame stream, then ColQwen embeds those pages. Bulk JPEGs and chunk wavs are deleted after embed. Export files stay until the video is deleted.
 
 ## Chat
 
-The laptop owns the loop. Gemma (on Modal vLLM, L4) only fills JSON. Tests inject a FakeBrain; default `BRAIN=fake`. Default chat worker is **E4B** (`modal_brain.py`, app `agentic-video-brain`). Thinking is a **second** E4B app (`modal_brain_thinking.py`, `agentic-video-brain-e4b-thinking`) with `--reasoning-parser gemma4`; do not add that flag to the default worker. The 12B A/B worker is a third app (`modal_brain_12b.py`, `agentic-video-brain-12b`) that serves `google/gemma-4-12B-it` from Google's QAT W4A16 checkpoint so it fits an L4. Flip `VLLM_BASE_URL` / `VLLM_MODEL` in `.env` (gitignored); set `VLLM_THINKING_BASE_URL` for the thinking replica. Do not overwrite the E4B deploy.
+This process owns the loop. Gemma, on a Modal vLLM worker, only fills JSON. Tests inject a fake brain. The example env sets `BRAIN=fake`, and chat returns 503 until `BRAIN=vllm` and `VLLM_BASE_URL` are set.
 
-JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `search_slides`, `export_clip`, `export_audio`, `answer`. `search_slides` is our Python (ColQwen query tokens → MaxSim vs unique-slide patches, top 8 times). Scores are not the answer; Gemma `look`s at a hit and reads the real frame. Export re-encodes on the laptop (not stream-copy) and returns `/videos/{id}/exports/{export_id}`. Gemma gets that URL as text, never the clip bytes. Follow-ups send the same `session_id`; last 3 look/listen/search/export windows go into the prompt as text (not old JPEGs/wavs). Not vLLM `tools=`.
+The default worker is E4B (`modal_brain.py`, app `agentic-video-brain`). Thinking is a second E4B app (`modal_brain_thinking.py`, `agentic-video-brain-e4b-thinking`) with `--reasoning-parser gemma4`. Leave that flag off the default worker. The 12B worker (`modal_brain_12b.py`, `agentic-video-brain-12b`) serves `google/gemma-4-12B-it` from Google's QAT W4A16 checkpoint so it fits an L4. Point `VLLM_BASE_URL` and `VLLM_MODEL` at it in `.env` when you want it. Set `VLLM_THINKING_BASE_URL` for the thinking worker. Deploying 12B does not replace the E4B app.
 
-Real slide ingest: same `modal_ingest.py` app, function `embed_slides` (not the chat GPU). Laptop ffmpeg writes unique JPEGs; Modal embeds; POST `/internal/videos/{id}/slide-pages`. Default `INGEST=fake` and `SLIDE_EMBEDDER=fake` so tests need no GPU.
+JSON moves: `look`, `listen`, `search`, `search_visual`, `search_audio`, `search_slides`, `export_clip`, `export_audio`, `answer`. `search_slides` compares ColQwen query tokens to unique-slide patches and returns up to 8 times. Scores are a map. Gemma looks at a hit and reads the frame. Export re-encodes on this machine and returns `/videos/{id}/exports/{export_id}`. Gemma receives that URL as text. Follow-ups send the same `session_id`. The last 3 time windows go into the prompt as text.
 
-Real sound ingest: same `modal_ingest.py` app, function `embed_audio` (not the chat GPU). Laptop ffmpeg writes 3s chunks; Modal embeds; POST `/internal/videos/{id}/sound`. Default `INGEST=fake` and `AUDIO_EMBEDDER=fake` so tests need no GPU.
+Real ingest uses `modal_ingest.py` (a different Modal app from chat). This machine writes the media; Modal embeds it and posts back. Defaults `INGEST=fake`, `EMBEDDER=fake`, `VISUAL_EMBEDDER=fake`, `AUDIO_EMBEDDER=fake`, and `SLIDE_EMBEDDER=fake` so tests need no GPU. `uv sync --extra local-ingest` installs Whisper, E5, SigLIP, CLAP, and ColQwen on this machine instead.
 
 ## API
 
 | Method | Path | What it does |
 |---|---|---|
-| POST | `/videos` | Multipart `file` **or** JSON `{"path": "..."}`. Probes, returns the row. Spawns speech + picture + sound + slide ingest in the background. |
+| POST | `/videos` | Multipart `file` or JSON `{"path": "..."}`. Probes, returns the row, starts ingest in the background. |
 | GET | `/videos` | List |
 | GET | `/videos/{id}` | Metadata, including `transcript_status`, `visual_status`, `audio_status`, and `slides_status` |
-| GET | `/videos/{id}/file` | Stored bytes. Range-friendly. |
+| GET | `/videos/{id}/file` | Stored bytes. Range requests work. |
 | POST | `/videos/{id}/chat` | `{ "message", "session_id"?, "thinking"? }` → `{ answer, citations, steps, session_id, export_url?, thinking, thoughts }`. Omit `session_id` for a new thread. `thinking: true` needs `VLLM_THINKING_BASE_URL`. |
-| GET | `/videos/{id}/exports/{export_id}` | Exported mp4 or wav. Range-friendly. |
-| POST | `/internal/videos/{id}/transcript` | Whisper segments. Bearer `INGEST_SECRET`. |
-| GET | `/internal/videos/{id}/audio` | Full wav for the ingest worker. |
-| POST | `/internal/videos/{id}/visual` | SigLIP frames `{t_s, embedding}`. Bearer `INGEST_SECRET`. |
-| GET | `/internal/videos/{id}/frames` | Tar of 1 FPS JPEGs for the ingest worker. |
-| POST | `/internal/videos/{id}/sound` | CLAP chunks `{start_s, end_s, embedding}`. Bearer `INGEST_SECRET`. |
-| GET | `/internal/videos/{id}/chunks` | Tar of 3s wav slices for the ingest worker. |
-| GET | `/internal/videos/{id}/slides` | Tar of unique-slide JPEGs for the ingest worker. |
-| POST | `/internal/videos/{id}/slide-pages` | ColQwen pages `{t_start_s, t_end_s, embeddings}`. Bearer `INGEST_SECRET`. |
-| DELETE | `/videos/{id}` | Deletes the row, chat, transcript, visual frames, audio chunks, slide pages, exports, **and** the folder |
+| POST | `/videos/{id}/chat/stream` | Same body as `/chat`. Newline-delimited JSON: pings, then `event: done` or `event: error`. The website uses this. |
+| GET | `/videos/{id}/chat/{session_id}/result` | Query `message`. Returns the saved turn, or `{ "status": "pending" }`. |
+| GET | `/videos/{id}/exports/{export_id}` | Exported mp4 or wav. Range requests work. |
+| DELETE | `/videos/{id}` | Deletes the row, chat, indexes, exports, and the folder |
 
-No auth on the public video/chat routes. CORS is open.
+Ingest workers call `/internal/videos/{id}/...` with bearer `INGEST_SECRET`. Public video and chat routes have no auth. CORS is open.
 
-## Layout
-
-`data/videos/{id}/original.{ext}` lives at the **repo root** `data/` (gitignored). Optional `uv sync --extra local-ingest` if you want Whisper / E5 / SigLIP / CLAP / ColQwen on the laptop instead of Modal.
+Original files live at the repo-root `data/videos/{id}/` directory (gitignored).

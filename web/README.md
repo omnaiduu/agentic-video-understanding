@@ -1,10 +1,10 @@
-# Website (Phases 9–12)
+# Website
 
-TanStack Start app for the library, upload, live indexes (speech, pictures, sounds, **slides**), **player**, **chat**, **in-thread clips**, phone layout, and **delete**. FastAPI is still the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, ColQwen, or Gemma. The browser talks to FastAPI with `VITE_API_URL` (see `.env.example`). No Start server function is a second backend.
+TanStack Start app for the library, upload, the four index lines, the player, chat, clips in the thread, a stacked phone layout, and delete. FastAPI is the only API. This folder does not run ffmpeg, Whisper, SigLIP, CLAP, ColQwen, or Gemma. The browser calls FastAPI through `VITE_API_URL` (see `.env.example`).
 
-Pick a file on `/`. After upload you land on `/videos/$id`. Video.js plays `GET {API}/videos/{id}/file`. Ask a question; the site POSTs chat, keeps `session_id` in localStorage for that video, and turns citations into seek chips. If the answer includes `export_url`, a mini `<video>` or `<audio>` plus **Download** render **inside that assistant turn**. The chat thread scrolls; older text, times, and clips stay above. Tool steps sit in a collapsed Details block. On a phone the source player stacks above chat (`md:` two columns). **Delete** confirms, then `DELETE /videos/{id}`.
+Pick a file on `/`. After upload you land on `/videos/$id`. Video.js plays `GET {API}/videos/{id}/file`. The site posts chat, keeps `session_id` in localStorage for that video, and turns citations into seek chips. When the answer includes `export_url`, a mini player and **Download** render inside that turn. Tool steps sit in a collapsed details block. On a narrow screen the player stacks above chat. **Delete** confirms, then calls `DELETE /videos/{id}`.
 
-If indexes are still building, the four live lines stay. Chat stays on once the file is playable; look and listen work while search books catch up.
+Chat stays off until the file status is `ready`. If indexes are still building, the four lines stay on screen and a note says look and listen work while search may be incomplete.
 
 ## Run with FastAPI
 
@@ -21,7 +21,7 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Chat needs a real brain (`BRAIN=vllm` + `VLLM_BASE_URL`) or a test FakeBrain. `BRAIN=fake` with no script returns 503.
+Chat needs `BRAIN=vllm` and `VLLM_BASE_URL`, or a test fake brain. `BRAIN=fake` with no script returns 503.
 
 Terminal 2 — website:
 
@@ -32,7 +32,7 @@ npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000). The example `VITE_API_URL=/` keeps calls on that origin. Vite proxies `/videos` to port 8000.
 
 ## Check
 
@@ -40,11 +40,11 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 npm test
 ```
 
-Tests mock `fetch` / XHR / Video.js. They do not start Gemma.
+Tests mock `fetch`, XHR, and Video.js. They do not start Gemma.
 
 ## Routes
 
 | Path | What it does |
 |---|---|
-| `/` | File picker + `GET {API}/videos` |
-| `/videos/$videoId` | Player, live indexes, chat, in-thread clips, delete |
+| `/` | File picker and `GET {API}/videos` |
+| `/videos/$videoId` | Player, index lines, chat, in-thread clips, delete |

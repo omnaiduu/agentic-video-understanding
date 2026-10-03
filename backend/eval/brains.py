@@ -1,4 +1,4 @@
-"""HF ids and Modal app names for the E4B vs 12B A/B. Not imported by the loop."""
+"""Hugging Face ids and Modal app names for the chat workers."""
 
 E4B_HF_ID = "google/gemma-4-E4B-it"
 TWELVE_B_HF_ID = "google/gemma-4-12B-it"

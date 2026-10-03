@@ -1,4 +1,4 @@
-"""Turn Phase 2 bytes into OpenAI-style user content parts. Not tool messages."""
+"""Turn frame and audio bytes into OpenAI-style user content parts."""
 
 from __future__ import annotations
 
